@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Brand } from "../../ui";
 
@@ -20,6 +21,12 @@ type Article = {
 
 const emptyArticle: Article = { id: "", slug: "", title: "", category: "Institucional", excerpt: "", content: "", image_url: null, status: "draft", published_at: null, created_at: "" };
 
+async function readResult(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) return response.json();
+  return { error: response.status === 413 ? "La imagen es demasiado pesada." : "El servidor no pudo procesar la solicitud." };
+}
+
 export default function AdminNewsPage() {
   const router = useRouter();
   const [items, setItems] = useState<Article[]>([]);
@@ -32,7 +39,7 @@ export default function AdminNewsPage() {
     setLoading(true);
     const response = await fetch("/api/admin/news", { cache: "no-store" });
     if (response.status === 401) { router.push("/admin"); return; }
-    const result = await response.json();
+    const result = await readResult(response);
     setItems(result.articles || []);
     setMessage(response.ok ? "" : result.error || "No pudimos cargar las noticias.");
     setLoading(false);
@@ -44,11 +51,16 @@ export default function AdminNewsPage() {
   }, [loadArticles]);
 
   async function uploadImage(file: File) {
-    const body = new FormData();
-    body.set("image", file);
-    const response = await fetch("/api/admin/news/image", { method: "POST", body });
-    const result = await response.json();
+    if (file.size > 10 * 1024 * 1024) throw new Error("La imagen supera el máximo de 10 MB.");
+    const response = await fetch("/api/admin/news/image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: file.type, size: file.size }) });
+    const result = await readResult(response);
     if (!response.ok) throw new Error(result.error || "No pudimos subir la imagen.");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("El almacenamiento no está configurado.");
+    const supabase = createClient(url, key, { auth: { persistSession: false } });
+    const { error } = await supabase.storage.from("news-images").uploadToSignedUrl(result.path, result.token, file, { contentType: file.type, cacheControl: "31536000" });
+    if (error) throw new Error("No pudimos completar la carga de la imagen.");
     return String(result.imageUrl);
   }
 
@@ -63,7 +75,7 @@ export default function AdminNewsPage() {
       const imageUrl = file instanceof File && file.size > 0 ? await uploadImage(file) : editing.image_url;
       const payload = { id: editing.id || undefined, title: String(form.get("title")), category: String(form.get("category")), excerpt: String(form.get("excerpt")), content: String(form.get("content")), status: String(form.get("status")), imageUrl };
       const response = await fetch("/api/admin/news", { method: editing.id ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      const result = await response.json();
+      const result = await readResult(response);
       if (!response.ok) throw new Error(result.error || "No pudimos guardar la noticia.");
       setEditing(null);
       setMessage(payload.status === "published" ? "Noticia publicada correctamente." : "Borrador guardado correctamente.");
@@ -78,7 +90,7 @@ export default function AdminNewsPage() {
   async function remove(article: Article) {
     if (!window.confirm(`¿Eliminar “${article.title}”?`)) return;
     const response = await fetch(`/api/admin/news?id=${article.id}`, { method: "DELETE" });
-    if (!response.ok) { const result = await response.json(); setMessage(result.error || "No pudimos eliminarla."); return; }
+    if (!response.ok) { const result = await readResult(response); setMessage(result.error || "No pudimos eliminarla."); return; }
     setMessage("Noticia eliminada.");
     await loadArticles();
   }
