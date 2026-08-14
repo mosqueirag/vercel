@@ -1,4 +1,10 @@
-"use client";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-export function LoginForm() { const router = useRouter(); const [error, setError] = useState(""); const [loading, setLoading] = useState(false); async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setLoading(true); setError(""); const form = new FormData(event.currentTarget); const response = await fetch("/api/admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password") }) }); const data = await response.json(); if (!response.ok) { setError(data.error); setLoading(false); return; } router.push("/admin/noticias"); } return <form className="admin-login" onSubmit={submit}><label>Correo electrónico<input required type="email" name="email" autoComplete="username" /></label><label>Contraseña<input required type="password" name="password" minLength={8} autoComplete="current-password" /></label>{error && <p className="form-error">{error}</p>}<button className="primary" disabled={loading}>{loading ? "Ingresando…" : "Ingresar"}</button></form>; }
+export function LoginForm({ error }: { error?: string }) {
+  const messages: Record<string, string> = {
+    configuration: "Supabase Auth todavía no está configurado en este entorno.",
+    oauth: "No fue posible iniciar sesión con Google. Intentá nuevamente.",
+    callback: "La respuesta de Google no pudo validarse.",
+    unauthorized: "Tu cuenta de Google no está autorizada para administrar COOPSAR.",
+  };
+  return <div className="admin-login">{error && <p className="form-error" role="alert">{messages[error] || "No fue posible iniciar sesión."}</p>}<Link className="google-button" href="/api/admin/google"><span aria-hidden="true">G</span> Continuar con Google</Link><small>Solo pueden ingresar cuentas incluidas en la lista privada de administradores.</small></div>;
+}
+import Link from "next/link";
