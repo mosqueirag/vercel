@@ -28,7 +28,7 @@ function mapArticle(row: Record<string, unknown>): NewsArticle {
     title: String(row.title),
     excerpt: String(row.excerpt),
     body: String(row.content).split(/\n{2,}/).map((part) => part.trim()).filter(Boolean),
-    imageUrl: typeof row.image_url === "string" && row.image_url ? row.image_url : null,
+    imageUrl: typeof row.image_url === "string" && row.image_url.startsWith("https://") ? row.image_url : null,
   };
 }
 
