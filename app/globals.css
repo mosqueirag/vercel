@@ -133,6 +133,7 @@ h1, h2, h3, .brand-name { font-family: "Manrope", Arial, sans-serif; }
 .news-card-2 .news-art { background: linear-gradient(145deg, #0a4a3a, #1aa373); }
 .news-card-3 .news-art { background: linear-gradient(145deg, #f1eedf, #bdba9e); }
 .news-art span { position: absolute; right: 20px; bottom: 14px; z-index: 1; color: rgba(255,255,255,.65); font-family: "Manrope", sans-serif; font-size: 45px; font-weight: 800; }
+.news-photo img { object-fit: cover; }
 .news-copy { padding: 24px; }
 .news-copy small, .post > small { color: var(--green-700); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
 .news-copy h3 { margin: 13px 0 11px; font-size: 20px; line-height: 1.3; }
@@ -171,6 +172,8 @@ h1, h2, h3, .brand-name { font-family: "Manrope", Arial, sans-serif; }
 .post p { font-size: 17px; line-height: 1.85; }
 .post .lead { color: var(--muted); font-size: 21px; }
 .post blockquote { margin: 35px 0; padding: 25px; border-left: 5px solid var(--lime); background: var(--cream); font-weight: 700; }
+.post-image { position: relative; width: 100%; aspect-ratio: 16 / 9; margin-bottom: 35px; overflow: hidden; border-radius: 16px; background: var(--cream); }
+.post-image img { object-fit: cover; }
 .admin { padding: 60px clamp(20px, 7vw, 100px); }
 .warning { margin-bottom: 25px; padding: 16px; border: 1px solid #dfc968; background: #fff6d5; }
 .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
@@ -179,6 +182,12 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; }
 th { background: var(--cream); font-size: 10px; }
 .ok { color: var(--green-700); font-weight: 800; }
+.admin-message { margin-bottom: 20px; padding: 16px; border-left: 4px solid var(--green-500); background: var(--mist); }
+.news-editor small { color: var(--muted); font-weight: 400; }
+.news-editor textarea[name="excerpt"] { min-height: 100px; }
+.editor-actions { display: flex; gap: 10px; }
+.editor-actions button { min-height: 44px; padding: 0 18px; }
+.admin-table-wrap { overflow-x: auto; }
 form { max-width: 760px; display: grid; gap: 14px; }
 label { display: grid; gap: 6px; font-size: 12px; font-weight: 800; }
 input, select, textarea { padding: 12px; border: 1px solid #cedbd2; }
