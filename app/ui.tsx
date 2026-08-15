@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CONTACT } from "../lib/coopsar-data";
 import type { NewsArticle } from "../lib/news";
 
@@ -20,6 +20,7 @@ export function Brand() {
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
   const selectedGroup = menuGroups.find((group) => group.id === activeMenu);
   const groupIsActive = (group: (typeof menuGroups)[number]) => group.links.some(([, href]) => pathname.startsWith(href));
@@ -34,6 +35,7 @@ export function Header() {
           {menuGroups.slice(0, 2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
           <Link className={pathname.startsWith("/noticias") ? "active" : ""} href="/noticias">Noticias</Link>
           {menuGroups.slice(2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
+          <button type="button" className="site-search-trigger" onClick={() => { setActiveMenu(null); setSearchOpen(true); }} aria-label="Buscar en todo el sitio"><span aria-hidden="true">⌕</span><b>Buscar</b></button>
         </nav>
         <a className="button button-dark header-action" href={CONTACT.virtualOffice} target="_blank" rel="noreferrer">Oficina virtual <span>→</span></a>
         <button className="menu-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label="Abrir menú"><i /><i /><i /></button>
@@ -54,9 +56,34 @@ export function Header() {
       <Link href="/#asistente" onClick={() => setMobileOpen(false)}>Asistente <span>→</span></Link>
       {menuGroups.map((group) => <details key={group.id}><summary>{group.label}<span>＋</span></summary>{group.links.map(([label, href]) => <Link key={href} href={href} onClick={() => setMobileOpen(false)}>{label}<span>→</span></Link>)}</details>)}
       <Link href="/noticias" onClick={() => setMobileOpen(false)}>Noticias <span>→</span></Link>
+      <button className="mobile-search-trigger" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}>Buscar en el sitio <span>⌕</span></button>
       <a className="button button-dark" href={CONTACT.virtualOffice}>Oficina Virtual →</a>
     </nav>
+    {searchOpen && <SiteSearch onClose={() => setSearchOpen(false)} />}
   </>;
+}
+
+type SearchResult = { title: string; description: string; href: string; type: string };
+
+function SiteSearch({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.focus(); const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, [onClose]);
+  useEffect(() => {
+    if (query.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      try { const response = await fetch(`/api/site-search?q=${encodeURIComponent(query)}`, { signal: controller.signal }); const data = await response.json() as { results: SearchResult[] }; setResults(data.results); }
+      catch (error) { if (!(error instanceof DOMException && error.name === "AbortError")) setResults([]); }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    }, 220);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [query]);
+
+  return <div className="site-search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="site-search-panel"><header><div><span className="eyebrow">Buscador integral</span><h2 id="site-search-title">¿Qué necesitás encontrar?</h2></div><button onClick={onClose} aria-label="Cerrar buscador">×</button></header><label><span aria-hidden="true">⌕</span><input ref={inputRef} value={query} onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length < 2) { setResults([]); setLoading(false); } }} placeholder="Buscá servicios, trámites, ayuda o noticias…" maxLength={80} /><kbd>ESC</kbd></label><div className="site-search-results" aria-live="polite">{query.trim().length < 2 ? <div className="site-search-empty"><strong>Buscá en todo COOPSAR</strong><p>Escribí al menos dos letras. Por ejemplo: factura, fibra, corte o titularidad.</p></div> : loading ? <div className="site-search-empty"><strong>Buscando…</strong></div> : results.length ? results.map((result) => <Link key={result.href} href={result.href} onClick={onClose}><small>{result.type}</small><strong>{result.title}</strong><p>{result.description}</p><span>→</span></Link>) : <div className="site-search-empty"><strong>No encontramos resultados</strong><p>Probá con otras palabras o consultale a COOPIA.</p><Link href="/#asistente" onClick={onClose}>Ir al asistente →</Link></div>}</div></section></div>;
 }
 
 export function NewsCards({ items }: { items: NewsArticle[] }) {
