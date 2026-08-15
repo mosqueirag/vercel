@@ -526,3 +526,8 @@ textarea { min-height: 160px; }
   .ai-legal { padding-left: 0; padding-right: 0; }
   .chat-input { margin-left: 0; margin-right: 0; background: #fff; }
 }
+
+/* Superficie unificada del asistente */
+.ai-status{border-bottom:0}.chat-log{border-bottom:0}.chat-empty{padding:72px 0;background:transparent;border:0;text-align:left}.suggestions{padding-top:8px}.suggestions button{border:0;background:rgba(9,74,58,.07);color:var(--green-900)}.chat-input{border:0;background:rgba(9,74,58,.07);box-shadow:none}.chat-input textarea{background:transparent}.chat-input button{border-radius:12px}.priority-links{display:none}
+@media (min-width:801px){.ai-center{grid-template-areas:"heading console";grid-template-rows:auto}.ai-heading{align-self:center}.ai-console{align-self:center}.chat-input{margin:12px 0}.chat-log{min-height:330px}}
+@media (max-width:800px){.chat-empty{padding:52px 0}.chat-input{background:rgba(9,74,58,.07)}.suggestions button{background:rgba(9,74,58,.07)}}

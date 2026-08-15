@@ -56,7 +56,6 @@ export function AssistantCenter() {
         {!limited && <><div className="suggestions" aria-label="Consultas sugeridas">{suggestions.map((item) => <button key={item} onClick={() => void ask(item)}>{item}</button>)}</div><form className="chat-input" onSubmit={submit}><label className="sr-only" htmlFor="assistant-query">Tu consulta</label><textarea id="assistant-query" value={input} maxLength={1200} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="Ej.: Quiero contratar internet en mi barrio…" rows={2} /><button disabled={!input.trim() || loading} aria-label="Enviar consulta">Enviar <span>↑</span></button></form></>}
         <div className="ai-legal"><span>La IA puede cometer errores. No compartas contraseñas, datos bancarios ni información sensible.</span><Link href="/privacidad">Privacidad</Link></div>
       </div>
-      <div className="priority-links"><Link href="/internet#contratar"><b>⌁ Contratar internet</b><span>Recibí una recomendación y solicitá cobertura →</span></Link><a href={CONTACT.virtualOffice}><b>□ Facturas y pagos</b><span>Pagá o descargá tu factura en Oficina Virtual ↗</span></a></div>
     </section>
   );
 }
