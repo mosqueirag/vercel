@@ -60,7 +60,7 @@ export function Header() {
 }
 
 export function NewsCards({ items }: { items: NewsArticle[] }) {
-  return <div className="news-grid">{items.map((item, index) => <article className={`news-card news-card-${index + 1}`} key={item.id}>{item.imageUrl ? <div className="news-art news-photo"><Image src={item.imageUrl} alt="" fill sizes="(max-width: 800px) 100vw, 33vw" /></div> : <div className="news-art" aria-hidden="true"><span>{String(index + 1).padStart(2, "0")}</span></div>}<div className="news-copy"><small>{item.date} · {item.category}</small><h3>{item.title}</h3><p>{item.excerpt}</p><Link className="text-link" href={`/noticias/${item.slug}`}>Leer noticia ↗</Link></div></article>)}</div>;
+  return <div className="featured-news-grid">{items.map((item, index) => <article key={item.id}>{item.imageUrl ? <div className="news-card-image"><Image src={item.imageUrl} alt="" fill sizes="(max-width: 680px) 100vw, 33vw" priority={index === 0} /></div> : <div className="news-card-image news-card-fallback" aria-hidden="true"><span>COOPSAR</span><small>{item.category}</small></div>}<div className="featured-news-copy"><small>{item.date} · {item.category}</small><h3>{item.title}</h3><p>{item.excerpt}</p><Link href={`/noticias/${item.slug}`}>Leer noticia <span>↗</span></Link></div></article>)}</div>;
 }
 
 export function Contact() {
