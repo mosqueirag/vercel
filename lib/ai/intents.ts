@@ -20,7 +20,7 @@ type Rule = Omit<IntentDetection, "confidence"> & { patterns: RegExp[]; confiden
 
 const rules: Rule[] = [
   { intent: "fiber_signup", service: "fiber", suggestedAction: "start_fiber_signup", patterns: [/\b(contratar|quiero|solicitar|instalar)\b.*\bfibra\b/i, /\bfibra\b.*\b(contratar|quiero|solicitar|instalar)\b/i], confidence: 0.98 },
-  { intent: "fiber_coverage", service: "fiber", suggestedAction: "check_fiber_coverage", patterns: [/\b(fibra|ftth)\b.*\b(llega|cobertura|disponible|domicilio|direcci[oó]n)\b/i, /\b(cobertura|llega)\b.*\bfibra\b/i], confidence: 0.96 },
+  { intent: "fiber_coverage", service: "fiber", suggestedAction: "check_fiber_coverage", patterns: [/\b(fibra|ftth)\b.*\b(hay|llega|cobertura|disponible|domicilio|direcci[oó]n|calle|barrio)\b/i, /\b(hay|cobertura|llega)\b.*\bfibra\b/i], confidence: 0.96 },
   { intent: "internet_problem", service: "internet", suggestedAction: "diagnose_internet", patterns: [/\b(no (tengo|anda|funciona)|sin|problema|falla|cort[óo])\b.*\binternet\b/i, /\binternet\b.*\b(no (anda|funciona)|sin|problema|falla|cort[óo])\b/i], confidence: 0.95 },
   { intent: "energy_problem", service: "energy", suggestedAction: "report_energy_problem", patterns: [/\b(no (tengo|hay)|sin|falta|problema|corte)\b.*\b(luz|energ[ií]a)\b/i, /\b(luz|energ[ií]a)\b.*\b(corte|problema|falta)\b/i], confidence: 0.95 },
   { intent: "download_invoice", service: "billing", suggestedAction: "open_virtual_office", patterns: [/\b(descargar|bajar|imprimir)\b.*\bfactura\b/i], confidence: 0.97 },

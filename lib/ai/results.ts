@@ -8,12 +8,20 @@ export const assistantActions = [
 
 export type AssistantAction = (typeof assistantActions)[number];
 export type AssistantUIType = "fiber_coverage" | "service_status" | "payment";
+export type AssistantRecommendedAction = { id: AssistantAction; label: string; href?: string };
 export type AssistantResult = {
   message: string;
   intent: AssistantIntent;
   service: AssistantService;
+  confidence: number;
   ui?: { type: AssistantUIType; data: Record<string, string | number | boolean | null> };
-  actions: { id: AssistantAction; label: string; href?: string }[];
+  recommendedActions: AssistantRecommendedAction[];
+  /** Compatibility alias for current UI consumers. */
+  actions: AssistantRecommendedAction[];
+  nextStep: string;
+  requiresConfirmation: boolean;
+  requiresHuman: boolean;
+  tool: { name: string; kind: "read" | "write"; status: "ready" | "completed" | "unavailable" };
   journey: { journeyId: string; currentStep: string };
 };
 
@@ -24,5 +32,5 @@ export type NavigationContextValue = {
   service?: AssistantService;
   currentStep?: string;
   previousActions: AssistantAction[];
-  recommendedActions: AssistantResult["actions"];
+  recommendedActions: AssistantResult["recommendedActions"];
 };

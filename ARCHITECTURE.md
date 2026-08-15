@@ -52,6 +52,21 @@ Las políticas administrativas usan `private.is_news_admin()`. El esquema `priva
 - `/admin/*` usa Google OAuth de Supabase con PKCE y cookies de servidor. El correo se valida contra `news_admins`; una cuenta Google válida no autorizada no ingresa.
 - El CMS conserva el bucket público `news-images`, limitado a JPEG, PNG o WebP y 10 MB por archivo. Solo administradores pueden escribir.
 
+## Fase 2 — COOPIA, intents y tools
+
+`POST /api/assistant/resolve` funciona como capa determinista entre la conversación y la interfaz. El flujo es:
+
+```text
+mensaje → Intent Router → catálogo de tools → tool READ o propuesta WRITE
+        → AssistantResult → AssistantUIRenderer → componente autorizado
+```
+
+El contrato `AssistantResult` incluye `intent`, `service`, `confidence`, `recommendedActions`, `nextStep`, `requiresConfirmation`, `requiresHuman`, estado de la tool y journey. Estos campos son internos y no se muestran como etiquetas técnicas al usuario.
+
+Los intents prioritarios activos son `fiber_signup`, `fiber_coverage`, `internet_problem`, `energy_problem` y `pay_invoice`. El renderer solo admite `fiber_coverage`, `service_status` y `payment`; el modelo nunca entrega HTML arbitrario.
+
+Las tools READ pueden ejecutarse automáticamente y quedan instrumentadas en `journey_events`. Las tools WRITE (`createInternetRequest`, `createComplaint` y `requestHumanHandoff`) son solo descriptores en esta fase: devuelven `requiresConfirmation = true` y no modifican datos. Su ejecución transaccional corresponde a la Fase 3.
+
 ## Controles de seguridad
 
 - RLS está habilitado en todas las tablas expuestas.

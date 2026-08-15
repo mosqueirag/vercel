@@ -20,7 +20,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => { if (state.intent) sessionStorage.setItem(storageKey, JSON.stringify(state)); }, [state]);
-  const applyResult = useCallback((result: AssistantResult, sessionId: string) => setState((current) => ({ ...current, journeyId: result.journey.journeyId, sessionId, intent: result.intent, service: result.service, currentStep: result.journey.currentStep, recommendedActions: result.actions })), []);
+  const applyResult = useCallback((result: AssistantResult, sessionId: string) => setState((current) => ({ ...current, journeyId: result.journey.journeyId, sessionId, intent: result.intent, service: result.service, currentStep: result.nextStep, recommendedActions: result.recommendedActions })), []);
   const recordAction = useCallback((action: AssistantAction) => setState((current) => ({ ...current, previousActions: [...current.previousActions.slice(-7), action] })), []);
   const value = useMemo<Value>(() => ({ ...state, applyResult, recordAction }), [applyResult, recordAction, state]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
