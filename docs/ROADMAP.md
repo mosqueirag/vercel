@@ -1,6 +1,6 @@
 # Roadmap
 
-1. Apply the P1 migration to an isolated Supabase development branch.
-2. Run database and application verification against that branch.
-3. Configure a scheduled outbox retry invocation and monitoring before production readiness.
-4. Review the draft PR. Production promotion and merge require explicit authorization.
+1. Create or connect an unmistakably named Supabase development/staging project and record its project ref and URL.
+2. Apply the already locally verified migrations only to that isolated environment and compare it for drift.
+3. Require the `quality` and `supabase-tests` GitHub checks on `main`.
+4. Validate Vercel Preview against staging, then move the draft PR to review. Production promotion and merge require explicit authorization.

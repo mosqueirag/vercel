@@ -5,3 +5,5 @@
 - Journey events are structured and exclude conversations and lead PII.
 - Commercial records and integration outbox are server-only. Published knowledge, plans, services and active alerts are public-read. Editorial operations remain admin-only.
 - n8n receives only event type and request number. Personal data stays in Supabase.
+- CI pins Node 22 LTS and Supabase CLI 2.114.0. The database job is local and disposable, uses no remote project reference, and treats migration or RLS failures as release blockers.
+- `main` must require the `quality` and `supabase-tests` checks. Branch protection is not weakened to accommodate deployments.

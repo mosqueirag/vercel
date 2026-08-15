@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(20);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -19,17 +19,35 @@ values
   ('noticia-borrador-test', 'Noticia borrador', 'Test', 'Resumen', 'Entrada', 'Contenido', 'draft', null);
 insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology)
 values ('CALLE TEST', 100, 'Plan interno', 'fibra');
+insert into public.help_articles (slug, title, category, content, status, published_at) values
+  ('ayuda-publica-test', 'Ayuda pública', 'Test', 'Contenido', 'published', now()),
+  ('ayuda-borrador-test', 'Ayuda borrador', 'Test', 'Contenido', 'draft', null);
+insert into public.faqs (question, answer, category, status, published_at) values
+  ('¿Pregunta pública?', 'Respuesta', 'Test', 'published', now()),
+  ('¿Pregunta borrador?', 'Respuesta', 'Test', 'draft', null);
+insert into public.internet_plans (slug, name, audience, status, published_at) values
+  ('plan-publico-test', 'Plan público', 'home', 'published', now()),
+  ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null);
+insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
+  ('10000000-0000-0000-0000-000000000001', 'Zona pública test', 'available', 'published', now()),
+  ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
 
 set local role anon;
 select is((select count(*)::integer from public.services where slug like '%-test'), 1, 'anon reads only published services');
 select is((select count(*)::integer from public.service_alerts where title like 'Alerta %'), 1, 'anon reads only active published alerts');
 select is((select count(*)::integer from public.news_articles where slug like '%-test'), 1, 'anon reads only published news');
+select is((select count(*)::integer from public.help_articles where slug like '%-test'), 1, 'anon reads only published help articles');
+select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
+select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
+select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',
   'permission denied for table internet_requests',
   'anon cannot read commercial requests'
 );
+select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'anon cannot read journeys');
+select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'anon cannot read journey events');
 select throws_ok(
   $$ select count(*) from public.service_address_coverage $$,
   '42501',
@@ -57,6 +75,8 @@ select is((select count(*)::integer from public.internet_requests where request_
 
 reset role;
 set local role authenticated;
+select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
+select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select set_config('request.jwt.claims', '{"email":"admin-test@coopsar.local","role":"authenticated"}', true);
 select lives_ok(
   $$ insert into public.news_articles
