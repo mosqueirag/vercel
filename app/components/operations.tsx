@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { quickActions, serviceStatuses } from "../../lib/coopsar-data";
+import { quickActions } from "../../lib/coopsar-data";
+import type { PublicServiceStatus } from "../../lib/tools/service-status";
 
 const actionGroups = [
   { id: "facturas", label: "Facturas y cuenta", image: "/images/quick-access-billing.webp", imageAlt: "Atención personalizada para consultar una factura", titles: ["Pagar factura", "Descargar factura", "Consultar deuda"] },
@@ -12,9 +13,9 @@ const actionGroups = [
   { id: "asociado", label: "Datos y atención", image: "/images/quick-access-support.webp", imageAlt: "Atención de una consulta en una oficina de servicios", titles: ["Cambiar titularidad", "Actualizar datos", "WhatsApp"] },
 ] as const;
 
-export function ServiceStatusPanel() {
+export function ServiceStatusPanel({ services }: { services: { name: string; status: PublicServiceStatus; detail: string }[] }) {
   const labels = { operational: "Operativo", maintenance: "Mantenimiento programado", partial: "Interrupción parcial", outage: "Interrupción general", unknown: "Sin datos confirmados" };
-  return <section className="status-section" id="estado"><div className="section-heading"><div><span className="eyebrow">Estado de servicios</span><h2>Información operativa</h2></div><p>Solo mostramos estados publicados por COOPSAR. Si no hay información confirmada, comunicate con la guardia correspondiente.</p></div><div className="status-grid">{serviceStatuses.map((service) => <article key={service.name}><span className={`status-dot ${service.status}`} /><div><h3>{service.name}</h3><p>{service.detail}</p></div><b className={service.status}>{labels[service.status]}</b></article>)}</div><Link className="text-link" href="/cortes-programados">Ver alertas y cortes programados →</Link></section>;
+  return <section className="status-section" id="estado"><div className="section-heading"><div><span className="eyebrow">Estado de servicios</span><h2>Información operativa</h2></div><p>Solo mostramos estados publicados por COOPSAR. Si no hay información confirmada, comunicate con la guardia correspondiente.</p></div><div className="status-grid">{services.map((service) => <article key={service.name}><span className={`status-dot ${service.status}`} /><div><h3>{service.name}</h3><p>{service.detail}</p></div><b className={service.status}>{labels[service.status]}</b></article>)}</div><Link className="text-link" href="/cortes-programados">Ver alertas y cortes programados →</Link></section>;
 }
 
 export function SelfService() {

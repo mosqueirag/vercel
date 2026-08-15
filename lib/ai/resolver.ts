@@ -41,23 +41,23 @@ export function resolveAssistantResult(detection: IntentDetection, journeyId: st
       });
     case "internet_problem":
       return createResult(detection, journeyId, tool, {
-        message: status === "incident" ? "Detectamos una incidencia general informada." : "No encontramos una incidencia general informada. Podemos revisar tu caso.",
+        message: ["outage", "partial", "maintenance"].includes(String(status)) ? "Detectamos una incidencia informada." : "No encontramos una incidencia general informada. Podemos revisar tu caso.",
         ui: { type: "service_status", data: { service: "Internet", status: status || "unknown" } },
         actions: [
           { id: "START_DIAGNOSIS", label: "Comenzar diagnóstico", href: "/tramites" },
           { id: "OPEN_WHATSAPP", label: "Contactar soporte", href: `tel:${CONTACT.internetSupport.replace(/\s/g, "")}` },
         ],
-        requiresHuman: status !== "incident",
+        requiresHuman: !["outage", "partial", "maintenance"].includes(String(status)),
       });
     case "energy_problem":
       return createResult(detection, journeyId, tool, {
-        message: status === "incident" ? "Hay una interrupción informada para el servicio." : "No encontramos una interrupción general informada.",
+        message: ["outage", "partial", "maintenance"].includes(String(status)) ? "Hay una incidencia informada para el servicio." : "No encontramos una interrupción general informada.",
         ui: { type: "service_status", data: { service: "Energía", status: status || "unknown" } },
         actions: [
           { id: "REPORT_ENERGY_PROBLEM", label: "Informar falta de energía", href: "/energia" },
           { id: "OPEN_WHATSAPP", label: "Contactar guardia", href: `tel:${CONTACT.energyGuard.replace(/\s/g, "")}` },
         ],
-        requiresHuman: status !== "incident",
+        requiresHuman: !["outage", "partial", "maintenance"].includes(String(status)),
       });
     case "pay_invoice":
       return createResult(detection, journeyId, tool, {

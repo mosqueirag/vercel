@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { CONTACT } from "../../lib/coopsar-data";
+import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; people: number; devices: number; intensive: boolean; zone: string; street: string; streetNumber: string };
 type CoverageResult = { status: "exact" | "probable" | "unknown" | "configuration_pending"; message: string; service?: { planName: string; technology: string; speedMbps: number | null } | null };
@@ -15,22 +16,24 @@ export function InternetCenter() {
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
   const [checkingCoverage, setCheckingCoverage] = useState(false);
   const [error, setError] = useState("");
+  function journey() { const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId(); const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId(); sessionStorage.setItem("coopsar-journey-id", journeyId); sessionStorage.setItem("coopsar-session-id", sessionId); return { journeyId, sessionId }; }
+  function track(eventType: string, result?: string) { const ids = journey(); void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...ids, eventType, result, page: "/#contratar", service: "fiber" }) }); }
   async function checkCoverage() {
     setError("");
     if (answers.street.trim().length < 3 || !Number(answers.streetNumber)) { setError("Ingresá la calle y la altura para consultar datos reales."); return; }
     setCheckingCoverage(true);
     try {
-      const response = await fetch("/api/coverage-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ street: answers.street, number: answers.streetNumber }) });
+      const response = await fetch("/api/coverage-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ street: answers.street, number: answers.streetNumber, ...journey() }) });
       const data = await response.json() as CoverageResult & { error?: string };
       if (!response.ok && data.status !== "configuration_pending") throw new Error(data.error || "No pudimos consultar la cobertura.");
-      setCoverage(data); setSelected(data.service?.planName ?? ""); setStep(2);
+      setCoverage(data); setSelected(data.service?.planName ?? ""); if (data.service) track("plan_view", data.service.planName); setStep(2);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos consultar la cobertura."); }
     finally { setCheckingCoverage(false); }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/internet-leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customerType: answers.type, name: form.get("name"), phone: form.get("phone"), email: form.get("email"), address: form.get("address"), zone: answers.zone || form.get("zone"), plan: selected, preferredTime: form.get("preferredTime"), consent: form.get("consent") === "on", source: "internet_recommender" }) });
+    const response = await fetch("/api/internet-leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customerType: answers.type, name: form.get("name"), phone: form.get("phone"), email: form.get("email"), address: form.get("address"), zone: answers.zone || form.get("zone"), plan: selected, preferredTime: form.get("preferredTime"), consent: form.get("consent") === "on", source: "internet_recommender", ...journey() }) });
     const data = await response.json(); if (!response.ok) { setError(data.error); return; } setResult(data);
   }
 

@@ -6,18 +6,20 @@ import { HomeAdaptivePanel } from "./components/home-adaptive-panel";
 import { InternetCenter } from "./components/internet-center";
 import { SelfService, ServiceStatusPanel } from "./components/operations";
 import { Contact, Footer, Header, NewsCards } from "./ui";
+import { getPublicServiceStatuses } from "../lib/tools/service-status";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const news = await getPublishedNews(3);
+  const statuses = await getPublicServiceStatuses();
   return <main>
     <Header />
     <AssistantCenter />
     <HomeAdaptivePanel />
     <InternetCenter />
     <SelfService />
-    <ServiceStatusPanel />
+    <ServiceStatusPanel services={statuses} />
     <section className="efficient-energy" aria-labelledby="efficient-energy-title">
       <div className="efficient-energy-image">
         <Image src="/images/coopsar-energy.png" alt="Equipo de COOPSAR trabajando en la red eléctrica de Sarmiento" fill sizes="(max-width: 800px) 100vw, 1400px" />

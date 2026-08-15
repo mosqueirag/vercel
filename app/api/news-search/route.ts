@@ -2,11 +2,11 @@ import OpenAI from "openai";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { getPublishedNews } from "../../../lib/news";
+import { consumeRateLimit } from "../../../lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
 const schema = z.object({ query: z.string().trim().min(3).max(300) });
-const attempts = new Map<string, { count: number; reset: number }>();
 
 function normalize(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -24,11 +24,8 @@ function findMatches(query: string, articles: Awaited<ReturnType<typeof getPubli
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const now = Date.now();
-  const rate = attempts.get(ip);
-  if (rate && rate.reset > now && rate.count >= 15) return Response.json({ error: "Realizaste demasiadas búsquedas. Intentá nuevamente en unos minutos." }, { status: 429 });
-  attempts.set(ip, { count: rate && rate.reset > now ? rate.count + 1 : 1, reset: now + 10 * 60_000 });
+  const rate = await consumeRateLimit(request, "news-search", 15, 600);
+  if (!rate.allowed) return Response.json({ error: rate.available ? "Realizaste demasiadas búsquedas. Intentá nuevamente en unos minutos." : "El servicio de protección no está disponible." }, { status: rate.available ? 429 : 503 });
 
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Escribí una consulta de al menos tres caracteres." }, { status: 400 });

@@ -5,6 +5,7 @@ import { CONTACT, knowledgeBase } from "../../../lib/coopsar-data";
 import { detectIntent } from "../../../lib/ai/intents";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
+import { configuredAiSessionLimit, consumeRateLimit } from "../../../lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,6 @@ const schema = z.object({
   sessionId: z.string().refine(isSessionId),
   page: z.string().trim().max(160).default("/"),
 });
-const attempts = new Map<string, { count: number; reset: number }>();
 
 function fallbackAnswer(message: string) {
   const value = message.toLowerCase();
@@ -27,18 +27,13 @@ function fallbackAnswer(message: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const now = Date.now();
-  const rate = attempts.get(ip);
-  if (rate && rate.reset > now && rate.count >= 12) return Response.json({ error: "Demasiadas solicitudes. Intentá nuevamente en unos minutos." }, { status: 429 });
-  attempts.set(ip, { count: rate && rate.reset > now ? rate.count + 1 : 1, reset: now + 10 * 60_000 });
-
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "La consulta no tiene un formato válido." }, { status: 400 });
-
-  const sessionCount = Number(request.cookies.get("coopsar_ai_count")?.value || "0");
-  const limit = Math.max(0, Number(process.env.AI_SESSION_LIMIT || 4));
-  if (sessionCount >= limit) return Response.json({ error: "session_limit", limit }, { status: 429 });
+  const globalRate = await consumeRateLimit(request, "chat-ip", 12, 600);
+  if (!globalRate.allowed) return Response.json({ error: globalRate.available ? "Demasiadas solicitudes. Intentá nuevamente en unos minutos." : "El servicio de protección no está disponible." }, { status: globalRate.available ? 429 : 503 });
+  const limit = configuredAiSessionLimit();
+  const sessionRate = await consumeRateLimit(request, "chat-session", limit, 3600, parsed.data.sessionId);
+  if (!sessionRate.allowed) return Response.json({ error: sessionRate.available ? "session_limit" : "El servicio de protección no está disponible.", limit }, { status: sessionRate.available ? 429 : 503 });
 
   const latest = parsed.data.messages.at(-1)?.content || "";
   const detection = detectIntent(latest);
@@ -50,7 +45,6 @@ export async function POST(request: NextRequest) {
   const headers = new Headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
   headers.set("X-COOPSAR-Journey-ID", parsed.data.journeyId);
   headers.set("X-COOPSAR-Session-ID", parsed.data.sessionId);
-  headers.append("Set-Cookie", `coopsar_ai_count=${sessionCount + 1}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600`);
 
   if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
 
