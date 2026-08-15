@@ -1,6 +1,6 @@
 # Operational data source audit
 
-Status: prepared locally on `platform-coopsar-ai`. No remote Supabase data has been written because there is no project that is unequivocally identified as COOPSAR STAGING.
+Status: schema and synthetic fixtures are validated on `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`). No official institutional content or personal data has been loaded.
 
 `lib/coopsar-data.ts` remains a compatibility layer during the transition. It is not the intended source of truth for operational or commercial information.
 
@@ -38,4 +38,4 @@ Status: prepared locally on `platform-coopsar-ai`. No remote Supabase data has b
 
 ## Source-of-truth transition
 
-The target read path is `server data access layer -> Supabase -> typed tool -> COOPIA/UI`. Components must not make arbitrary Supabase queries. Until staging is validated, no operational data is considered migrated and no production source is modified.
+The target read path is `server data access layer -> Supabase -> typed tool -> COOPIA/UI`. Components must not make arbitrary Supabase queries. The current staging content is only synthetic and therefore does not yet replace static operational fallbacks. No production source is modified.

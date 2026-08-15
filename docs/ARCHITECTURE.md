@@ -20,6 +20,10 @@ Database changes must never move directly from new code to production. A remote 
 
 The application reads `NEXT_PUBLIC_APP_ENV` explicitly. Only the value `staging` renders the visible `Entorno de prueba · STAGING` banner. Preview deployments must use credentials belonging to the isolated staging Supabase project; production credentials must be scoped exclusively to Vercel Production. See `docs/ENVIRONMENTS.md` for the complete deployment contract.
 
+## Staging target
+
+The authorized staging target is `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`). Its schema is repository-derived and its only seed content is idempotent synthetic data from `supabase/seed.sql`. Staging credentials must remain distinct from Production and server credentials remain server-only.
+
 ## Operational content transition
 
 The additive schema already defines `services`, `help_articles`, `faqs`, `internet_plans`, `coverage_zones` and `service_alerts`. These are intended to become the server-side source of truth for COOPIA and the public UI. The current `lib/coopsar-data.ts` data remains a constrained compatibility fallback until it is loaded and validated on an isolated staging project; it must not be treated as confirmed commercial information. The detailed classification is in `docs/DATA_SOURCE_AUDIT.md`.

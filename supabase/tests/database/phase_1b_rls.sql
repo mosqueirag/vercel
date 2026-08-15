@@ -7,12 +7,12 @@ select plan(22);
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
 insert into public.services (id, slug, name, description, status)
 values
-  ('10000000-0000-0000-0000-000000000001', 'energia-test', 'Energía test', 'Servicio de prueba', 'published'),
-  ('10000000-0000-0000-0000-000000000002', 'borrador-test', 'Borrador test', 'Servicio privado', 'draft');
+  ('10000000-0000-0000-0000-000000000001', 'pgtap-energia', 'Energía test', 'Servicio de prueba', 'published'),
+  ('10000000-0000-0000-0000-000000000002', 'pgtap-borrador', 'Borrador test', 'Servicio privado', 'draft');
 insert into public.service_alerts (service, title, detail, status, published, published_at)
 values
-  ('energia-test', 'Alerta visible', 'Detalle público', 'maintenance', true, now()),
-  ('energia-test', 'Alerta privada', 'Detalle privado', 'unknown', false, null);
+  ('pgtap-energia', 'Alerta pgTAP visible', 'Detalle público', 'maintenance', true, now()),
+  ('pgtap-energia', 'Alerta pgTAP privada', 'Detalle privado', 'unknown', false, null);
 insert into public.news_articles (slug, title, category, excerpt, lead, content, status, published_at)
 values
   ('noticia-publica-test', 'Noticia pública', 'Test', 'Resumen', 'Entrada', 'Contenido', 'published', now()),
@@ -33,8 +33,8 @@ insert into public.coverage_zones (service_id, zone_name, availability, status, 
   ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
 
 set local role anon;
-select is((select count(*)::integer from public.services where slug like '%-test'), 1, 'anon reads only published services');
-select is((select count(*)::integer from public.service_alerts where title like 'Alerta %'), 1, 'anon reads only active published alerts');
+select is((select count(*)::integer from public.services where slug like 'pgtap-%'), 1, 'anon reads only published services');
+select is((select count(*)::integer from public.service_alerts where title like 'Alerta pgTAP %'), 1, 'anon reads only active published alerts');
 select is((select count(*)::integer from public.news_articles where slug like '%-test'), 1, 'anon reads only published news');
 select is((select count(*)::integer from public.help_articles where slug like '%-test'), 1, 'anon reads only published help articles');
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');

@@ -21,7 +21,7 @@ Git branch: `platform-coopsar-ai`.
 
 Vercel target: Preview deployment scoped to that branch.
 
-Supabase target: a separate project named `coopsar-staging`, not a repurposed production project. Prefer the `sa-east-1` region when available. Its project reference and credentials must be distinct from Production.
+Supabase target: `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`), a separate project and not a repurposed production project. Its project reference and credentials must be distinct from Production. Never document or commit its keys.
 
 Configure Preview values in Vercel for this branch:
 
@@ -40,7 +40,7 @@ N8N_WEBHOOK_SECRET=
 
 The value `NEXT_PUBLIC_APP_ENV=staging` renders a visible `Entorno de prueba · STAGING` banner. It is an explicit configuration marker, not hostname inference.
 
-Before applying migrations: rebuild and test the local database, identify the remote project by name/ref/URL, confirm its isolation, then apply only the repository migrations in order. Do not copy personal data from production; use only clearly labelled synthetic fixtures such as `TEST`.
+Before applying migrations: rebuild and test the local database, identify the remote project by name/ref/URL, confirm its isolation, then apply only the repository migrations in order. Do not copy personal data from production; use only the idempotent, clearly labelled synthetic fixtures in `supabase/seed.sql`.
 
 ## Production
 
