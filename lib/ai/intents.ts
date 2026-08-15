@@ -44,6 +44,10 @@ const rules: Rule[] = [
 
 export function detectIntent(message: string): IntentDetection {
   const normalized = message.normalize("NFC").trim();
+  const lower = normalized.toLocaleLowerCase("es-AR");
+  if ((lower.includes("internet") || lower.includes("fibra")) && (lower.includes("precio") || lower.includes("sale"))) {
+    return { intent: "internet_plans", service: "internet", confidence: 0.93, suggestedAction: "show_internet_plans" };
+  }
   for (const rule of rules) {
     if (rule.patterns.some((pattern) => pattern.test(normalized))) {
       return { intent: rule.intent, service: rule.service, confidence: rule.confidence ?? 0.9, suggestedAction: rule.suggestedAction };
