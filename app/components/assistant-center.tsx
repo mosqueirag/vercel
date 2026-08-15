@@ -7,6 +7,19 @@ import { CONTACT } from "../../lib/coopsar-data";
 type Message = { role: "user" | "assistant"; content: string };
 const suggestions = ["Pagar una factura", "Informar un problema", "Contratar internet", "Consultar cobertura", "Descargar factura", "Ver cortes programados"];
 
+function RichText({ content }: { content: string }) {
+  const inline = (value: string) => value.split(/(\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (/^https?:\/\//.test(part)) return <a key={index} href={part} target="_blank" rel="noreferrer">{part}</a>;
+    return part;
+  });
+  return <div className="message-content">{content.trim().split(/\n\s*\n/).filter(Boolean).map((block, index) => {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.every((line) => /^[-•]\s+/.test(line))) return <ul key={index}>{lines.map((line) => <li key={line}>{inline(line.replace(/^[-•]\s+/, ""))}</li>)}</ul>;
+    return <p key={index}>{lines.map((line, lineIndex) => <span key={lineIndex}>{inline(line)}{lineIndex < lines.length - 1 && <br />}</span>)}</p>;
+  })}</div>;
+}
+
 export function AssistantCenter() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -47,7 +60,7 @@ export function AssistantCenter() {
       <div className="ai-console">
         <div className="ai-status"><span className="assistant-avatar">✦</span><div><strong>COOPIA</strong><small>Asistente digital de COOPSAR</small></div><i /> <small>Orientación inmediata</small></div>
         <div className="chat-log" aria-live="polite">
-          {messages.length === 0 ? <div className="chat-empty"><strong>Escribí lo que necesitás con tus propias palabras.</strong><p>Voy a orientarte usando información oficial de COOPSAR.</p></div> : messages.map((message, index) => <div className={`message ${message.role}`} key={`${message.role}-${index}`}><small>{message.role === "user" ? "Vos" : "COOPIA"}</small><p>{message.content || "…"}</p>{message.role === "assistant" && message.content && <div className="message-actions"><a href={whatsapp}>Hablar con un operador</a><Link href="/tramites">Ver trámites</Link></div>}</div>)}
+          {messages.length === 0 ? <div className="chat-empty"><strong>Escribí lo que necesitás con tus propias palabras.</strong><p>Voy a orientarte usando información oficial de COOPSAR.</p></div> : messages.map((message, index) => <div className={`message ${message.role}`} key={`${message.role}-${index}`}><small>{message.role === "user" ? "Vos" : "COOPIA"}</small>{message.content ? <RichText content={message.content} /> : <p>…</p>}{message.role === "assistant" && message.content && <div className="message-actions"><a href={whatsapp}>Hablar con un operador</a><Link href="/tramites">Ver trámites</Link></div>}</div>)}
           {loading && messages.at(-1)?.role !== "assistant" && <div className="typing"><i /><i /><i /><span>COOPIA está escribiendo</span></div>}
           {limited && <div className="limit-card"><strong>Continuemos por un canal humano</strong><p>Alcanzaste el límite inicial de respuestas de IA. Podés copiar el resumen o enviarlo por WhatsApp.</p><div><button onClick={() => navigator.clipboard.writeText(summary)}>Copiar conversación</button><a href={whatsapp}>Continuar por WhatsApp ↗</a></div></div>}
           {error && <div className="chat-error"><span>{error}</span><button onClick={() => void ask(messages.at(-1)?.content || input)}>Reintentar</button></div>}

@@ -12,12 +12,12 @@ const attempts = new Map<string, { count: number; reset: number }>();
 
 function fallbackAnswer(message: string) {
   const value = message.toLowerCase();
-  if (/luz|energ|corte/.test(value)) return `Para informar una falta de energía llamá a la guardia ${CONTACT.energyGuard}. Los cortes programados solo se muestran cuando existe información confirmada.`;
-  if (/internet|fibra|cobertura|plan/.test(value)) return `Podemos registrar tu interés y solicitar una evaluación de cobertura. Las velocidades, precios y disponibilidad están pendientes de confirmación. Usá el botón “Consultar cobertura” o WhatsApp.`;
-  if (/factura|pagar|deuda/.test(value)) return `Podés consultar, descargar o pagar tu factura desde la Oficina Virtual. No compartas contraseñas ni datos bancarios por este chat.`;
-  if (/sepelio|funeral/.test(value)) return `El Servicio Solidario acompaña a las familias. Para información confirmada o una urgencia, comunicate al ${CONTACT.funeralGuard}.`;
-  if (/persona|operador|whatsapp/.test(value)) return `Podés continuar con una persona por WhatsApp al ${CONTACT.whatsappDisplay}.`;
-  return `No tengo información oficial suficiente para responder con certeza. Puedo orientarte sobre energía, facturas, internet, fibra, telefonía, sepelio o derivarte a WhatsApp.`;
+  if (/luz|energ|corte/.test(value)) return `**Te ayudamos con el servicio de energía**\n\nPara informar una falta de energía, comunicate con la guardia: **${CONTACT.energyGuard}**.\n\nLos cortes programados se informan únicamente cuando existe información confirmada.`;
+  if (/internet|fibra|cobertura|plan/.test(value)) return `**Consultemos el servicio disponible**\n\nPodés ingresar tu domicilio en la consulta de cobertura. El sistema buscará el plan registrado para esa dirección o una altura cercana.\n\nLa disponibilidad final siempre requiere validación técnica.`;
+  if (/factura|pagar|deuda/.test(value)) return `**Consultá o pagá tu factura**\n\nIngresá a la Oficina Virtual para revisar tu deuda, descargar facturas o realizar un pago.\n\nPor seguridad, no compartas contraseñas ni datos bancarios en este chat.`;
+  if (/sepelio|funeral/.test(value)) return `**Estamos para acompañarte**\n\nPara recibir información confirmada sobre el Servicio Solidario o comunicar una urgencia, llamá al **${CONTACT.funeralGuard}**.`;
+  if (/persona|operador|whatsapp/.test(value)) return `**Podés hablar con nuestro equipo**\n\nContinuá la atención por WhatsApp al **${CONTACT.whatsappDisplay}**. Vamos a derivar tu consulta para que una persona pueda ayudarte.`;
+  return `**Quiero orientarte correctamente**\n\nNo tengo información oficial suficiente para responder esa consulta con certeza. Puedo ayudarte con energía, facturas, internet, fibra, telefonía, sepelio o derivarte a un operador.`;
 }
 
 export async function POST(request: NextRequest) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       model: process.env.OPENAI_MODEL || "gpt-5.4-nano",
       stream: true,
       max_output_tokens: 450,
-      instructions: `Sos COOPIA, asistente digital de COOPSAR. Respondé en español argentino, con claridad y frases cortas. Usá exclusivamente la base oficial incluida. Hacé una sola pregunta de seguimiento cuando sea necesaria. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo y ofrecé un canal real.\n\nBASE OFICIAL:\n${knowledgeBase}`,
+      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad y ofrecé un canal real.\n\nBASE OFICIAL:\n${knowledgeBase}`,
       input: parsed.data.messages.map((message) => ({ role: message.role, content: message.content })),
     });
     const encoder = new TextEncoder();
