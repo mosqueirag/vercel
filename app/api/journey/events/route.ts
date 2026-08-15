@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isJourneyId, isSessionId } from "../../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../../lib/journey/recorder";
 import { journeyEventTypes } from "../../../../lib/journey/types";
+import { intentNames } from "../../../../lib/ai/intents";
 
 const publicEvents = ["journey_started", "page_viewed", "assistant_opened", "human_handoff_requested", "whatsapp_opened", "journey_abandoned", "navigation_executed", "contextual_component_rendered", "action_clicked", "form_started", "form_completed"] as const;
 const schema = z.object({
@@ -10,6 +11,8 @@ const schema = z.object({
   sessionId: z.string().refine(isSessionId),
   eventType: z.enum(publicEvents),
   page: z.string().trim().max(160).default("/"),
+  intent: z.enum(intentNames).optional(),
+  service: z.enum(["billing", "internet", "fiber", "energy", "phone", "funeral", "general"]).optional(),
   action: z.string().trim().max(80).optional(),
   result: z.string().trim().max(80).optional(),
 });

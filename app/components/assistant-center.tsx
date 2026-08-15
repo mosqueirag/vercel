@@ -5,8 +5,8 @@ import Link from "next/link";
 import { CONTACT } from "../../lib/coopsar-data";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import type { AssistantResult } from "../../lib/ai/results";
-import { AssistantUIRenderer, ContextualQuickActions } from "./assistant-ui";
-import { NavigationProvider, useNavigationContext } from "./navigation-context";
+import { AssistantUIRenderer } from "./assistant-ui";
+import { useNavigationContext } from "./navigation-context";
 
 type Message = { role: "user" | "assistant"; content: string };
 const suggestions = ["Pagar una factura", "Informar un problema", "Contratar internet", "Consultar cobertura", "Descargar factura", "Ver cortes programados"];
@@ -100,11 +100,10 @@ function AssistantCenterContent() {
           {error && <div className="chat-error"><span>{error}</span><button onClick={() => void ask(messages.at(-1)?.content || input)}>Reintentar</button></div>}
           <div ref={endRef} />
         </div>}
-        <ContextualQuickActions />
         <div className="ai-legal"><span>La IA puede cometer errores. No compartas contraseñas, datos bancarios ni información sensible.</span><Link href="/privacidad">Privacidad</Link></div>
       </div>
     </section>
   );
 }
 
-export function AssistantCenter() { return <NavigationProvider><AssistantCenterContent /></NavigationProvider>; }
+export function AssistantCenter() { return <AssistantCenterContent />; }
