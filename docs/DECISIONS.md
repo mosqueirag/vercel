@@ -9,3 +9,4 @@
 - `main` must require the `quality` and `supabase-tests` checks. Branch protection is not weakened to accommodate deployments.
 - COOPIA service processes use one `service_requests` aggregate instead of one table/form per minor procedure. Common identity/contact fields remain columns; only explicitly allow-listed, request-specific fields enter `payload`.
 - Informational intent may render guidance or offer a form, but no write occurs until the user submits an explicit confirmation. Public tracking numbers are random `SRV-YYYY-XXXXXXXX` values rather than sequential IDs.
+- The existing remote Supabase reference is treated as potential production because its name and migration history do not establish that it is a disposable development environment. Staging must be a separate project named `coopsar-staging`; no production project is repurposed for tests.

@@ -10,5 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="es"><body><NavigationProvider>{children}<GlobalJourneyNavigation /></NavigationProvider></body></html>;
+  const appEnvironment = process.env.NEXT_PUBLIC_APP_ENV;
+  const isStaging = appEnvironment === "staging";
+
+  return <html lang="es"><body>{isStaging ? <div className="environment-banner" role="status">Entorno de prueba · STAGING</div> : null}<NavigationProvider>{children}<GlobalJourneyNavigation /></NavigationProvider></body></html>;
 }
