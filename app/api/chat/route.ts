@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return Response.json({ error: "La consulta no tiene un formato válido." }, { status: 400 });
 
   const sessionCount = Number(request.cookies.get("coopsar_ai_count")?.value || "0");
-  const limit = Math.max(0, Number(process.env.AI_SESSION_LIMIT || 2));
+  const limit = Math.max(0, Number(process.env.AI_SESSION_LIMIT || 4));
   if (sessionCount >= limit) return Response.json({ error: "session_limit", limit }, { status: 429 });
 
   const latest = parsed.data.messages.at(-1)?.content || "";
