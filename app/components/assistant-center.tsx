@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CONTACT } from "../../lib/coopsar-data";
+import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 
 type Message = { role: "user" | "assistant"; content: string };
 const suggestions = ["Pagar una factura", "Informar un problema", "Contratar internet", "Consultar cobertura", "Descargar factura", "Ver cortes programados"];
@@ -27,9 +28,29 @@ export function AssistantCenter() {
   const [error, setError] = useState("");
   const [limited, setLimited] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const journeyRef = useRef<{ journeyId: string; sessionId: string } | null>(null);
+
+  function getJourney() {
+    if (journeyRef.current) return journeyRef.current;
+    const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId();
+    const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId();
+    sessionStorage.setItem("coopsar-journey-id", journeyId);
+    sessionStorage.setItem("coopsar-session-id", sessionId);
+    journeyRef.current = { journeyId, sessionId };
+    return journeyRef.current;
+  }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { const saved = sessionStorage.getItem("coopsar-chat"); if (saved) try { setMessages(JSON.parse(saved) as Message[]); } catch { /* Ignore invalid temporary history. */ } }, 0);
+    const timer = window.setTimeout(() => {
+      const saved = sessionStorage.getItem("coopsar-chat");
+      if (saved) try { setMessages(JSON.parse(saved) as Message[]); } catch { /* Ignore invalid temporary history. */ }
+      const journey = getJourney();
+      if (!sessionStorage.getItem("coopsar-journey-started")) {
+        sessionStorage.setItem("coopsar-journey-started", "1");
+        void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...journey, eventType: "journey_started", page: `${location.pathname}${location.hash}` }) });
+      }
+      void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...journey, eventType: "assistant_opened", page: `${location.pathname}${location.hash}` }) });
+    }, 0);
     return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => { sessionStorage.setItem("coopsar-chat", JSON.stringify(messages.slice(-8))); if (messages.length > 0) endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [messages]);
@@ -40,7 +61,8 @@ export function AssistantCenter() {
     const next = [...messages, { role: "user" as const, content: clean }].slice(-8);
     setMessages(next); setInput(""); setError(""); setLoading(true);
     try {
-      const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next }) });
+      const journey = getJourney();
+      const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...journey, page: `${location.pathname}${location.hash}` }) });
       if (!response.ok) { const data = await response.json(); if (data.error === "session_limit") setLimited(true); else throw new Error(data.error); return; }
       setMessages((current) => [...current, { role: "assistant", content: "" }]);
       const reader = response.body?.getReader(); const decoder = new TextDecoder();

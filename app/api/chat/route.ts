@@ -2,11 +2,17 @@ import OpenAI from "openai";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { CONTACT, knowledgeBase } from "../../../lib/coopsar-data";
+import { detectIntent } from "../../../lib/ai/intents";
+import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
+import { recordJourneyEvent } from "../../../lib/journey/recorder";
 
 export const runtime = "nodejs";
 
 const schema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(1200) })).min(1).max(8),
+  journeyId: z.string().refine(isJourneyId),
+  sessionId: z.string().refine(isSessionId),
+  page: z.string().trim().max(160).default("/"),
 });
 const attempts = new Map<string, { count: number; reset: number }>();
 
@@ -35,7 +41,15 @@ export async function POST(request: NextRequest) {
   if (sessionCount >= limit) return Response.json({ error: "session_limit", limit }, { status: 429 });
 
   const latest = parsed.data.messages.at(-1)?.content || "";
+  const detection = detectIntent(latest);
+  const journey = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: parsed.data.page, intent: detection.intent, service: detection.service };
+  await Promise.all([
+    recordJourneyEvent({ ...journey, eventType: "assistant_question_sent", agent: "coopia", metadata: { message_length: latest.length } }),
+    recordJourneyEvent({ ...journey, eventType: "intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.intent, metadata: { confidence: detection.confidence } }),
+  ]);
   const headers = new Headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+  headers.set("X-COOPSAR-Journey-ID", parsed.data.journeyId);
+  headers.set("X-COOPSAR-Session-ID", parsed.data.sessionId);
   headers.append("Set-Cookie", `coopsar_ai_count=${sessionCount + 1}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600`);
 
   if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
@@ -46,7 +60,7 @@ export async function POST(request: NextRequest) {
       model: process.env.OPENAI_MODEL || "gpt-5.4-nano",
       stream: true,
       max_output_tokens: 450,
-      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad y ofrecé un canal real.\n\nBASE OFICIAL:\n${knowledgeBase}`,
+      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad y ofrecé un canal real. La capa de navegación detectó internamente la intención "${detection.intent}" y el servicio "${detection.service}"; usalos solamente para orientar la respuesta, sin mostrar etiquetas técnicas ni JSON.\n\nBASE OFICIAL:\n${knowledgeBase}`,
       input: parsed.data.messages.map((message) => ({ role: message.role, content: message.content })),
     });
     const encoder = new TextEncoder();
