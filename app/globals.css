@@ -239,6 +239,49 @@ textarea { min-height: 160px; }
   .mobile-nav .brand-logo { width: 185px; }
 }
 
+/* Institutional navigation and photographic page headers */
+.institutional-strip { min-height: 38px; display: flex; align-items: center; gap: 18px; padding: 6px clamp(24px, 5.5vw, 88px); color: #fff; background: linear-gradient(90deg, var(--green-900), var(--green-700)); font-size: 11px; }
+.institutional-strip strong { padding: 5px 10px; border-radius: 16px; background: rgba(255,255,255,.15); font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
+.institutional-strip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.institutional-strip a { margin-left: auto; padding: 6px 10px; border-radius: 7px; background: rgba(255,255,255,.14); font-weight: 700; white-space: nowrap; }
+.site-header { height: 80px; gap: 28px; background: rgba(255,255,255,.96); }
+.desktop-nav { padding: 5px; border-radius: 14px; background: #f4f7f3; }
+.desktop-nav a { padding: 11px 13px; border-radius: 10px; }
+.desktop-nav a:hover, .desktop-nav a.active { color: #fff; background: var(--green-700); }
+.header-action { border-radius: 28px; }
+.page-hero-shell { padding: 18px clamp(24px, 7vw, 112px) 70px; background: #f4f7f8; }
+.page-back { min-height: 44px; display: inline-flex; align-items: center; margin-bottom: 12px; color: var(--green-700); font-size: 13px; font-weight: 700; }
+.visual-hero { min-height: 490px; position: relative; overflow: hidden; border-radius: 30px; background: var(--green-950); box-shadow: 0 24px 65px rgba(9,46,38,.14); }
+.visual-hero > img { object-fit: cover; }
+.visual-hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,31,25,.72) 0%, rgba(5,31,25,.18) 57%, rgba(5,31,25,.32) 100%); }
+.visual-hero-title { position: absolute; left: clamp(26px,4vw,58px); bottom: clamp(28px,5vw,62px); z-index: 1; max-width: 58%; color: #fff; }
+.visual-hero-title .tag { color: var(--lime); }
+.visual-hero-title h1 { margin: 14px 0 0; font-size: clamp(48px,5vw,76px); line-height: .98; letter-spacing: -4px; }
+.visual-hero-summary { position: absolute; right: 24px; bottom: 24px; z-index: 1; width: min(390px,38%); padding: 34px; border: 1px solid rgba(255,255,255,.28); border-radius: 26px; background: rgba(7,52,42,.62); color: #fff; backdrop-filter: blur(16px); }
+.visual-hero-summary p { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; }
+
+@media (max-width: 1250px) {
+  .desktop-nav a { padding: 10px 8px; font-size: 10px !important; }
+  .site-header .brand-logo { width: 165px; }
+}
+
+@media (max-width: 800px) {
+  .institutional-strip span { display: none; }
+  .institutional-strip a { margin-left: auto; }
+  .visual-hero { min-height: 520px; }
+  .visual-hero-title { right: 25px; bottom: 155px; max-width: none; }
+  .visual-hero-title h1 { font-size: clamp(42px,12vw,62px); letter-spacing: -2.5px; }
+  .visual-hero-summary { left: 20px; right: 20px; bottom: 20px; width: auto; padding: 23px; }
+}
+
+@media (max-width: 560px) {
+  .institutional-strip { padding: 5px 14px; }
+  .institutional-strip strong { font-size: 9px; }
+  .institutional-strip a { font-size: 10px; }
+  .page-hero-shell { padding: 10px 14px 55px; }
+  .visual-hero { min-height: 500px; border-radius: 22px; }
+}
+
 @media (max-width: 560px) {
   .site-header { padding: 0 18px; }
   .header-action { font-size: 0; gap: 0; }
