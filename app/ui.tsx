@@ -8,7 +8,7 @@ import { CONTACT } from "../lib/coopsar-data";
 import type { NewsArticle } from "../lib/news";
 
 const menuGroups = [
-  { id: "servicios", label: "Servicios", description: "Servicios esenciales para hogares, comercios y empresas.", image: "/images/coopsar-energy.png", links: [["Energía eléctrica", "/energia"], ["Internet", "/internet"], ["Fibra óptica", "/fibra-optica"], ["Telefonía", "/telefonia"], ["Sepelio", "/sepelio"]] },
+  { id: "servicios", label: "Servicios", description: "Servicios esenciales para hogares, comercios y empresas.", image: "/images/coopsar-energy.png", links: [["Energía eléctrica", "/energia"], ["Simulador de consumo", "/simulador-energia"], ["Internet", "/internet"], ["Fibra óptica", "/fibra-optica"], ["Telefonía", "/telefonia"], ["Sepelio", "/sepelio"]] },
   { id: "gestiones", label: "Trámites y ayuda", description: "Resolvé gestiones y encontrá información operativa.", image: "/images/coopsar-service-office.png", links: [["Todos los trámites", "/tramites"], ["Medios de pago", "/medios-de-pago"], ["Cortes programados", "/cortes-programados"], ["Centro de ayuda", "/centro-de-ayuda"]] },
   { id: "coopsar", label: "COOPSAR", description: "Conocé la cooperativa y nuestros canales de atención.", image: "/images/sarmiento-community.png", links: [["Institucional", "/institucional"], ["Contacto", "/contacto"], ["Privacidad", "/privacidad"]] },
 ] as const;
