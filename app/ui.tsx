@@ -35,7 +35,7 @@ export function Header() {
           {menuGroups.slice(0, 2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
           <Link className={pathname.startsWith("/noticias") ? "active" : ""} href="/noticias">Noticias</Link>
           {menuGroups.slice(2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
-          <button type="button" className="site-search-trigger" onClick={() => { setActiveMenu(null); setSearchOpen(true); }} aria-label="Buscar en todo el sitio"><span aria-hidden="true">⌕</span><b>Buscar</b></button>
+          <button type="button" className="site-search-trigger" onClick={() => { setActiveMenu(null); setSearchOpen(true); }} aria-label="Buscar en todo el sitio"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg></button>
         </nav>
         <a className="button button-dark header-action" href={CONTACT.virtualOffice} target="_blank" rel="noreferrer">Oficina virtual <span>→</span></a>
         <button className="menu-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label="Abrir menú"><i /><i /><i /></button>
