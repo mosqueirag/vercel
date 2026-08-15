@@ -1,5 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { quickActions, serviceStatuses } from "../../lib/coopsar-data";
+
+const actionGroups = [
+  { id: "facturas", label: "Facturas y cuenta", titles: ["Pagar factura", "Descargar factura", "Consultar deuda"] },
+  { id: "energia", label: "Energía", titles: ["Falta de energía", "Cortes programados", "Nueva conexión", "Solicitar reconexión"] },
+  { id: "internet", label: "Internet y fibra", titles: ["Consultar cobertura", "Contratar internet"] },
+  { id: "asociado", label: "Datos y atención", titles: ["Cambiar titularidad", "Actualizar datos", "WhatsApp"] },
+] as const;
 
 export function ServiceStatusPanel() {
   const labels = { operational: "Operativo", maintenance: "Mantenimiento programado", partial: "Interrupción parcial", outage: "Interrupción general", unknown: "Sin datos confirmados" };
@@ -7,5 +17,10 @@ export function ServiceStatusPanel() {
 }
 
 export function SelfService() {
-  return <section className="self-service" id="tramites"><div className="section-heading"><div><span className="eyebrow">Autoservicio</span><h2>Resolvé gestiones frecuentes</h2></div><p>No necesitás conocer la estructura del sitio: elegí qué querés hacer y te llevamos al canal correspondiente.</p></div><div className="self-grid">{quickActions.map(([title, description, href, icon]) => <a href={href} key={title}><span>{icon}</span><div><h3>{title}</h3><p>{description}</p></div><b>→</b></a>)}</div></section>;
+  const [active, setActive] = useState<(typeof actionGroups)[number]["id"]>("facturas");
+  const group = actionGroups.find((item) => item.id === active) ?? actionGroups[0];
+  const actions = quickActions.filter(([title]) => group.titles.some((item) => item === title));
+  const [featured, ...secondary] = actions;
+
+  return <section className="self-service" id="tramites"><div className="section-heading"><div><span className="eyebrow">Accesos rápidos</span><h2>¿Qué necesitás hacer?</h2></div><p>Elegí una categoría y accedé directamente a la gestión o al canal de atención correspondiente.</p></div><div className="quick-access"><div className="quick-tabs" role="tablist" aria-label="Categorías de gestiones">{actionGroups.map((item) => <button type="button" role="tab" aria-selected={active === item.id} className={active === item.id ? "active" : ""} key={item.id} onClick={() => setActive(item.id)}><span>{item.label}</span><b>→</b></button>)}</div><div className="quick-panel" role="tabpanel" aria-live="polite"><div className="quick-panel-heading"><small>{group.label}</small><strong>Accesos disponibles</strong></div>{featured && <a className="quick-featured" href={featured[2]}><span>{featured[3]}</span><div><small>Acceso principal</small><h3>{featured[0]}</h3><p>{featured[1]}</p></div><b>↗</b></a>}<div className="quick-secondary">{secondary.map(([title, description, href, icon]) => <a href={href} key={title}><span>{icon}</span><div><h3>{title}</h3><p>{description}</p></div><b>→</b></a>)}</div></div></div></section>;
 }
