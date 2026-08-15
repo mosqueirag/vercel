@@ -21,7 +21,7 @@ type Rule = Omit<IntentDetection, "confidence"> & { patterns: RegExp[]; confiden
 
 const rules: Rule[] = [
   { intent: "fiber_waitlist", service: "fiber", suggestedAction: "start_fiber_waitlist", patterns: [/\b(avisen|av[ií]senme|notifiquen|notifiquenme)\b.*\b(fibra|llegue)\b/i, /\bfibra\b.*\b(avisen|av[ií]senme|notifiquen)\b/i], confidence: 0.97 },
-  { intent: "internet_plans", service: "internet", suggestedAction: "show_internet_plans", patterns: [/\b(qu[eé] planes|planes tienen|cu[aá]nto sale|precio).*(internet|fibra)?\b/i, /\b(internet|fibra)\b.*\b(planes|precio|sale)\b/i], confidence: 0.93 },
+  { intent: "internet_plans", service: "internet", suggestedAction: "show_internet_plans", patterns: [/\b(qu[eé] planes|planes tienen|cu[aá]nto sale|precio).*(internet|fibra)?\b/i, /\bcu[a-zá]*nto\s+sale\b.*\b(internet|fibra)\b/i, /\b(internet|fibra)\b.*\b(planes|precio|sale)\b/i], confidence: 0.93 },
   { intent: "fiber_signup", service: "fiber", suggestedAction: "start_fiber_signup", patterns: [/\b(contratar|quiero|solicitar|instalar)\b.*\bfibra\b/i, /\bfibra\b.*\b(contratar|quiero|solicitar|instalar)\b/i], confidence: 0.98 },
   { intent: "fiber_coverage", service: "fiber", suggestedAction: "check_fiber_coverage", patterns: [/\b(fibra|ftth)\b.*\b(hay|llega|cobertura|disponible|domicilio|direcci[oó]n|calle|barrio)\b/i, /\b(hay|cobertura|llega)\b.*\bfibra\b/i], confidence: 0.96 },
   { intent: "internet_problem", service: "internet", suggestedAction: "diagnose_internet", patterns: [/\b(no (tengo|anda|funciona)|sin|problema|falla|cort[óo])\b.*\binternet\b/i, /\binternet\b.*\b(no (anda|funciona)|sin|problema|falla|cort[óo])\b/i], confidence: 0.95 },

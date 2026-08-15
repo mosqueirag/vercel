@@ -10,6 +10,7 @@ describe("detectIntent", () => {
     ["Quiero Internet", "internet_signup"],
     ["Necesito internet para mi negocio", "internet_signup"],
     ["¿Qué planes tienen?", "internet_plans"],
+    ["¿Cuánto sale Internet?", "internet_plans"],
     ["Quiero que me avisen cuando llegue fibra", "fiber_waitlist"],
     ["No tengo internet desde ayer", "internet_problem"],
     ["Quiero pagar una factura", "pay_invoice"],
