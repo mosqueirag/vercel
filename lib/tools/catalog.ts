@@ -10,6 +10,10 @@ export const assistantToolNames = [
   "getPaymentInformation",
   "createInternetRequest",
   "createComplaint",
+  "createOwnershipChangeRequest",
+  "createNewSupplyRequest",
+  "createDigitalInvoiceRequest",
+  "createPhoneRequest",
   "requestHumanHandoff",
 ] as const;
 
@@ -24,6 +28,10 @@ const selections: Partial<Record<IntentDetection["intent"], ToolSelection>> = {
   energy_problem: { name: "getEnergyServiceStatus", kind: "read", requiresConfirmation: false },
   pay_invoice: { name: "getPaymentInformation", kind: "read", requiresConfirmation: false },
   create_complaint: { name: "createComplaint", kind: "write", requiresConfirmation: true },
+  ownership_change: { name: "createOwnershipChangeRequest", kind: "write", requiresConfirmation: true },
+  new_supply: { name: "createNewSupplyRequest", kind: "write", requiresConfirmation: true },
+  phone_service: { name: "createPhoneRequest", kind: "write", requiresConfirmation: true },
+  digital_invoice: { name: "createDigitalInvoiceRequest", kind: "write", requiresConfirmation: true },
   contact_operator: { name: "requestHumanHandoff", kind: "write", requiresConfirmation: true },
   internet_signup: { name: "createInternetRequest", kind: "write", requiresConfirmation: true },
 };

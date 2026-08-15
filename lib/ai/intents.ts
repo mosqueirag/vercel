@@ -4,6 +4,7 @@ export const intentNames = [
   "service_status", "ownership_change", "new_supply", "contact_operator",
   "news_search", "payment_methods", "office_virtual", "funeral_service",
   "phone_service", "general_question",
+  "digital_invoice",
 ] as const;
 
 export type AssistantIntent = (typeof intentNames)[number];
@@ -30,6 +31,7 @@ const rules: Rule[] = [
   { intent: "create_complaint", service: "general", suggestedAction: "start_complaint", patterns: [/\b(reclamo|reclamar|queja)\b/i], confidence: 0.94 },
   { intent: "service_status", service: "general", suggestedAction: "get_service_status", patterns: [/\b(estado|incidencia|corte programado)\b.*\b(servicio|internet|luz|energ[ií]a|fibra)?/i], confidence: 0.88 },
   { intent: "ownership_change", service: "general", suggestedAction: "show_ownership_change", patterns: [/\b(cambio|cambiar)\b.*\btitular/i, /\btitularidad\b/i], confidence: 0.96 },
+  { intent: "digital_invoice", service: "billing", suggestedAction: "start_digital_invoice", patterns: [/\b(adherir|recibir|activar)\b.*\bfactura digital\b/i, /\bfactura digital\b.*\b(adherir|recibir|activar)\b/i], confidence: 0.96 },
   { intent: "new_supply", service: "energy", suggestedAction: "show_new_supply", patterns: [/\b(nuevo|nueva)\b.*\b(suministro|conexi[oó]n|medidor)\b/i], confidence: 0.91 },
   { intent: "contact_operator", service: "general", suggestedAction: "human_handoff", patterns: [/\b(persona|operador|humano|whatsapp|asesor)\b/i], confidence: 0.94 },
   { intent: "news_search", service: "general", suggestedAction: "search_news", patterns: [/\b(noticia|comunicado|publicaci[oó]n)\b/i], confidence: 0.9 },

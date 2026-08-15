@@ -4,10 +4,14 @@ export const assistantActions = [
   "CHECK_COVERAGE", "REQUEST_INSTALLATION", "SHOW_SERVICE_STATUS", "START_DIAGNOSIS",
   "REPORT_ENERGY_PROBLEM", "OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS",
   "DOWNLOAD_INVOICE", "OPEN_WHATSAPP",
+  "START_COMPLAINT", "SUBMIT_COMPLAINT", "START_OWNERSHIP_CHANGE", "SUBMIT_OWNERSHIP_CHANGE",
+  "START_NEW_SUPPLY", "SUBMIT_NEW_SUPPLY", "START_DIGITAL_INVOICE", "SUBMIT_DIGITAL_INVOICE",
+  "SHOW_FUNERAL_SERVICE", "CALL_FUNERAL_GUARD", "START_PHONE_REQUEST", "SUBMIT_PHONE_REQUEST",
+  "REQUEST_HUMAN_HANDOFF", "CHECK_REQUEST_STATUS",
 ] as const;
 
 export type AssistantAction = (typeof assistantActions)[number];
-export type AssistantUIType = "fiber_coverage" | "service_status" | "payment";
+export type AssistantUIType = "fiber_coverage" | "service_status" | "payment" | "service_request_form" | "human_handoff";
 export type AssistantRecommendedAction = { id: AssistantAction; label: string; href?: string };
 export type AssistantResult = {
   message: string;

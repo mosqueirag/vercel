@@ -2,6 +2,7 @@ import { CONTACT } from "../coopsar-data";
 import type { ToolResolution } from "../tools/catalog";
 import type { IntentDetection } from "./intents";
 import type { AssistantRecommendedAction, AssistantResult } from "./results";
+import { serviceRequestConfigs, type ServiceRequestType } from "../service-requests/config";
 
 type ResultConfig = Pick<AssistantResult, "message"> & {
   ui?: AssistantResult["ui"];
@@ -69,7 +70,26 @@ export function resolveAssistantResult(detection: IntentDetection, journeyId: st
           { id: "DOWNLOAD_INVOICE", label: "Descargar factura", href: CONTACT.virtualOffice },
         ],
       });
+    case "create_complaint":
+      return serviceRequestResult("complaint", detection, journeyId, tool);
+    case "ownership_change":
+      return serviceRequestResult("ownership_change", detection, journeyId, tool);
+    case "new_supply":
+      return serviceRequestResult("new_supply", detection, journeyId, tool);
+    case "digital_invoice":
+      return serviceRequestResult("digital_invoice", detection, journeyId, tool);
+    case "phone_service":
+      return serviceRequestResult("phone_request", detection, journeyId, tool);
+    case "contact_operator":
+      return createResult(detection, journeyId, tool, { message: "Podés continuar con una persona de nuestro equipo.", ui: { type: "human_handoff", data: {} }, actions: [{ id: "REQUEST_HUMAN_HANDOFF", label: "Solicitar atención" }, { id: "OPEN_WHATSAPP", label: "Abrir WhatsApp", href: `https://wa.me/${CONTACT.whatsapp}` }], requiresHuman: true });
+    case "funeral_service":
+      return createResult(detection, journeyId, tool, { message: "Te mostramos los canales oficiales del servicio solidario.", actions: [{ id: "SHOW_FUNERAL_SERVICE", label: "Ver información", href: "/sepelio" }, { id: "CALL_FUNERAL_GUARD", label: "Llamar a la guardia", href: `tel:${CONTACT.funeralGuard.replace(/\s/g, "")}` }], requiresHuman: true });
     default:
       return createResult(detection, journeyId, tool, { message: "Voy a orientarte con la información oficial disponible.", actions: [], requiresHuman: true });
   }
+}
+
+function serviceRequestResult(type: ServiceRequestType, detection: IntentDetection, journeyId: string, tool: ToolResolution) {
+  const config = serviceRequestConfigs[type];
+  return createResult(detection, journeyId, tool, { message: `Podés iniciar ${config.title.toLowerCase()} desde acá. La solicitud se registra únicamente después de tu confirmación.`, ui: { type: "service_request_form", data: { requestType: type, title: config.title } }, actions: [{ id: config.startAction, label: config.title }] });
 }

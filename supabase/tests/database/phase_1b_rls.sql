@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(22);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -48,6 +48,7 @@ select throws_ok(
 );
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'anon cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'anon cannot read journey events');
+select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'anon cannot read service requests');
 select throws_ok(
   $$ select count(*) from public.service_address_coverage $$,
   '42501',
@@ -77,6 +78,7 @@ reset role;
 set local role authenticated;
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
+select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');
 select set_config('request.jwt.claims', '{"email":"admin-test@coopsar.local","role":"authenticated"}', true);
 select lives_ok(
   $$ insert into public.news_articles

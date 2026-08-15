@@ -7,3 +7,5 @@
 - n8n receives only event type and request number. Personal data stays in Supabase.
 - CI pins Node 22 LTS and Supabase CLI 2.114.0. The database job is local and disposable, uses no remote project reference, and treats migration or RLS failures as release blockers.
 - `main` must require the `quality` and `supabase-tests` checks. Branch protection is not weakened to accommodate deployments.
+- COOPIA service processes use one `service_requests` aggregate instead of one table/form per minor procedure. Common identity/contact fields remain columns; only explicitly allow-listed, request-specific fields enter `payload`.
+- Informational intent may render guidance or offer a form, but no write occurs until the user submits an explicit confirmation. Public tracking numbers are random `SRV-YYYY-XXXXXXXX` values rather than sequential IDs.

@@ -5,6 +5,8 @@ export const journeyEventTypes = [
   "intent_detected", "tool_started", "tool_completed", "tool_failed",
   "fiber_coverage_checked", "fiber_lead_started", "fiber_lead_created",
   "fiber_coverage_check", "fiber_coverage_result", "plan_view", "lead_started", "lead_created", "lead_failed",
+  "service_request_started", "service_request_submitted", "service_request_created", "service_request_failed",
+  "service_request_status_checked", "human_handoff_opened",
   "ticket_started", "ticket_created", "ticket_status_checked", "service_status_viewed",
   "news_opened", "payment_information_viewed", "human_handoff_requested",
   "whatsapp_opened", "journey_completed", "journey_abandoned", "navigation_recommended",

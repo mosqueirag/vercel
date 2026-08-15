@@ -15,3 +15,7 @@ GitHub Actions runs two mandatory gates. `quality` uses `npm ci` and validates T
 `desarrollo -> CI -> Supabase local -> tests RLS -> staging -> validación -> aprobación -> producción`
 
 Database changes must never move directly from new code to production. A remote migration is permitted only after the project reference, name and URL unequivocally identify a development or staging environment.
+
+## COOPIA action layer
+
+The reusable write path is `intent -> typed tool -> structured result -> trusted form configuration -> explicit confirmation -> server route -> service_role -> service_requests -> journey event -> follow-up`. React components never execute SQL and cannot choose arbitrary fields or request states. All supported request types share one private table and one API contract; type-specific payloads are strict Zod objects.

@@ -14,6 +14,8 @@ describe("resolveAssistantResult", () => {
     ["No tengo Internet", "service_status"],
     ["Quiero pagar mi factura", "payment"],
     ["No tengo luz", "service_status"],
+    ["Quiero cambiar la titularidad", "service_request_form"],
+    ["Quiero hacer un reclamo", "service_request_form"],
   ])("maps %s to approved UI %s", (message, ui) => {
     expect(resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message)).ui?.type).toBe(ui);
   });
@@ -38,5 +40,9 @@ describe("resolveAssistantResult", () => {
     const message = "Quiero hacer un reclamo";
     const result = resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message));
     expect(result).toMatchObject({ requiresConfirmation: true, tool: { name: "createComplaint", kind: "write", status: "ready" } });
+  });
+  it("selects a trusted request type for the UI", () => {
+    const message = "Quiero una nueva conexión";
+    expect(resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).toMatchObject({ ui: { type: "service_request_form", data: { requestType: "new_supply" } }, requiresConfirmation: true });
   });
 });
