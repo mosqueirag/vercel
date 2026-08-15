@@ -4,6 +4,9 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CONTACT } from "../../lib/coopsar-data";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
+import type { AssistantResult } from "../../lib/ai/results";
+import { AssistantUIRenderer, ContextualQuickActions } from "./assistant-ui";
+import { NavigationProvider, useNavigationContext } from "./navigation-context";
 
 type Message = { role: "user" | "assistant"; content: string };
 const suggestions = ["Pagar una factura", "Informar un problema", "Contratar internet", "Consultar cobertura", "Descargar factura", "Ver cortes programados"];
@@ -21,12 +24,14 @@ function RichText({ content }: { content: string }) {
   })}</div>;
 }
 
-export function AssistantCenter() {
+function AssistantCenterContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [limited, setLimited] = useState(false);
+  const [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null);
+  const navigation = useNavigationContext();
   const endRef = useRef<HTMLDivElement>(null);
   const journeyRef = useRef<{ journeyId: string; sessionId: string } | null>(null);
 
@@ -62,7 +67,12 @@ export function AssistantCenter() {
     setMessages(next); setInput(""); setError(""); setLoading(true);
     try {
       const journey = getJourney();
-      const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...journey, page: `${location.pathname}${location.hash}` }) });
+      const page = `${location.pathname}${location.hash}`;
+      const structuredPromise = fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...journey, page }) });
+      const responsePromise = fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...journey, page }) });
+      const structuredResponse = await structuredPromise;
+      if (structuredResponse.ok) { const result = await structuredResponse.json() as AssistantResult; setAssistantResult(result); navigation.applyResult(result, journey.sessionId); }
+      const response = await responsePromise;
       if (!response.ok) { const data = await response.json(); if (data.error === "session_limit") setLimited(true); else throw new Error(data.error); return; }
       setMessages((current) => [...current, { role: "assistant", content: "" }]);
       const reader = response.body?.getReader(); const decoder = new TextDecoder();
@@ -83,14 +93,18 @@ export function AssistantCenter() {
         <div className="ai-status"><span className="assistant-avatar">✦</span><div><strong>COOPIA</strong><small>Asistente digital de COOPSAR</small></div><i /> <small>Orientación inmediata</small></div>
         {!limited && <><form className="chat-input" onSubmit={submit}><label className="sr-only" htmlFor="assistant-query">Tu consulta</label><textarea id="assistant-query" value={input} maxLength={1200} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder={'Escribí lo que necesitás con tus propias palabras.\nVoy a orientarte usando información oficial de COOPSAR.'} rows={3} /><button disabled={!input.trim() || loading} aria-label="Enviar consulta">Enviar <span>↑</span></button></form><div className="suggestions" aria-label="Consultas sugeridas">{suggestions.map((item) => <button key={item} onClick={() => void ask(item)}>{item}</button>)}</div></>}
         {(messages.length > 0 || limited || error) && <div className="chat-log" aria-live="polite">
+          {assistantResult && <AssistantUIRenderer result={assistantResult} />}
           {messages.map((message, index) => <div className={`message ${message.role}`} key={`${message.role}-${index}`}><small>{message.role === "user" ? "Vos" : "COOPIA"}</small>{message.content ? <RichText content={message.content} /> : <p>…</p>}{message.role === "assistant" && message.content && <div className="message-actions"><a href={whatsapp}>Hablar con un operador</a><Link href="/tramites">Ver trámites</Link></div>}</div>)}
           {loading && messages.at(-1)?.role !== "assistant" && <div className="typing"><i /><i /><i /><span>COOPIA está escribiendo</span></div>}
           {limited && <div className="limit-card"><strong>Continuemos por un canal humano</strong><p>Alcanzaste el límite inicial de respuestas de IA. Podés copiar el resumen o enviarlo por WhatsApp.</p><div><button onClick={() => navigator.clipboard.writeText(summary)}>Copiar conversación</button><a href={whatsapp}>Continuar por WhatsApp ↗</a></div></div>}
           {error && <div className="chat-error"><span>{error}</span><button onClick={() => void ask(messages.at(-1)?.content || input)}>Reintentar</button></div>}
           <div ref={endRef} />
         </div>}
+        <ContextualQuickActions />
         <div className="ai-legal"><span>La IA puede cometer errores. No compartas contraseñas, datos bancarios ni información sensible.</span><Link href="/privacidad">Privacidad</Link></div>
       </div>
     </section>
   );
 }
+
+export function AssistantCenter() { return <NavigationProvider><AssistantCenterContent /></NavigationProvider>; }

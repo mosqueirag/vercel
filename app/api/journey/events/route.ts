@@ -4,12 +4,14 @@ import { isJourneyId, isSessionId } from "../../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../../lib/journey/recorder";
 import { journeyEventTypes } from "../../../../lib/journey/types";
 
-const publicEvents = ["journey_started", "page_viewed", "assistant_opened", "human_handoff_requested", "whatsapp_opened", "journey_abandoned"] as const;
+const publicEvents = ["journey_started", "page_viewed", "assistant_opened", "human_handoff_requested", "whatsapp_opened", "journey_abandoned", "navigation_executed", "contextual_component_rendered", "action_clicked", "form_started", "form_completed"] as const;
 const schema = z.object({
   journeyId: z.string().refine(isJourneyId),
   sessionId: z.string().refine(isSessionId),
   eventType: z.enum(publicEvents),
   page: z.string().trim().max(160).default("/"),
+  action: z.string().trim().max(80).optional(),
+  result: z.string().trim().max(80).optional(),
 });
 const attempts = new Map<string, { count: number; reset: number }>();
 
