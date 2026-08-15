@@ -1,7 +1,10 @@
 param(
   [Parameter(Mandatory = $true)][string]$WorkbookPath,
   [string]$SourceUpdatedAt = (Get-Date -Format "yyyy-MM-dd"),
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$AsJson,
+  [int]$JsonOffset = 0,
+  [int]$JsonLimit = 250
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,6 +39,7 @@ function Category-Details([string]$Category) {
 
 $resolvedPath = (Resolve-Path -LiteralPath $WorkbookPath).Path
 $connection = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$resolvedPath;Extended Properties='Excel 8.0;HDR=YES;IMEX=1'")
+$jsonRows = [Collections.Generic.List[object]]::new()
 try {
   $connection.Open()
   $command = $connection.CreateCommand()
@@ -47,7 +51,9 @@ try {
     $parsed=Parse-Address $address
     if (-not $parsed -or -not $category) { $skipped++; continue }
     $details=Category-Details $category
-    $batch.Add(@{street_normalized=$parsed.street_normalized;street_number=$parsed.street_number;plan_name=$category.Trim();technology=$details.technology;speed_down_mbps=$details.speed_down_mbps;source_updated_at=$SourceUpdatedAt})
+    $row = @{street_normalized=$parsed.street_normalized;street_number=$parsed.street_number;plan_name=$category.Trim();technology=$details.technology;speed_down_mbps=$details.speed_down_mbps;source_updated_at=$SourceUpdatedAt}
+    $batch.Add($row)
+    if ($AsJson) { $jsonRows.Add($row) }
     if ($batch.Count -ge 250) {
       if (-not $DryRun) {
         $headers=@{apikey=$serviceKey;Authorization="Bearer $serviceKey";Prefer="resolution=merge-duplicates,return=minimal"}
@@ -63,8 +69,11 @@ try {
     }
     $imported += $batch.Count
   }
-  $mode = if ($DryRun) { "Validación" } else { "Importación" }
-  Write-Host "$mode finalizada. Registros procesados: $imported. Filas omitidas por formato: $skipped."
+  if ($AsJson) { Write-Output ($jsonRows | Select-Object -Skip $JsonOffset -First $JsonLimit | ConvertTo-Json -Depth 5 -Compress) }
+  else {
+    $mode = if ($DryRun) { "Validación" } else { "Importación" }
+    Write-Host "$mode finalizada. Registros procesados: $imported. Filas omitidas por formato: $skipped."
+  }
 } finally {
   if ($reader) { $reader.Dispose() }
   if ($command) { $command.Dispose() }
