@@ -48,20 +48,20 @@ export async function POST(request: NextRequest) {
   }
 
   const rows = (data ?? []) as CoverageRow[];
-  if (!rows.length) return Response.json({ status: "unknown", services: [], message: "No encontramos instalaciones registradas en esa calle dentro del margen consultado. Podemos solicitar una revisión técnica." });
+  if (!rows.length) return Response.json({ status: "unknown", service: null, message: "No encontramos un plan disponible para ese domicilio en el padrón cargado. Podemos solicitar una revisión técnica." });
 
   const nearestDistance = Math.min(...rows.map((row) => Math.abs(row.street_number - parsed.data.number)));
   const nearest = rows.filter((row) => Math.abs(row.street_number - parsed.data.number) === nearestDistance);
-  const services = Array.from(new Map(nearest.map((row) => [row.plan_name, { planName: row.plan_name, technology: row.technology, speedMbps: row.speed_down_mbps }])).values());
+  const service = Array.from(new Map(nearest.map((row) => [row.plan_name, { planName: row.plan_name, technology: row.technology, speedMbps: row.speed_down_mbps }])).values())[0] ?? null;
   const exact = nearestDistance === 0;
 
   return Response.json({
     status: exact ? "exact" : "probable",
-    services,
+    service,
     distance: nearestDistance,
     margin,
     message: exact
-      ? "Hay un servicio registrado en el domicilio indicado. La disponibilidad de una nueva conexión igualmente requiere validación técnica."
-      : `Hay instalaciones registradas en la misma calle a una diferencia de ${nearestDistance} números. La cobertura es probable y debe confirmarse técnicamente.`,
+      ? "Plan disponible según el padrón actualizado para este domicilio. La nueva conexión requiere validación técnica."
+      : `Plan identificado en una instalación cercana, a ${nearestDistance} números de diferencia. Requiere validación técnica para este domicilio.`,
   });
 }
