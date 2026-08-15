@@ -20,6 +20,10 @@ Database changes must never move directly from new code to production. A remote 
 
 The application reads `NEXT_PUBLIC_APP_ENV` explicitly. Only the value `staging` renders the visible `Entorno de prueba · STAGING` banner. Preview deployments must use credentials belonging to the isolated staging Supabase project; production credentials must be scoped exclusively to Vercel Production. See `docs/ENVIRONMENTS.md` for the complete deployment contract.
 
+## Operational content transition
+
+The additive schema already defines `services`, `help_articles`, `faqs`, `internet_plans`, `coverage_zones` and `service_alerts`. These are intended to become the server-side source of truth for COOPIA and the public UI. The current `lib/coopsar-data.ts` data remains a constrained compatibility fallback until it is loaded and validated on an isolated staging project; it must not be treated as confirmed commercial information. The detailed classification is in `docs/DATA_SOURCE_AUDIT.md`.
+
 ## COOPIA action layer
 
 The reusable write path is `intent -> typed tool -> structured result -> trusted form configuration -> explicit confirmation -> server route -> service_role -> service_requests -> journey event -> follow-up`. React components never execute SQL and cannot choose arbitrary fields or request states. All supported request types share one private table and one API contract; type-specific payloads are strict Zod objects.

@@ -33,7 +33,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<staging publishable key>
 SUPABASE_SECRET_KEY=<staging server-only key>
 OPENAI_API_KEY=<staging server-only key>
 OPENAI_MODEL=gpt-5.4-nano
-AI_SESSION_LIMIT=4
+AI_SESSION_LIMIT=2
 N8N_WEBHOOK_URL=
 N8N_WEBHOOK_SECRET=
 ```

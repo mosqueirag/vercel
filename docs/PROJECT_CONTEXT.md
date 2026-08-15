@@ -1,6 +1,6 @@
 # COOPSAR project context
 
-The current branch hardens the existing digital platform without adding product scope. COOPIA defaults to four server-enforced responses per session, commercial leads are journey-linked, public status comes from active Supabase alerts, and n8n delivery uses a persistent outbox. Production migrations have not been applied.
+The current branch hardens the existing digital platform without adding product scope. COOPIA defaults to two server-enforced responses per session, commercial leads are journey-linked, public status comes from active Supabase alerts, and n8n delivery uses a persistent outbox. Production migrations have not been applied.
 
 PR #2 remains Draft. GitHub Actions and the Vercel preview are green for commit `8ecac27`. No authenticated Supabase staging project is connected; all database verification is local and disposable. The only discovered remote Supabase project is classified as potential production until its purpose is independently confirmed, so no remote schema or data change is permitted.
 
