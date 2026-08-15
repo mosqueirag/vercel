@@ -116,7 +116,7 @@ export default function AdminNewsPage() {
         ) : (
           <>
             <div className="toolbar"><b>{loading ? "Cargando…" : `${items.length} publicaciones`}</b><button className="primary" onClick={() => setEditing(emptyArticle)}>＋ Nueva noticia</button></div>
-            <div className="admin-table-wrap"><table><thead><tr><th>Título</th><th>Categoría</th><th>Fecha</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td><b>{item.title}</b></td><td>{item.category}</td><td>{new Date(item.published_at || item.created_at).toLocaleDateString("es-AR")}</td><td className={item.status === "published" ? "ok" : ""}>{item.status === "published" ? "Publicada" : "Borrador"}</td><td><button onClick={() => setEditing(item)}>Editar</button> <button onClick={() => void remove(item)}>Eliminar</button></td></tr>)}</tbody></table></div>
+            <div className="admin-table-wrap"><table><thead><tr><th>Título</th><th>Categoría</th><th>Fecha</th><th>Estado</th><th>Enlace</th><th>Acción</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td><b>{item.title}</b></td><td>{item.category}</td><td>{new Date(item.published_at || item.created_at).toLocaleDateString("es-AR")}</td><td className={item.status === "published" ? "ok" : ""}>{item.status === "published" ? "Publicada" : "Borrador"}</td><td>{item.status === "published" ? <Link className="text-link" href={`/noticias/${item.slug}`} target="_blank">Ver noticia ↗</Link> : <small>Disponible al publicar</small>}</td><td><button onClick={() => setEditing(item)}>Editar</button> <button onClick={() => void remove(item)}>Eliminar</button></td></tr>)}</tbody></table></div>
           </>
         )}
       </section>

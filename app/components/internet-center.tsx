@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
 import { CONTACT, internetPlans } from "../../lib/coopsar-data";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; people: number; devices: number; intensive: boolean; zone: string };
@@ -23,6 +24,7 @@ export function InternetCenter() {
   return (
     <section className="internet-hub" id="internet">
       <div className="section-heading"><div><span className="eyebrow">Internet y fibra óptica</span><h2>Internet para estar<br />siempre conectado</h2></div><p>Conocé nuestros planes y encontrá la opción adecuada para tu hogar, comercio o empresa. La cobertura y las condiciones siempre se confirman antes de contratar.</p></div>
+      <div className="internet-photo"><Image src="/images/coopsar-connectivity.png" alt="Técnico trabajando en infraestructura de conectividad en Sarmiento" fill sizes="(max-width: 900px) 100vw, 1200px" /></div>
       <div className="plan-grid">{internetPlans.map((plan) => <article className={selected === plan.id ? "plan-card selected" : "plan-card"} key={plan.id}><small>{plan.audience}</small><h3>{plan.name}</h3><strong>{plan.speed}</strong><p>{plan.technology}</p><ul>{plan.benefits.map((benefit) => <li key={benefit}>✓ {benefit}</li>)}</ul><div className="price-pending">Precio: pendiente de confirmación</div><button onClick={() => { setSelected(plan.id); setStep(2); }}>{selected === plan.id ? "Plan seleccionado" : "Quiero contratar"}</button></article>)}</div>
       <div className="recommender" id="contratar">
         <div className="recommender-copy"><span className="eyebrow eyebrow-light">Recomendador inteligente</span><h3>Encontrá un punto de partida</h3><p>Respondé unas preguntas. La recomendación es orientativa y no confirma cobertura, velocidad ni precio.</p><div className="step-indicator"><span className={step >= 1 ? "active" : ""}>1</span><i /><span className={step >= 2 ? "active" : ""}>2</span><i /><span className={step >= 3 ? "active" : ""}>3</span></div></div>

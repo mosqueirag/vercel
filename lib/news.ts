@@ -13,10 +13,20 @@ export type NewsArticle = {
 };
 
 export const fallbackNews: NewsArticle[] = [
-  { id: "fallback-1", slug: "mantenimiento-infraestructura-electrica", category: "ENERGÍA", date: "1 JUL 2026", title: "Mantenimiento y mejoras en la infraestructura eléctrica", excerpt: "Continúan los trabajos preventivos y las mejoras de capacidad en distintos sectores de Sarmiento.", body: ["COOPSAR continúa ejecutando tareas preventivas y mejoras sobre la red de distribución eléctrica."], imageUrl: null },
-  { id: "fallback-2", slug: "fibra-optica-nuevas-zonas", category: "FIBRA ÓPTICA", date: "9 JUL 2026", title: "La fibra óptica continúa llegando a nuevas zonas", excerpt: "La red FTTH de COOPSAR sigue ampliándose para ofrecer mayor velocidad, estabilidad y capacidad.", body: ["La contratación está sujeta a disponibilidad técnica."], imageUrl: null },
-  { id: "fallback-3", slug: "servicio-solidario-sepelios", category: "SERVICIO SOLIDARIO", date: "13 JUN 2026", title: "El Servicio Solidario acompaña a las familias", excerpt: "Un servicio cooperativo creado para brindar asistencia y contención cuando más se necesita.", body: ["El Servicio Solidario forma parte del acompañamiento comunitario de COOPSAR."], imageUrl: null },
+  { id: "fallback-1", slug: "mantenimiento-infraestructura-electrica", category: "ENERGÍA", date: "1 JUL 2026", title: "Mantenimiento y mejoras en la infraestructura eléctrica", excerpt: "Continúan los trabajos preventivos y las mejoras de capacidad en distintos sectores de Sarmiento.", body: ["COOPSAR continúa ejecutando tareas preventivas y mejoras sobre la red de distribución eléctrica."], imageUrl: "/images/coopsar-energy.png" },
+  { id: "fallback-2", slug: "fibra-optica-nuevas-zonas", category: "FIBRA ÓPTICA", date: "9 JUL 2026", title: "La fibra óptica continúa llegando a nuevas zonas", excerpt: "La red FTTH de COOPSAR sigue ampliándose para ofrecer mayor velocidad, estabilidad y capacidad.", body: ["La contratación está sujeta a disponibilidad técnica."], imageUrl: "/images/coopsar-connectivity.png" },
+  { id: "fallback-3", slug: "servicio-solidario-sepelios", category: "SERVICIO SOLIDARIO", date: "13 JUN 2026", title: "El Servicio Solidario acompaña a las familias", excerpt: "Un servicio cooperativo creado para brindar asistencia y contención cuando más se necesita.", body: ["El Servicio Solidario forma parte del acompañamiento comunitario de COOPSAR."], imageUrl: "/images/sarmiento-community.png" },
 ];
+
+function resolveImageUrl(value: unknown, category: string) {
+  if (typeof value === "string" && value.startsWith("https://")) return value;
+  if (typeof value === "string" && value.startsWith("/images/coopsar-")) return value;
+  const normalized = category.toLocaleLowerCase("es-AR");
+  if (normalized.includes("energ")) return "/images/coopsar-energy.png";
+  if (normalized.includes("fibra") || normalized.includes("internet") || normalized.includes("telefon")) return "/images/coopsar-connectivity.png";
+  if (normalized.includes("institucional") || normalized.includes("solidario") || normalized.includes("sepelio")) return "/images/sarmiento-community.png";
+  return "/images/coopsar-service-office.png";
+}
 
 function mapArticle(row: Record<string, unknown>): NewsArticle {
   const published = String(row.published_at || row.created_at || new Date().toISOString());
@@ -28,7 +38,7 @@ function mapArticle(row: Record<string, unknown>): NewsArticle {
     title: String(row.title),
     excerpt: String(row.excerpt),
     body: String(row.content).split(/\n{2,}/).map((part) => part.trim()).filter(Boolean),
-    imageUrl: typeof row.image_url === "string" && row.image_url.startsWith("https://") ? row.image_url : null,
+    imageUrl: resolveImageUrl(row.image_url, String(row.category)),
   };
 }
 
