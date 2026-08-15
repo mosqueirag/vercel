@@ -1,6 +1,6 @@
 export const intentNames = [
   "pay_invoice", "download_invoice", "internet_problem", "energy_problem",
-  "fiber_signup", "internet_signup", "fiber_coverage", "create_complaint",
+  "fiber_signup", "internet_signup", "fiber_coverage", "internet_plans", "fiber_waitlist", "create_complaint",
   "service_status", "ownership_change", "new_supply", "contact_operator",
   "news_search", "payment_methods", "office_virtual", "funeral_service",
   "phone_service", "general_question",
@@ -20,6 +20,8 @@ export type IntentDetection = {
 type Rule = Omit<IntentDetection, "confidence"> & { patterns: RegExp[]; confidence?: number };
 
 const rules: Rule[] = [
+  { intent: "fiber_waitlist", service: "fiber", suggestedAction: "start_fiber_waitlist", patterns: [/\b(avisen|av[ií]senme|notifiquen|notifiquenme)\b.*\b(fibra|llegue)\b/i, /\bfibra\b.*\b(avisen|av[ií]senme|notifiquen)\b/i], confidence: 0.97 },
+  { intent: "internet_plans", service: "internet", suggestedAction: "show_internet_plans", patterns: [/\b(qu[eé] planes|planes tienen|cu[aá]nto sale|precio).*(internet|fibra)?\b/i, /\b(internet|fibra)\b.*\b(planes|precio|sale)\b/i], confidence: 0.93 },
   { intent: "fiber_signup", service: "fiber", suggestedAction: "start_fiber_signup", patterns: [/\b(contratar|quiero|solicitar|instalar)\b.*\bfibra\b/i, /\bfibra\b.*\b(contratar|quiero|solicitar|instalar)\b/i], confidence: 0.98 },
   { intent: "fiber_coverage", service: "fiber", suggestedAction: "check_fiber_coverage", patterns: [/\b(fibra|ftth)\b.*\b(hay|llega|cobertura|disponible|domicilio|direcci[oó]n|calle|barrio)\b/i, /\b(hay|cobertura|llega)\b.*\bfibra\b/i], confidence: 0.96 },
   { intent: "internet_problem", service: "internet", suggestedAction: "diagnose_internet", patterns: [/\b(no (tengo|anda|funciona)|sin|problema|falla|cort[óo])\b.*\binternet\b/i, /\binternet\b.*\b(no (anda|funciona)|sin|problema|falla|cort[óo])\b/i], confidence: 0.95 },
@@ -27,7 +29,7 @@ const rules: Rule[] = [
   { intent: "download_invoice", service: "billing", suggestedAction: "open_virtual_office", patterns: [/\b(descargar|bajar|imprimir)\b.*\bfactura\b/i], confidence: 0.97 },
   { intent: "pay_invoice", service: "billing", suggestedAction: "open_payment", patterns: [/\b(pagar|abonar)\b.*\b(factura|internet|deuda|servicio)\b/i, /\b(factura|deuda)\b.*\b(pagar|abonar)\b/i], confidence: 0.96 },
   { intent: "payment_methods", service: "billing", suggestedAction: "show_payment_information", patterns: [/\b(medio|forma|c[oó]mo)\b.*\bpago/i], confidence: 0.91 },
-  { intent: "internet_signup", service: "internet", suggestedAction: "start_internet_signup", patterns: [/\b(contratar|quiero|solicitar|instalar)\b.*\binternet\b/i], confidence: 0.95 },
+  { intent: "internet_signup", service: "internet", suggestedAction: "start_internet_signup", patterns: [/\b(contratar|quiero|solicitar|instalar|necesito)\b.*\binternet\b/i, /\binternet\b.*\b(contratar|quiero|solicitar|instalar|necesito)\b/i], confidence: 0.95 },
   { intent: "create_complaint", service: "general", suggestedAction: "start_complaint", patterns: [/\b(reclamo|reclamar|queja)\b/i], confidence: 0.94 },
   { intent: "service_status", service: "general", suggestedAction: "get_service_status", patterns: [/\b(estado|incidencia|corte programado)\b.*\b(servicio|internet|luz|energ[ií]a|fibra)?/i], confidence: 0.88 },
   { intent: "ownership_change", service: "general", suggestedAction: "show_ownership_change", patterns: [/\b(cambio|cambiar)\b.*\btitular/i, /\btitularidad\b/i], confidence: 0.96 },

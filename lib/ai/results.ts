@@ -1,7 +1,7 @@
 import type { AssistantIntent, AssistantService } from "./intents";
 
 export const assistantActions = [
-  "CHECK_COVERAGE", "REQUEST_INSTALLATION", "SHOW_SERVICE_STATUS", "START_DIAGNOSIS",
+  "CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "SELECT_INTERNET_PLAN", "START_FIBER_WAITLIST", "REQUEST_INSTALLATION", "SHOW_SERVICE_STATUS", "START_DIAGNOSIS",
   "REPORT_ENERGY_PROBLEM", "OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS",
   "DOWNLOAD_INVOICE", "OPEN_WHATSAPP",
   "START_COMPLAINT", "SUBMIT_COMPLAINT", "START_OWNERSHIP_CHANGE", "SUBMIT_OWNERSHIP_CHANGE",
@@ -11,7 +11,7 @@ export const assistantActions = [
 ] as const;
 
 export type AssistantAction = (typeof assistantActions)[number];
-export type AssistantUIType = "fiber_coverage" | "service_status" | "payment" | "service_request_form" | "human_handoff";
+export type AssistantUIType = "fiber_coverage" | "internet_plans" | "service_status" | "payment" | "service_request_form" | "human_handoff";
 export type AssistantRecommendedAction = { id: AssistantAction; label: string; href?: string };
 export type AssistantResult = {
   message: string;

@@ -32,6 +32,7 @@ export function resolveAssistantResult(detection: IntentDetection, journeyId: st
   switch (detection.intent) {
     case "fiber_signup":
     case "fiber_coverage":
+    case "internet_signup":
       return createResult(detection, journeyId, tool, {
         message: "Perfecto. Primero veamos qué servicio está disponible en tu domicilio.",
         ui: { type: "fiber_coverage", data: {} },
@@ -40,6 +41,10 @@ export function resolveAssistantResult(detection: IntentDetection, journeyId: st
           { id: "OPEN_WHATSAPP", label: "Hablar con un asesor", href: `https://wa.me/${CONTACT.whatsapp}` },
         ],
       });
+    case "internet_plans":
+      return createResult(detection, journeyId, tool, { message: "Te mostraré únicamente los planes publicados. Si falta un precio o velocidad, te lo indicaremos como pendiente.", ui: { type: "internet_plans", data: {} }, actions: [{ id: "SHOW_INTERNET_PLANS", label: "Ver planes" }, { id: "CHECK_COVERAGE", label: "Consultar cobertura" }] });
+    case "fiber_waitlist":
+      return createResult(detection, journeyId, tool, { message: "Podés dejar una solicitud para que el equipo evalúe y te avise cuando exista información oficial para tu zona.", ui: { type: "fiber_coverage", data: { waitlist: true } }, actions: [{ id: "START_FIBER_WAITLIST", label: "Quiero que me avisen" }], requiresHuman: true });
     case "internet_problem":
       return createResult(detection, journeyId, tool, {
         message: ["outage", "partial", "maintenance"].includes(String(status)) ? "Detectamos una incidencia informada." : "No encontramos una incidencia general informada. Podemos revisar tu caso.",

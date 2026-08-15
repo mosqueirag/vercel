@@ -59,8 +59,25 @@ select 'energia-test', 'Alerta TEST activa', 'Alerta sintética para validar el 
 where not exists (select 1 from public.service_alerts a where a.title = 'Alerta TEST activa');
 
 insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology, speed_down_mbps, source_updated_at)
-values ('CALLE TEST', 999, 'Plan TEST sin precio', 'TEST', null, current_date)
+values
+  ('CALLE TEST', 100, 'Plan TEST sin precio', 'TEST', null, current_date),
+  ('CALLE TEST', 200, 'Plan TEST sin precio', 'TEST', null, current_date),
+  ('CALLE TEST', 300, 'Plan TEST sin precio', 'TEST', null, current_date),
+  ('CALLE TEST', 400, 'Plan TEST sin precio', 'TEST', null, current_date),
+  ('CALLE TEST', 500, 'Plan TEST sin precio', 'TEST', null, current_date),
+  ('CALLE TEST', 999, 'Plan TEST sin precio', 'TEST', null, current_date)
 on conflict (street_normalized, street_number, plan_name) do update set
   technology = excluded.technology,
   speed_down_mbps = excluded.speed_down_mbps,
   source_updated_at = excluded.source_updated_at;
+
+update public.service_address_coverage
+set coverage_status = case street_number
+  when 100 then 'available'
+  when 200 then 'nearby'
+  when 300 then 'planned'
+  when 400 then 'unavailable'
+  else 'unknown'
+end,
+plan_slug = 'plan-test-sin-precio'
+where street_normalized = 'CALLE TEST';

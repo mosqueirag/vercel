@@ -5,6 +5,8 @@ import { getServiceStatus } from "./service-status";
 
 export const assistantToolNames = [
   "checkFiberCoverage",
+  "getInternetPlans",
+  "createFiberWaitlist",
   "getInternetServiceStatus",
   "getEnergyServiceStatus",
   "getPaymentInformation",
@@ -24,6 +26,8 @@ export type ToolResolution = ToolSelection & { status: "ready" | "completed" | "
 const selections: Partial<Record<IntentDetection["intent"], ToolSelection>> = {
   fiber_signup: { name: "checkFiberCoverage", kind: "read", requiresConfirmation: false },
   fiber_coverage: { name: "checkFiberCoverage", kind: "read", requiresConfirmation: false },
+  internet_plans: { name: "getInternetPlans", kind: "read", requiresConfirmation: false },
+  fiber_waitlist: { name: "createFiberWaitlist", kind: "write", requiresConfirmation: true },
   internet_problem: { name: "getInternetServiceStatus", kind: "read", requiresConfirmation: false },
   energy_problem: { name: "getEnergyServiceStatus", kind: "read", requiresConfirmation: false },
   pay_invoice: { name: "getPaymentInformation", kind: "read", requiresConfirmation: false },

@@ -7,6 +7,10 @@ describe("detectIntent", () => {
   });
   it.each([
     ["¿Llega fibra a Rivadavia 1250?", "fiber_coverage"],
+    ["Quiero Internet", "internet_signup"],
+    ["Necesito internet para mi negocio", "internet_signup"],
+    ["¿Qué planes tienen?", "internet_plans"],
+    ["Quiero que me avisen cuando llegue fibra", "fiber_waitlist"],
     ["No tengo internet desde ayer", "internet_problem"],
     ["Quiero pagar una factura", "pay_invoice"],
     ["Necesito cambiar la titularidad", "ownership_change"],

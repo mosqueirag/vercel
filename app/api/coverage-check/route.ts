@@ -13,7 +13,8 @@ const schema = z.object({
   sessionId: z.string().refine(isSessionId).optional(),
 }).refine((value) => Boolean(value.journeyId) === Boolean(value.sessionId));
 
-type CoverageRow = { street_number: number; plan_name: string; technology: string; speed_down_mbps: number | null };
+type CoverageRow = { street_number: number; plan_name: string; technology: string; speed_down_mbps: number | null; coverage_status: "available" | "nearby" | "planned" | "unavailable" | "unknown" };
+type PlanRow = { id: string; name: string; slug: string; technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null; price_amount: number | null; currency: string | null };
 
 export async function POST(request: NextRequest) {
   const rate = await consumeRateLimit(request, "coverage", 20, 60);
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
   const margin = configuredCoverageMargin();
   const { data, error } = await supabase
     .from("service_address_coverage")
-    .select("street_number,plan_name,technology,speed_down_mbps")
+    .select("street_number,plan_name,technology,speed_down_mbps,coverage_status")
     .eq("street_normalized", streetNormalized)
     .gte("street_number", parsed.data.number - margin)
     .lte("street_number", parsed.data.number + margin)
@@ -43,21 +44,20 @@ export async function POST(request: NextRequest) {
   }
 
   const rows = (data ?? []) as CoverageRow[];
-  if (!rows.length) { if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: "unknown" }); return Response.json({ status: "unknown", service: null, message: "No encontramos un plan disponible para ese domicilio. Podemos solicitar una revisión técnica." }); }
+  if (!rows.length) { if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: "unknown" }); return Response.json({ coverageStatus: "unknown", technology: null, commercialAvailability: false, plans: [], nextAction: "fiber_waitlist", message: "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial." }); }
 
   const nearestDistance = Math.min(...rows.map((row) => Math.abs(row.street_number - parsed.data.number)));
   const nearest = rows.filter((row) => Math.abs(row.street_number - parsed.data.number) === nearestDistance);
-  const service = Array.from(new Map(nearest.map((row) => [row.plan_name, { planName: row.plan_name, technology: row.technology, speedMbps: row.speed_down_mbps }])).values())[0] ?? null;
   const exact = nearestDistance === 0;
-  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: exact ? "exact" : "probable", metadata: { distance: nearestDistance } });
+  const coverageStatus = exact ? nearest[0].coverage_status : "nearby";
+  const technology = nearest[0]?.technology ?? null;
+  const { data: publishedPlans } = await supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency").eq("status", "published").lte("published_at", new Date().toISOString());
+  const plans = ((publishedPlans ?? []) as PlanRow[]).filter((plan) => plan.name === nearest[0]?.plan_name || (plan.technology && plan.technology === technology));
+  const commercialAvailability = coverageStatus === "available" && plans.length > 0;
+  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: coverageStatus, metadata: { distance: nearestDistance } });
 
   return Response.json({
-    status: exact ? "exact" : "probable",
-    service,
-    distance: nearestDistance,
-    margin,
-    message: exact
-      ? "Plan disponible según el padrón actualizado para este domicilio. La nueva conexión requiere validación técnica."
-      : `Plan identificado en una instalación cercana, a ${nearestDistance} números de diferencia. Requiere validación técnica para este domicilio.`,
+    coverageStatus, technology, commercialAvailability, plans: plans.map((plan) => ({ ...plan, price_amount: plan.price_amount, speed_down_mbps: plan.speed_down_mbps, speed_up_mbps: plan.speed_up_mbps })), nextAction: commercialAvailability ? "show_plans" : coverageStatus === "nearby" ? "coverage_validation" : "fiber_waitlist",
+    message: coverageStatus === "available" && commercialAvailability ? "Tenemos disponibilidad en tu domicilio. Podés revisar los planes compatibles." : coverageStatus === "nearby" ? "Tu domicilio requiere validación técnica. No podemos confirmar cobertura todavía." : "Actualmente no tenemos fibra confirmada para este domicilio. Podés pedir que te avisemos cuando haya información oficial.",
   });
 }
