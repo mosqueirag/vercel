@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(33);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -78,6 +78,23 @@ select throws_ok(
 
 reset role;
 set local role service_role;
+select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE NULL TEST', 100, null, 'FTTH') $$,
+  'service role can store coverage with a null plan name'
+);
+select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE UNIQUE TEST', 200, null, 'FTTH') $$,
+  'first address and technology coverage row is accepted'
+);
+select throws_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE UNIQUE TEST', 200, null, 'FTTH') $$,
+  '23505', null, 'same address and technology is unique independently of plan name'
+);
+select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE MULTI TEST', 300, null, 'FTTH'), ('CALLE MULTI TEST', 300, null, 'ADSL') $$,
+  'same address supports distinct technology rows'
+);
+select lives_ok($$ select count(*) from public.service_address_coverage $$, 'service role can read private address coverage');
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
   '23514',
@@ -95,6 +112,7 @@ select is((select count(*)::integer from public.internet_requests where request_
 
 reset role;
 set local role authenticated;
+select throws_ok($$ select count(*) from public.service_address_coverage $$, '42501', 'permission denied for table service_address_coverage', 'authenticated cannot read address-level coverage');
 select throws_ok(
   $$ select updated_by_email from public.public_contact_channels $$,
   '42501',
