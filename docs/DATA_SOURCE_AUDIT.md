@@ -3,7 +3,7 @@
 | Dato | Fuente actual | Fallback | Administración |
 | --- | --- | --- | --- |
 | Planes, tecnología, velocidad y precio | `internet_plans` publicados | ninguno comercial; “Consultar precio”/pendiente | `/admin/internet/planes` |
-| Contactos públicos | `public_contact_channels` publicados | mensaje de indisponibilidad, nunca un número viejo | `/admin/configuracion/contactos` |
+| Contactos públicos | `public_contact_channels` mediante DAL server-side | mensaje de indisponibilidad, nunca un número viejo | `/admin/configuracion/contactos` |
 | Cobertura exacta | `service_address_coverage`, solo backend | `unknown` y lista de espera | importador + administración posterior |
 | Cobertura zonal | `coverage_zones` publicados | sin confirmación | administración futura |
 | FAQ y ayuda | `faqs`, `help_articles`, `services` publicados | respuesta de información no disponible | administración de conocimiento futura |
@@ -16,6 +16,10 @@
 ## TEST vs oficial
 
 `supabase/seed.sql` contiene únicamente filas sintéticas visibles como `TEST`, `Plan TEST sin precio` o similar. No son datos institucionales ni se deben copiar a producción. Contenido oficial requiere `status='published'`, `published_at <= now()` y aprobación interna fuera del repositorio. Los borradores y archivados no tienen lectura pública.
+
+## Acceso de contactos públicos
+
+`anon` y `authenticated` no tienen `SELECT` directo sobre `public_contact_channels`: RLS filtra filas, pero no columnas. Las rutas públicas usan `lib/data/public-content.ts`, que corre con rol de servidor y devuelve una proyección allowlist sin `value`, `updated_by_email` ni timestamps internos. Los endpoints administrativos requieren `requireNewsAdmin()` y operan server-side.
 
 ## Cobertura
 

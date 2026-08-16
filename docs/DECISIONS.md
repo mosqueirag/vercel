@@ -7,3 +7,4 @@
 - El consentimiento operativo y el opt-in comercial son campos distintos en `internet_requests`; solo el primero es obligatorio para solicitar contacto.
 - El outbox guarda tipo de evento y número de solicitud, no datos de contacto, y deja reintentos exponenciales para una futura integración autorizada.
 - Las tarjetas/constantes en `lib/coopsar-data.ts` son una compatibilidad limitada, no una fuente comercial confirmada. La migración se detalla en `AI_KNOWLEDGE.md`.
+- P2 de roles: la autorización de contenidos reutiliza `news_admins`/`requireNewsAdmin()`. En una fase posterior se reemplazará por roles explícitos como `platform_admin` y `content_admin`; mientras tanto, las rutas administrativas usan un cliente server-side y no hay grants directos para `authenticated`.

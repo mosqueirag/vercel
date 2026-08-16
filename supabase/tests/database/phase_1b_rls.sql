@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(25);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -43,7 +43,12 @@ select is((select count(*)::integer from public.help_articles where slug like '%
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
 select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
-select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 1, 'anon reads only published public contacts');
+select throws_ok(
+  $$ select public_value, value, updated_by_email from public.public_contact_channels $$,
+  '42501',
+  'permission denied for table public_contact_channels',
+  'anon cannot read public contacts or internal audit columns directly'
+);
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',
@@ -70,6 +75,7 @@ select throws_ok(
 
 reset role;
 set local role service_role;
+select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 2, 'server role can read public and draft contacts through the DAL backend');
 select lives_ok(
   $$ insert into public.internet_requests
      (request_number, customer_type, full_name, phone, email, address, zone, consent)
@@ -80,6 +86,12 @@ select is((select count(*)::integer from public.internet_requests where request_
 
 reset role;
 set local role authenticated;
+select throws_ok(
+  $$ select updated_by_email from public.public_contact_channels $$,
+  '42501',
+  'permission denied for table public_contact_channels',
+  'authenticated users cannot read public contacts or updated_by_email directly'
+);
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');

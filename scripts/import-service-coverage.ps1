@@ -46,14 +46,16 @@ try {
   $command = $connection.CreateCommand()
   $command.CommandText = 'SELECT [CATEGORIA], [DIRECCION] FROM [internet$]'
   $reader = $command.ExecuteReader()
-  $batch = [Collections.Generic.List[object]]::new(); $seen = [Collections.Generic.HashSet[string]]::new(); $imported=0; $skipped=0; $duplicates=0
+  $batch = [Collections.Generic.List[object]]::new(); $seen = [Collections.Generic.HashSet[string]]::new(); $imported=0; $total=0; $valid=0; $skipped=0; $duplicates=0
   while ($reader.Read()) {
+    $total++
     $category=[string]$reader['CATEGORIA']; $address=[string]$reader['DIRECCION']
     $parsed=Parse-Address $address
     if (-not $parsed -or -not $category) { $skipped++; continue }
     $details=Category-Details $category
     $key = "$($parsed.street_normalized)|$($parsed.street_number)|$($category.Trim())"
     if (-not $seen.Add($key)) { $duplicates++; continue }
+    $valid++
     $row = @{street_normalized=$parsed.street_normalized;street_number=$parsed.street_number;plan_name=$category.Trim();technology=$details.technology;speed_down_mbps=$details.speed_down_mbps;coverage_status='available';source=$Source;verified_at="$SourceUpdatedAt`T00:00:00Z";source_updated_at=$SourceUpdatedAt}
     $batch.Add($row)
     if ($AsJson) { $jsonRows.Add($row) }
@@ -75,7 +77,8 @@ try {
   if ($AsJson) { Write-Output ($jsonRows | Select-Object -Skip $JsonOffset -First $JsonLimit | ConvertTo-Json -Depth 5 -Compress) }
   else {
     $mode = if ($DryRun) { "Validación" } else { "Importación" }
-    Write-Host "$mode finalizada. Registros procesados: $imported. Filas omitidas por formato: $skipped. Duplicados omitidos: $duplicates. Fuente: $Source."
+    $newUpdated = if ($DryRun) { "Nuevas: pendiente de comparar con staging. Actualizadas: pendiente de comparar con staging." } else { "Nuevas/actualizadas mediante upsert: $imported (el endpoint no expone la separación por fila)." }
+    Write-Host "$mode finalizada. Filas totales: $total. Válidas: $valid. Inválidas: $skipped. Duplicadas: $duplicates. $newUpdated Fuente: $Source."
   }
 } finally {
   if ($reader) { $reader.Dispose() }
