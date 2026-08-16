@@ -1,14 +1,9 @@
-# Decisions
+# Decisiones técnicas
 
-- Supabase was chosen for distributed limits to avoid instance-local state and another infrastructure provider.
-- Rate-limit identifiers use a server-side salt and SHA-256; only hashes and expiring counters are stored.
-- Journey events are structured and exclude conversations and lead PII.
-- Commercial records and integration outbox are server-only. Published knowledge, plans, services and active alerts are public-read. Editorial operations remain admin-only.
-- n8n receives only event type and request number. Personal data stays in Supabase.
-- CI pins Node 22 LTS and Supabase CLI 2.114.0. The database job is local and disposable, uses no remote project reference, and treats migration or RLS failures as release blockers.
-- `main` must require the `quality` and `supabase-tests` checks. Branch protection is not weakened to accommodate deployments.
-- COOPIA service processes use one `service_requests` aggregate instead of one table/form per minor procedure. Common identity/contact fields remain columns; only explicitly allow-listed, request-specific fields enter `payload`.
-- Informational intent may render guidance or offer a form, but no write occurs until the user submits an explicit confirmation. Public tracking numbers are random `SRV-YYYY-XXXXXXXX` values rather than sequential IDs.
-- The existing remote Supabase reference is treated as potential production because its name and migration history do not establish that it is a disposable development environment. Staging must be a separate project named `coopsar-staging`; no production project is repurposed for tests.
-- Operational content moves through a typed, server-side data access layer. Static contacts, plans, FAQs and service information remain explicit fallbacks until matching published records have been validated in staging; absent data must yield a safe unknown or pending result, never an inferred commercial fact.
-- `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`) is the sole remote database authorized for branch validation. Its initial fixtures are idempotent and explicitly synthetic; the earlier Supabase project remains out of scope.
+- Staging (`wwvqlbycwzxvjnexklwg`) es el único remoto autorizado para PR #2; ningún test ni reparación toca producción.
+- El historial de nueve migraciones es canónico y el esquema se modifica solo mediante migraciones aditivas revisadas.
+- Los límites distribuidos usan `consume_rate_limit` y huellas con hash/sal; no se persiste IP cruda. Si falla la protección, los endpoints protegidos fallan cerrados.
+- El tracking de journeys es best-effort: errores analíticos no bloquean una solicitud comercial válida. Guarda identificadores, intención, acción, resultados agregados y duración; nunca conversación completa ni PII de contacto.
+- El consentimiento operativo y el opt-in comercial son campos distintos en `internet_requests`; solo el primero es obligatorio para solicitar contacto.
+- El outbox guarda tipo de evento y número de solicitud, no datos de contacto, y deja reintentos exponenciales para una futura integración autorizada.
+- Las tarjetas/constantes en `lib/coopsar-data.ts` son una compatibilidad limitada, no una fuente comercial confirmada. La migración se detalla en `AI_KNOWLEDGE.md`.

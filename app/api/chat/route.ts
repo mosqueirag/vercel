@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
       },
     });
     return new Response(body, { headers });
-  } catch (error) {
-    console.error("COOPIA response failed", error instanceof Error ? error.message : "unknown_error");
+  } catch {
+    console.error("COOPIA response failed");
     return Response.json({ error: "No pudimos responder ahora. Podés reintentar o continuar por WhatsApp." }, { status: 503 });
   }
 }

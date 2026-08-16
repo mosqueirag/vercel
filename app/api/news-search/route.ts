@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
       input: `Consulta: ${parsed.data.query}\n\nResultados oficiales disponibles:\n${context}`,
     });
     return Response.json({ answer: response.output_text.trim() || fallback, matches: resultLinks });
-  } catch (error) {
-    console.error("News AI search failed", error instanceof Error ? error.message : "unknown_error");
+  } catch {
+    console.error("News AI search failed");
     return Response.json({ answer: fallback, matches: resultLinks });
   }
 }

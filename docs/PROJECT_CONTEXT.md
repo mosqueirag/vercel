@@ -1,9 +1,9 @@
-# COOPSAR project context
+# COOPSAR — estado del proyecto
 
-The current branch hardens the existing digital platform without adding product scope. COOPIA defaults to two server-enforced responses per session, commercial leads are journey-linked, public status comes from active Supabase alerts, and n8n delivery uses a persistent outbox. Production migrations have not been applied.
+PR #2 (`platform-coopsar-ai`) continúa en borrador. El único entorno remoto autorizado para esta rama es **coopsar-staging** (`wwvqlbycwzxvjnexklwg`, `sa-east-1`). El proyecto Supabase histórico se trata como posible producción y permanece fuera de alcance.
 
-PR #2 remains Draft. COOPSAR staging is the isolated Supabase project `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`). It contains only repository schema and explicit synthetic `TEST` fixtures. The earlier Supabase project remains classified as potential production and is never modified.
+La plataforma valida en staging: navegación y asistencia COOPIA, consulta de cobertura por domicilio, planes publicados, solicitudes de Internet/lista de espera, outbox persistente y CMS de noticias con rol editorial. No hay CRM, n8n productivo ni flujos operativos internos nuevos.
 
-Phase 2A adds a reusable COOPIA action layer for complaints, ownership changes, new energy supply, digital invoice enrollment and phone requests. It does not implement a CRM or service-specific back-office workflow.
+Los nueve archivos de `supabase/migrations/` reproducen el esquema actual y están aplicados en staging. El contenido semilla y las solicitudes usadas para validación están etiquetados explícitamente como `TEST`; nunca son información institucional ni comercial.
 
-Environment configuration is documented in `docs/ENVIRONMENTS.md`. A visual staging label is shown only when `NEXT_PUBLIC_APP_ENV=staging`.
+Antes de producción se requiere información oficial validada, canales operativos aprobados, revisión de privacidad, observabilidad y la lista de `docs/PRODUCTION_READINESS.md` completa.

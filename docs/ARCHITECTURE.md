@@ -1,33 +1,24 @@
-# Architecture
+# Arquitectura
 
-Next.js App Router runs the public UI and server endpoints on Vercel. Supabase is the system of record. Browser code uses only the public URL/key; privileged writes and private reads use a server-only service credential.
+Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el sistema de registro. El navegador usa exclusivamente URL y clave pública. `SUPABASE_SECRET_KEY`/service role se usa solo en rutas servidoras y utilidades `lib/`.
 
-Public status follows `service_alerts -> server selector -> Home and COOPIA`. Missing or failed data resolves to `unknown`.
+## Flujos actuales
 
-Endpoint protection uses hashed identifiers and the atomic `consume_rate_limit` RPC. Raw IP addresses are not persisted. Private lead creation uses `create_internet_request_with_outbox`, which atomically stores the request and a minimal integration event. A worker invocation claims events using `FOR UPDATE SKIP LOCKED`, records delivery, and schedules exponential retry after failure.
+- **COOPIA:** consulta → detección de intención → respuesta OpenAI con fallback oficial → acción estructurada → tracking mínimo. OpenAI no confirma cobertura, planes, precios, cortes ni requisitos.
+- **Cobertura:** `/api/coverage-check` consulta `service_address_coverage` desde servidor; solo expone un resultado comercial agregado, no infraestructura ni padrón.
+- **Internet/fibra:** `/api/internet-leads` valida, exige consentimiento operativo y usa `create_internet_request_v2_with_outbox` para crear solicitud y evento outbox en una transacción. La entrega a n8n permanece desactivada sin variables configuradas.
+- **Noticias:** Google OAuth identifica al usuario, pero el acceso editorial exige además presencia en `news_admins`. Imágenes se cargan con URL firmada para administradores.
 
-## Continuous integration
+## Datos y acceso
 
-GitHub Actions runs two mandatory gates. `quality` uses `npm ci` and validates TypeScript, ESLint, unit tests and the production build. `supabase-tests` starts a disposable Postgres 17 Supabase stack, reconstructs all migrations, runs pgTAP/RLS tests and lints the generated schema. Neither job receives production credentials.
+| Clase | Tablas |
+| --- | --- |
+| Public read publicado | `services`, `help_articles`, `faqs`, `internet_plans`, `coverage_zones`, `service_alerts`, noticias publicadas |
+| Server only | `internet_requests`, `service_requests`, `service_address_coverage`, `user_journeys`, `journey_events`, `integration_outbox` |
+| Admin only | `news_admins` y operaciones editoriales/de alertas/base de conocimiento |
 
-## Proceso seguro de cambios de base de datos
+Las tablas privadas tienen RLS y no otorgan lectura a `anon` ni a `authenticated`. Las funciones SECURITY DEFINER relevantes tienen `search_path=''` y ejecución limitada a `service_role`.
 
-`desarrollo -> CI -> Supabase local -> tests RLS -> staging -> validación -> aprobación -> producción`
+## CI
 
-Database changes must never move directly from new code to production. A remote migration is permitted only after the project reference, name and URL unequivocally identify a development or staging environment.
-
-## Environments
-
-The application reads `NEXT_PUBLIC_APP_ENV` explicitly. Only the value `staging` renders the visible `Entorno de prueba · STAGING` banner. Preview deployments must use credentials belonging to the isolated staging Supabase project; production credentials must be scoped exclusively to Vercel Production. See `docs/ENVIRONMENTS.md` for the complete deployment contract.
-
-## Staging target
-
-The authorized staging target is `coopsar-staging` (`wwvqlbycwzxvjnexklwg`, `sa-east-1`). Its schema is repository-derived and its only seed content is idempotent synthetic data from `supabase/seed.sql`. Staging credentials must remain distinct from Production and server credentials remain server-only.
-
-## Operational content transition
-
-The additive schema already defines `services`, `help_articles`, `faqs`, `internet_plans`, `coverage_zones` and `service_alerts`. These are intended to become the server-side source of truth for COOPIA and the public UI. The current `lib/coopsar-data.ts` data remains a constrained compatibility fallback until it is loaded and validated on an isolated staging project; it must not be treated as confirmed commercial information. The detailed classification is in `docs/DATA_SOURCE_AUDIT.md`.
-
-## COOPIA action layer
-
-The reusable write path is `intent -> typed tool -> structured result -> trusted form configuration -> explicit confirmation -> server route -> service_role -> service_requests -> journey event -> follow-up`. React components never execute SQL and cannot choose arbitrary fields or request states. All supported request types share one private table and one API contract; type-specific payloads are strict Zod objects.
+`quality` ejecuta instalación limpia, typecheck, lint, tests y build. `supabase-tests` inicia un stack efímero, reconstruye las migraciones, ejecuta pgTAP/RLS y `db lint`. Ninguno usa credenciales remotas o productivas.
