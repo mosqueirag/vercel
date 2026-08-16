@@ -5,6 +5,7 @@ import { createSupabaseAdmin } from "../../../lib/supabase";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { consumeRateLimit } from "../../../lib/security/rate-limit";
+import { selectCoverage } from "../../../lib/coverage-results";
 
 const schema = z.object({
   street: z.string().trim().min(3).max(120),
@@ -46,10 +47,10 @@ export async function POST(request: NextRequest) {
   const rows = (data ?? []) as CoverageRow[];
   if (!rows.length) { if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: "unknown" }); return Response.json({ coverageStatus: "unknown", technology: null, commercialAvailability: false, plans: [], nextAction: "fiber_waitlist", message: "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial." }); }
 
-  const nearestDistance = Math.min(...rows.map((row) => Math.abs(row.street_number - parsed.data.number)));
-  const nearest = rows.filter((row) => Math.abs(row.street_number - parsed.data.number) === nearestDistance);
-  const exact = nearestDistance === 0;
-  const coverageStatus = exact ? nearest[0].coverage_status : "nearby";
+  const selection = selectCoverage(rows, parsed.data.number);
+  const nearestDistance = selection.distance!;
+  const nearest = selection.nearest;
+  const coverageStatus = selection.status;
   const technology = nearest[0]?.technology ?? null;
   const { data: publishedPlans } = await supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency").eq("status", "published").lte("published_at", new Date().toISOString());
   const plans = ((publishedPlans ?? []) as PlanRow[]).filter((plan) => plan.name === nearest[0]?.plan_name || (plan.technology && plan.technology === technology));

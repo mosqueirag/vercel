@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -31,6 +31,9 @@ insert into public.internet_plans (slug, name, audience, status, published_at) v
 insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
   ('10000000-0000-0000-0000-000000000001', 'Zona pública test', 'available', 'published', now()),
   ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
+insert into public.public_contact_channels (service, channel_type, label, value, public_value, purpose, status, published_at) values
+  ('internet', 'whatsapp', 'Contacto público test', '5490000000001', 'Canal público test', 'support', 'published', now()),
+  ('internet', 'phone', 'Contacto borrador test', '2974000000', 'Canal borrador test', 'support', 'draft', null);
 
 set local role anon;
 select is((select count(*)::integer from public.services where slug like 'pgtap-%'), 1, 'anon reads only published services');
@@ -40,6 +43,7 @@ select is((select count(*)::integer from public.help_articles where slug like '%
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
 select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
+select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 1, 'anon reads only published public contacts');
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',

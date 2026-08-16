@@ -1,0 +1,61 @@
+import { createSupabaseAdmin } from "../supabase";
+
+export type PublicInternetPlan = {
+  id: string; slug: string; name: string; description: string | null; audience: string;
+  technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null;
+  price_amount: number | null; currency: string | null; installation_price: number | null;
+  installation_notes: string | null; benefits: string[]; conditions: string | null;
+};
+
+export type PublicContact = { id: string; service: string; channelType: string; label: string; value: string; purpose: string };
+
+const now = () => new Date().toISOString();
+
+export async function getPublishedInternetPlans(): Promise<PublicInternetPlan[]> {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("internet_plans")
+    .select("id,slug,name,description,audience,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,installation_price,installation_notes,benefits,conditions")
+    .eq("status", "published").lte("published_at", now()).order("sort_order");
+  if (error) { console.error("Published plans query failed", error.code); return []; }
+  return (data ?? []).map((plan) => ({ ...plan, benefits: Array.isArray(plan.benefits) ? plan.benefits.filter((item): item is string => typeof item === "string") : [] }));
+}
+
+export async function getPublicContacts(service?: string): Promise<PublicContact[]> {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  let query = supabase.from("public_contact_channels").select("id,service,channel_type,label,public_value,purpose").eq("status", "published").lte("published_at", now()).order("sort_order");
+  if (service) query = query.eq("service", service);
+  const { data, error } = await query;
+  if (error) { console.error("Public contacts query failed", error.code); return []; }
+  return (data ?? []).map((contact) => ({ id: contact.id, service: contact.service, channelType: contact.channel_type, label: contact.label, value: contact.public_value, purpose: contact.purpose }));
+}
+
+export async function getPublicContact(service: string, purpose?: string) {
+  const contacts = await getPublicContacts(service);
+  return contacts.find((contact) => !purpose || contact.purpose === purpose) ?? null;
+}
+
+export async function searchPublishedKnowledge(query: string) {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const term = `%${query.replace(/[%_]/g, "")} %`.replace(" %", "%");
+  const [faqs, articles, services] = await Promise.all([
+    supabase.from("faqs").select("question,answer,category").eq("status", "published").lte("published_at", now()).or(`question.ilike.${term},answer.ilike.${term}`).limit(5),
+    supabase.from("help_articles").select("title,summary,content,category").eq("status", "published").lte("published_at", now()).or(`title.ilike.${term},summary.ilike.${term},content.ilike.${term}`).limit(5),
+    supabase.from("services").select("name,description").eq("status", "published").or(`name.ilike.${term},description.ilike.${term}`).limit(5),
+  ]);
+  if (faqs.error || articles.error || services.error) { console.error("Published knowledge query failed"); return []; }
+  return [
+    ...(faqs.data ?? []).map((item) => `${item.question}\n${item.answer}`),
+    ...(articles.data ?? []).map((item) => `${item.title}\n${item.summary ?? item.content}`),
+    ...(services.data ?? []).map((item) => `${item.name}\n${item.description}`),
+  ];
+}
+
+export async function getAssistantKnowledge() {
+  const [plans, contacts, knowledge] = await Promise.all([getPublishedInternetPlans(), getPublicContacts(), searchPublishedKnowledge("COOPSAR")]);
+  const planLines = plans.map((plan) => `Plan publicado: ${plan.name}. Tecnología: ${plan.technology ?? "no publicada"}. Velocidad: ${plan.speed_down_mbps ?? "no publicada"}. Precio: ${plan.price_amount === null ? "no publicado" : `${plan.currency ?? ""} ${plan.price_amount}`}.`).join("\n");
+  const contactLines = contacts.map((contact) => `${contact.label}: ${contact.value}.`).join("\n");
+  return ["Usá solo los datos publicados a continuación. Si no hay información, indicá que no está publicada y ofrecé reintentar.", contactLines, planLines, knowledge.join("\n")].filter(Boolean).join("\n");
+}

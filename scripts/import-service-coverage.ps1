@@ -1,6 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][string]$WorkbookPath,
   [string]$SourceUpdatedAt = (Get-Date -Format "yyyy-MM-dd"),
+  [ValidateSet('manual_admin','csv_import','network_export','verified_internal')][string]$Source = 'csv_import',
   [switch]$DryRun,
   [switch]$AsJson,
   [int]$JsonOffset = 0,
@@ -45,13 +46,15 @@ try {
   $command = $connection.CreateCommand()
   $command.CommandText = 'SELECT [CATEGORIA], [DIRECCION] FROM [internet$]'
   $reader = $command.ExecuteReader()
-  $batch = [Collections.Generic.List[object]]::new(); $imported=0; $skipped=0
+  $batch = [Collections.Generic.List[object]]::new(); $seen = [Collections.Generic.HashSet[string]]::new(); $imported=0; $skipped=0; $duplicates=0
   while ($reader.Read()) {
     $category=[string]$reader['CATEGORIA']; $address=[string]$reader['DIRECCION']
     $parsed=Parse-Address $address
     if (-not $parsed -or -not $category) { $skipped++; continue }
     $details=Category-Details $category
-    $row = @{street_normalized=$parsed.street_normalized;street_number=$parsed.street_number;plan_name=$category.Trim();technology=$details.technology;speed_down_mbps=$details.speed_down_mbps;source_updated_at=$SourceUpdatedAt}
+    $key = "$($parsed.street_normalized)|$($parsed.street_number)|$($category.Trim())"
+    if (-not $seen.Add($key)) { $duplicates++; continue }
+    $row = @{street_normalized=$parsed.street_normalized;street_number=$parsed.street_number;plan_name=$category.Trim();technology=$details.technology;speed_down_mbps=$details.speed_down_mbps;coverage_status='available';source=$Source;verified_at="$SourceUpdatedAt`T00:00:00Z";source_updated_at=$SourceUpdatedAt}
     $batch.Add($row)
     if ($AsJson) { $jsonRows.Add($row) }
     if ($batch.Count -ge 250) {
@@ -72,7 +75,7 @@ try {
   if ($AsJson) { Write-Output ($jsonRows | Select-Object -Skip $JsonOffset -First $JsonLimit | ConvertTo-Json -Depth 5 -Compress) }
   else {
     $mode = if ($DryRun) { "Validación" } else { "Importación" }
-    Write-Host "$mode finalizada. Registros procesados: $imported. Filas omitidas por formato: $skipped."
+    Write-Host "$mode finalizada. Registros procesados: $imported. Filas omitidas por formato: $skipped. Duplicados omitidos: $duplicates. Fuente: $Source."
   }
 } finally {
   if ($reader) { $reader.Dispose() }
