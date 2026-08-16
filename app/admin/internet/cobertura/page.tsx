@@ -5,7 +5,7 @@ import { FormEvent, useState } from "react";
 
 type CoverageStatus = "available" | "nearby" | "planned" | "unavailable" | "unknown";
 type Source = "manual_admin" | "csv_import" | "network_export" | "verified_internal";
-type Row = { id: number; street_normalized: string; street_number: number; plan_name: string; technology: string; coverage_status: CoverageStatus; source: Source; verified_at: string | null };
+type Row = { id: number; street_normalized: string; street_number: number; plan_name: string | null; technology: string; coverage_status: CoverageStatus; source: Source; verified_at: string | null };
 const statuses: CoverageStatus[] = ["available", "nearby", "planned", "unavailable", "unknown"];
 const sources: Source[] = ["manual_admin", "csv_import", "network_export", "verified_internal"];
 

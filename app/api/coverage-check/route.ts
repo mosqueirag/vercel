@@ -14,7 +14,7 @@ const schema = z.object({
   sessionId: z.string().refine(isSessionId).optional(),
 }).refine((value) => Boolean(value.journeyId) === Boolean(value.sessionId));
 
-type CoverageRow = { street_number: number; plan_name: string; technology: string; speed_down_mbps: number | null; coverage_status: "available" | "nearby" | "planned" | "unavailable" | "unknown" };
+type CoverageRow = { street_number: number; plan_name: string | null; technology: string; speed_down_mbps: number | null; coverage_status: "available" | "nearby" | "planned" | "unavailable" | "unknown" };
 type PlanRow = { id: string; name: string; slug: string; technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null; price_amount: number | null; currency: string | null };
 
 export async function POST(request: NextRequest) {

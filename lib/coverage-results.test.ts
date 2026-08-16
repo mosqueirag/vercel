@@ -8,4 +8,6 @@ describe("coverage selection", () => {
   it("never upgrades a nearby record to available", () => expect(selectCoverage([row(100, "available")], 110).status).toBe("nearby"));
   it.each(["planned", "unavailable", "unknown"] as const)("keeps exact %s", (status) => expect(selectCoverage([row(100, status)], 100).status).toBe(status));
   it("is deterministic for equidistant rows", () => expect(selectCoverage([row(102, "available"), row(98, "unavailable")], 100).nearest[0].street_number).toBe(98));
+  it("keeps an exact available record with no plan name", () => expect(selectCoverage([{ ...row(100, "available"), plan_name: null }], 100).status).toBe("available"));
+  it("sorts equal-distance null plans deterministically", () => expect(selectCoverage([{ ...row(102, "available"), plan_name: null }, { ...row(98, "available"), plan_name: null }], 100).nearest[0].street_number).toBe(98));
 });
