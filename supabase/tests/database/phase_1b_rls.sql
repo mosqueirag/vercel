@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(27);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -28,6 +28,8 @@ insert into public.faqs (question, answer, category, status, published_at) value
 insert into public.internet_plans (slug, name, audience, status, published_at) values
   ('plan-publico-test', 'Plan público', 'home', 'published', now()),
   ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null);
+insert into public.internet_plans (slug, name, audience, status)
+values ('plan-incompleto-test', 'Plan incompleto', null, 'draft');
 insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
   ('10000000-0000-0000-0000-000000000001', 'Zona pública test', 'available', 'published', now()),
   ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
@@ -42,6 +44,7 @@ select is((select count(*)::integer from public.news_articles where slug like '%
 select is((select count(*)::integer from public.help_articles where slug like '%-test'), 1, 'anon reads only published help articles');
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
+select is((select audience from public.internet_plans where slug = 'plan-incompleto-test'), null, 'draft plan may have no confirmed audience');
 select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
 select throws_ok(
   $$ select public_value, value, updated_by_email from public.public_contact_channels $$,
@@ -75,6 +78,12 @@ select throws_ok(
 
 reset role;
 set local role service_role;
+select throws_ok(
+  $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
+  '23514',
+  null,
+  'published plan requires a confirmed audience'
+);
 select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 2, 'server role can read public and draft contacts through the DAL backend');
 select lives_ok(
   $$ insert into public.internet_requests
