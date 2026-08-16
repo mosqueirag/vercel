@@ -1,5 +1,8 @@
-node_modules
-.next
+.next/
+node_modules/
+*.tsbuildinfo
 .env*
+!.env.example
+*.log
+
 .vercel
-npm-debug.log*

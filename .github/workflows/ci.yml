@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+
+  supabase-tests:
+    name: supabase-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Start disposable Supabase
+        run: npx --yes supabase@2.114.0 start
+      - name: Rebuild schema from migrations
+        run: npx --yes supabase@2.114.0 db reset
+      - name: Run pgTAP and RLS tests
+        run: npx --yes supabase@2.114.0 test db
+      - name: Lint database schema
+        run: npx --yes supabase@2.114.0 db lint
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx --yes supabase@2.114.0 stop --no-backup

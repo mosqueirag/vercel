@@ -1,5 +1,44 @@
-"use client";
-import Link from "next/link";import{useState}from"react";import{Contact,Footer,Header,NewsCards}from"./ui";
-const quick=[["▣","Pagar mi factura","/facturas-pagos"],["⌁","Oficina virtual","https://www.cooponlineweb.com.ar/SARMIENTO/Login"],["⚡","Falta de energía","/energia"],["◉","Internet y telefonía","/internet-telefonia"],["↻","Débito automático","/facturas-pagos"],["＋","Nuevo suministro","/tramites"]];
-const answers:Record<string,string>={"Quiero pagar mi factura":"Podés consultar y pagar tus facturas desde la Oficina Virtual. También están disponibles Mercado Pago, Red Link, Pago Mis Cuentas, Pago Fácil y débito automático.","Necesito cambiar la titularidad":"Necesitás acreditar identidad, domicilio y vínculo con el inmueble. Consultá la documentación exacta por WhatsApp.","Quiero solicitar un nuevo servicio":"Reuní la documentación del titular y del inmueble. COOPSAR verificará la factibilidad técnica.","Estoy sin energía o internet":"Energía: 297 436-4961. Internet y Telefonía: 297 464-1110."};
-export default function Home(){const[msg,setMsg]=useState("¡Hola! Soy COOPIA. Elegí una consulta frecuente y te voy a orientar.");return <main><Header/><section className="hero"><div><span className="tag">TU COOPERATIVA DIGITAL</span><h1>Todos tus trámites,<br/><em>con ayuda de IA.</em></h1><p>Contale a COOPIA qué necesitás. Te orientará paso a paso y te llevará al canal correcto.</p><div className="steps"><b>01 Preguntá</b><b>02 Orientate</b><b>03 Continuá online</b></div></div><div className="chat"><div className="chatTitle"><i>✦</i><span><small>COOPIA · ASISTENTE IA</small><strong>¿Qué trámite necesitás realizar?</strong></span></div><div className="suggest">{Object.keys(answers).map(q=><button key={q} onClick={()=>setMsg(answers[q])}>{q}<b>→</b></button>)}</div><p className="answer">{msg}</p><a href="https://wa.me/5492975376656">Hablar con un operador →</a><small>No compartas contraseñas ni datos bancarios.</small></div></section><section className="notice"><b>Información de servicio</b><span>Consultá cortes programados y novedades operativas.</span><Link href="/estado-servicios">Ver estado →</Link></section><section className="section"><span className="tag">GESTIONES ONLINE</span><h2>Accesos rápidos</h2><div className="quick">{quick.map((q,i)=><article key={q[1]}><span>{q[0]}</span><small>0{i+1}</small><h3>{q[1]}</h3><p>Resolvé esta gestión de forma simple y segura.</p><Link href={q[2]}>Comenzar ↗</Link></article>)}</div></section><section className="digital"><div><span className="tag">TU COOPERATIVA DIGITAL</span><h2>Tu oficina,<br/>abierta las 24 horas.</h2><p>Consultá facturas, descargá comprobantes y realizá trámites de manera segura.</p><a href="https://www.cooponlineweb.com.ar/SARMIENTO/Login">Ingresar ahora →</a></div><div className="phone"><b>COOPSAR</b><h3>Mis servicios</h3><button>Ingresar a Oficina Virtual</button><p>⚡ Energía <b>Consultar</b></p><p>◉ Internet <b>Consultar</b></p></div></section><section className="section"><span className="tag">ACTUALIDAD</span><h2>Noticias de COOPSAR</h2><NewsCards/></section><Contact/><Footer/></main>}
+import Image from "next/image";
+import Link from "next/link";
+import { getPublishedNews } from "../lib/news";
+import { AssistantCenter } from "./components/assistant-center";
+import { HomeAdaptivePanel } from "./components/home-adaptive-panel";
+import { InternetCenter } from "./components/internet-center";
+import { SelfService, ServiceStatusPanel } from "./components/operations";
+import { Contact, Footer, Header, NewsCards } from "./ui";
+import { getPublicServiceStatuses } from "../lib/tools/service-status";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const news = await getPublishedNews(3);
+  const statuses = await getPublicServiceStatuses();
+  return <main>
+    <Header />
+    <AssistantCenter />
+    <HomeAdaptivePanel />
+    <InternetCenter />
+    <SelfService />
+    <ServiceStatusPanel services={statuses} />
+    <section className="efficient-energy" aria-labelledby="efficient-energy-title">
+      <div className="efficient-energy-image">
+        <Image src="/images/coopsar-energy.png" alt="Equipo de COOPSAR trabajando en la red eléctrica de Sarmiento" fill sizes="(max-width: 800px) 100vw, 1400px" />
+        <div className="efficient-energy-shade" />
+        <h2 id="efficient-energy-title">Pequeños cambios<br />hacen una <strong>gran<br />diferencia</strong></h2>
+        <article>
+          <span className="eyebrow">Consumo eficiente</span>
+          <h3>Cuidá la energía.<br />Conocé cuánto consumís.</h3>
+          <p>Usar la energía de manera responsable empieza por entender nuestros hábitos. Identificá qué artefactos demandan más y encontrá oportunidades concretas para ahorrar.</p>
+          <p>Con el simulador de COOPSAR podés estimar el consumo mensual de tu hogar en kWh, comparar categorías y tomar mejores decisiones.</p>
+          <div><Link href="/simulador-energia">Simular consumo →</Link><Link href="/energia">Ver consejos</Link></div>
+        </article>
+      </div>
+    </section>
+    <section className="section news-section">
+      <div className="section-heading"><div><span className="eyebrow">Noticias y comunicados</span><h2>Información de COOPSAR</h2></div><Link className="text-link" href="/noticias">Ver todas →</Link></div>
+      <NewsCards items={news} />
+    </section>
+    <Contact />
+    <Footer />
+  </main>;
+}

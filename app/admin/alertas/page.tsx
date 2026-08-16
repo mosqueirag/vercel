@@ -1,0 +1,2 @@
+import { Brand } from "../../ui";
+export default function AlertsAdmin() { return <main><header className="site-header"><Brand /><b>Administración</b></header><section className="admin"><span className="eyebrow">Estado de servicios</span><h1>Alertas operativas</h1><p>La estructura de datos y permisos está preparada. La publicación quedará disponible al aplicar la migración de Supabase.</p></section></main>; }

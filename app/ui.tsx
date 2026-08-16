@@ -1,10 +1,99 @@
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
-export const news=[
- {slug:"mantenimiento-infraestructura-electrica",category:"ENERGÍA",date:"1 JUL 2026",title:"Mantenimiento y mejoras en la infraestructura eléctrica",excerpt:"Continúan los trabajos preventivos y las mejoras de capacidad en distintos sectores de Sarmiento.",body:["COOPSAR continúa ejecutando tareas preventivas y mejoras sobre la red de distribución eléctrica.","Los trabajos permiten renovar componentes, mejorar la capacidad de transformación y reforzar la calidad del servicio.","Cuando una intervención requiera interrumpir el suministro, la información oficial indicará fecha, horario y zonas alcanzadas."]},
- {slug:"fibra-optica-nuevas-zonas",category:"FIBRA ÓPTICA",date:"9 JUL 2026",title:"La fibra óptica continúa llegando a nuevas zonas",excerpt:"La red FTTH de COOPSAR sigue ampliándose para ofrecer mayor velocidad, estabilidad y capacidad.",body:["La expansión de la fibra óptica representa una inversión estratégica para Sarmiento.","La tecnología FTTH lleva la fibra directamente hasta el hogar o comercio.","La contratación está sujeta a disponibilidad técnica."]},
- {slug:"servicio-solidario-sepelios",category:"SEPELIO",date:"13 JUN 2026",title:"El Servicio Solidario de Sepelios acompaña a las familias",excerpt:"Un servicio cooperativo creado para brindar asistencia y contención.",body:["El Servicio Solidario forma parte del acompañamiento comunitario de COOPSAR.","Es importante mantener actualizada la planilla del grupo familiar.","Guardia: 297 624-1614 / 297 624-1615."]}
-];
-export function Header(){return <header><Link className="logo" href="/"><span>COOP</span>SAR<small>SERVICIOS PÚBLICOS</small></Link><nav><Link href="/energia">Energía</Link><Link href="/internet-telefonia">Internet y teléfono</Link><Link href="/fibra-optica">Fibra óptica</Link><Link href="/sepelio">Sepelio</Link><Link href="/noticias">Noticias</Link></nav><a className="portal" href="https://www.cooponlineweb.com.ar/SARMIENTO/Login" target="_blank">Oficina virtual →</a></header>}
-export function NewsCards(){return <div className="news">{news.map((n,i)=><article className={i===0?"featured":""} key={n.slug}><div className="visual"><b>{n.category}</b></div><div><small>{n.date} · {n.category}</small><h3>{n.title}</h3><p>{n.excerpt}</p><Link href={"/noticias/"+n.slug}>Leer noticia →</Link></div></article>)}</div>}
-export function Contact(){return <section className="contact"><div><small>¿NECESITÁS AYUDA?</small><h2>Estamos para acompañarte.</h2></div><a href="https://wa.me/5492975376656">◉ WhatsApp<br/><small>+54 9 2975 37-6656</small></a><a href="tel:+542974364961">⚡ Guardia de Energía<br/><small>297 436-4961</small></a></section>}
-export function Footer(){return <footer><div><b>COOPSAR</b><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><Link href="/energia">Energía</Link><Link href="/internet-telefonia">Internet y Telefonía</Link><Link href="/fibra-optica">Fibra óptica</Link><Link href="/sepelio">Sepelio</Link></div><div><Link href="/institucional">Institucional</Link><Link href="/estado-servicios">Estado de servicios</Link><Link href="/noticias">Noticias</Link><Link href="/contacto">Contacto</Link></div><div><p>Lunes a viernes · 8:00 a 15:00<br/>Roca 663 · Sarmiento, Chubut</p></div><small>© 2026 COOPSAR</small></footer>}
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { CONTACT } from "../lib/coopsar-data";
+import type { NewsArticle } from "../lib/news";
+
+const menuGroups = [
+  { id: "servicios", label: "Servicios", description: "Servicios esenciales para hogares, comercios y empresas.", image: "/images/coopsar-energy.png", links: [["Energía eléctrica", "/energia"], ["Simulador de consumo", "/simulador-energia"], ["Internet", "/internet"], ["Fibra óptica", "/fibra-optica"], ["Telefonía", "/telefonia"], ["Sepelio", "/sepelio"]] },
+  { id: "gestiones", label: "Trámites y ayuda", description: "Resolvé gestiones y encontrá información operativa.", image: "/images/coopsar-service-office.png", links: [["Todos los trámites", "/tramites"], ["Medios de pago", "/medios-de-pago"], ["Cortes programados", "/cortes-programados"], ["Centro de ayuda", "/centro-de-ayuda"]] },
+  { id: "coopsar", label: "COOPSAR", description: "Conocé la cooperativa y nuestros canales de atención.", image: "/images/sarmiento-community.png", links: [["Institucional", "/institucional"], ["Contacto", "/contacto"], ["Privacidad", "/privacidad"]] },
+] as const;
+
+export function Brand() {
+  return <Link className="brand" href="/" aria-label="COOPSAR, inicio"><Image className="brand-logo" src="/logo-coopsar.svg" alt="COOPSAR" width={337} height={60} priority /></Link>;
+}
+
+export function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = usePathname();
+  const selectedGroup = menuGroups.find((group) => group.id === activeMenu);
+  const groupIsActive = (group: (typeof menuGroups)[number]) => group.links.some(([, href]) => pathname.startsWith(href));
+
+  return <>
+    <aside className="institutional-strip"><strong>COOPSAR INFORMA</strong><span>Gestioná tus servicios, facturas y consultas desde nuestros canales digitales.</span><Link href="/#asistente">Consultar ahora →</Link></aside>
+    <div className="header-shell" onMouseLeave={() => setActiveMenu(null)} onKeyDown={(event) => { if (event.key === "Escape") setActiveMenu(null); }}>
+      <header className="site-header">
+        <Brand />
+        <nav className="desktop-nav" aria-label="Navegación principal">
+          <Link href="/#asistente">Asistente</Link>
+          {menuGroups.slice(0, 2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
+          <Link className={pathname.startsWith("/noticias") ? "active" : ""} href="/noticias">Noticias</Link>
+          {menuGroups.slice(2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
+          <button type="button" className="site-search-trigger" onClick={() => { setActiveMenu(null); setSearchOpen(true); }} aria-label="Buscar en todo el sitio"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg></button>
+        </nav>
+        <a className="button button-dark header-action" href={CONTACT.virtualOffice} target="_blank" rel="noreferrer">Oficina virtual <span>→</span></a>
+        <button className="menu-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label="Abrir menú"><i /><i /><i /></button>
+      </header>
+      {selectedGroup && <>
+        <div className="mega-backdrop" onClick={() => setActiveMenu(null)} />
+        <section className="mega-menu" id={`submenu-${selectedGroup.id}`} aria-label={selectedGroup.label}>
+          <div className="mega-intro"><span className="mega-icon">{selectedGroup.label.charAt(0)}</span><h2>{selectedGroup.label}</h2><p>{selectedGroup.description}</p><Link href={selectedGroup.links[0][1]} onClick={() => setActiveMenu(null)}>Ver sección →</Link></div>
+          <nav aria-label={`Opciones de ${selectedGroup.label}`}>{selectedGroup.links.map(([label, href]) => <Link key={href} href={href} onClick={() => setActiveMenu(null)}>{label}<span>↗</span></Link>)}</nav>
+          <Link className="mega-promo" href={selectedGroup.links[0][1]} onClick={() => setActiveMenu(null)}><Image src={selectedGroup.image} alt="" fill sizes="260px" /><span><small>Acceso destacado</small><strong>{selectedGroup.links[0][0]}</strong><b>Explorar →</b></span></Link>
+        </section>
+      </>}
+    </div>
+    {mobileOpen && <div className="menu-backdrop" onClick={() => setMobileOpen(false)} />}
+    <nav id="mobile-menu" className={mobileOpen ? "mobile-nav open" : "mobile-nav"} aria-label="Navegación móvil">
+      <div><Brand /><button onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">×</button></div>
+      <Link href="/" onClick={() => setMobileOpen(false)}>Inicio <span>→</span></Link>
+      <Link href="/#asistente" onClick={() => setMobileOpen(false)}>Asistente <span>→</span></Link>
+      {menuGroups.map((group) => <details key={group.id}><summary>{group.label}<span>＋</span></summary>{group.links.map(([label, href]) => <Link key={href} href={href} onClick={() => setMobileOpen(false)}>{label}<span>→</span></Link>)}</details>)}
+      <Link href="/noticias" onClick={() => setMobileOpen(false)}>Noticias <span>→</span></Link>
+      <button className="mobile-search-trigger" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}>Buscar en el sitio <span>⌕</span></button>
+      <a className="button button-dark" href={CONTACT.virtualOffice}>Oficina Virtual →</a>
+    </nav>
+    {searchOpen && <SiteSearch onClose={() => setSearchOpen(false)} />}
+  </>;
+}
+
+type SearchResult = { title: string; description: string; href: string; type: string };
+
+function SiteSearch({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.focus(); const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, [onClose]);
+  useEffect(() => {
+    if (query.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      try { const response = await fetch(`/api/site-search?q=${encodeURIComponent(query)}`, { signal: controller.signal }); const data = await response.json() as { results: SearchResult[] }; setResults(data.results); }
+      catch (error) { if (!(error instanceof DOMException && error.name === "AbortError")) setResults([]); }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    }, 220);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [query]);
+
+  return <div className="site-search-overlay" role="dialog" aria-modal="true" aria-labelledby="site-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="site-search-panel"><header><div><span className="eyebrow">Buscador integral</span><h2 id="site-search-title">¿Qué necesitás encontrar?</h2></div><button onClick={onClose} aria-label="Cerrar buscador">×</button></header><label><span aria-hidden="true">⌕</span><input ref={inputRef} value={query} onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length < 2) { setResults([]); setLoading(false); } }} placeholder="Buscá servicios, trámites, ayuda o noticias…" maxLength={80} /><kbd>ESC</kbd></label><div className="site-search-results" aria-live="polite">{query.trim().length < 2 ? <div className="site-search-empty"><strong>Buscá en todo COOPSAR</strong><p>Escribí al menos dos letras. Por ejemplo: factura, fibra, corte o titularidad.</p></div> : loading ? <div className="site-search-empty"><strong>Buscando…</strong></div> : results.length ? results.map((result) => <Link key={result.href} href={result.href} onClick={onClose}><small>{result.type}</small><strong>{result.title}</strong><p>{result.description}</p><span>→</span></Link>) : <div className="site-search-empty"><strong>No encontramos resultados</strong><p>Probá con otras palabras o consultale a COOPIA.</p><Link href="/#asistente" onClick={onClose}>Ir al asistente →</Link></div>}</div></section></div>;
+}
+
+export function NewsCards({ items }: { items: NewsArticle[] }) {
+  return <div className="featured-news-grid">{items.map((item, index) => <article key={item.id}>{item.imageUrl ? <div className="news-card-image"><Image src={item.imageUrl} alt="" fill sizes="(max-width: 680px) 100vw, 33vw" priority={index === 0} /></div> : <div className="news-card-image news-card-fallback" aria-hidden="true"><span>COOPSAR</span><small>{item.category}</small></div>}<div className="featured-news-copy"><small>{item.date} · {item.category}</small><h3>{item.title}</h3><p>{item.excerpt}</p><Link href={`/noticias/${item.slug}`}>Leer noticia <span>↗</span></Link></div></article>)}</div>;
+}
+
+export function Contact() {
+  return <section className="contact-band"><div><span className="eyebrow eyebrow-dark">Atención cercana</span><h2>Estamos para<br />acompañarte.</h2></div><a className="contact-item" href={`https://wa.me/${CONTACT.whatsapp}`}><span className="contact-icon">W</span><span><small>WhatsApp comercial</small><strong>{CONTACT.whatsappDisplay}</strong></span><b>↗</b></a><a className="contact-item" href="tel:+542974364961"><span className="contact-icon">24</span><span><small>Guardia de energía</small><strong>{CONTACT.energyGuard}</strong></span><b>↗</b></a></section>;
+}
+
+export function Footer() {
+  return <footer className="site-footer"><div className="footer-lead"><Brand /><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><b>Servicios</b><Link href="/energia">Energía</Link><Link href="/internet">Internet y fibra</Link><Link href="/telefonia">Telefonía</Link><Link href="/sepelio">Sepelio</Link></div><div><b>Ayuda</b><Link href="/centro-de-ayuda">Centro de ayuda</Link><Link href="/tramites">Trámites</Link><Link href="/cortes-programados">Estado de servicios</Link><Link href="/privacidad">Privacidad</Link></div><div><b>Atención</b><p>{CONTACT.hours}</p><p>{CONTACT.office}</p></div><div className="footer-bottom"><small>© 2026 COOPSAR</small><small>Servicios esenciales, compromiso local.</small></div></footer>;
+}
