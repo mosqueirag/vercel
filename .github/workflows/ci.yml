@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, platform-coopsar-ai]
+    branches: [main, platform-coopsar-ai, data-internet-fibra]
   push:
     branches: [main]
 
