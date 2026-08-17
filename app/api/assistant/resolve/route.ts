@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const detection = detectIntent(parsed.data.message);
   const context = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: parsed.data.page, intent: detection.intent, service: detection.service };
   const tool = await resolveAssistantTool(detection, context);
-  const result = resolveAssistantResult(detection, parsed.data.journeyId, tool);
+  const result = await resolveAssistantResult(detection, parsed.data.journeyId, tool);
   if (result.ui) await recordJourneyEvent({ ...context, eventType: "navigation_recommended", agent: "coopia", action: result.ui.type, result: detection.intent });
   return Response.json(result, { headers: { "Cache-Control": "no-store" } });
 }

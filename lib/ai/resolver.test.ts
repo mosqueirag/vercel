@@ -16,13 +16,13 @@ describe("resolveAssistantResult", () => {
     ["No tengo luz", "service_status"],
     ["Quiero cambiar la titularidad", "service_request_form"],
     ["Quiero hacer un reclamo", "service_request_form"],
-  ])("maps %s to approved UI %s", (message, ui) => {
-    expect(resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message)).ui?.type).toBe(ui);
+  ])("maps %s to approved UI %s", async (message, ui) => {
+    expect((await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).ui?.type).toBe(ui);
   });
 
-  it("returns the complete structured contract without exposing arbitrary UI", () => {
+  it("returns the complete structured contract without exposing arbitrary UI", async () => {
     const message = "Quiero pagar mi factura";
-    const result = resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message, { virtualOffice: "https://example.test" }));
+    const result = await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message, { virtualOffice: "https://example.test" }));
     expect(result).toMatchObject({
       intent: "pay_invoice",
       service: "billing",
@@ -36,13 +36,13 @@ describe("resolveAssistantResult", () => {
     expect(result.recommendedActions).toEqual(result.actions);
   });
 
-  it("marks write tools as confirmation-required", () => {
+  it("marks write tools as confirmation-required", async () => {
     const message = "Quiero hacer un reclamo";
-    const result = resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message));
+    const result = await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message));
     expect(result).toMatchObject({ requiresConfirmation: true, tool: { name: "createComplaint", kind: "write", status: "ready" } });
   });
-  it("selects a trusted request type for the UI", () => {
+  it("selects a trusted request type for the UI", async () => {
     const message = "Quiero una nueva conexión";
-    expect(resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).toMatchObject({ ui: { type: "service_request_form", data: { requestType: "new_supply" } }, requiresConfirmation: true });
+    expect(await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).toMatchObject({ ui: { type: "service_request_form", data: { requestType: "new_supply" } }, requiresConfirmation: true });
   });
 });

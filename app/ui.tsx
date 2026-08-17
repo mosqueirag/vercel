@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CONTACT } from "../lib/coopsar-data";
 import type { NewsArticle } from "../lib/news";
+import { usePublicContact } from "./components/public-contact-context";
 
 const menuGroups = [
   { id: "servicios", label: "Servicios", description: "Servicios esenciales para hogares, comercios y empresas.", image: "/images/coopsar-energy.png", links: [["Energía eléctrica", "/energia"], ["Simulador de consumo", "/simulador-energia"], ["Internet", "/internet"], ["Fibra óptica", "/fibra-optica"], ["Telefonía", "/telefonia"], ["Sepelio", "/sepelio"]] },
@@ -22,6 +23,8 @@ export function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
+  const officialVirtualOffice = usePublicContact("billing", "virtual_office")?.value;
+  const virtualOffice = officialVirtualOffice || CONTACT.virtualOffice;
   const selectedGroup = menuGroups.find((group) => group.id === activeMenu);
   const groupIsActive = (group: (typeof menuGroups)[number]) => group.links.some(([, href]) => pathname.startsWith(href));
 
@@ -37,7 +40,7 @@ export function Header() {
           {menuGroups.slice(2).map((group) => <button type="button" key={group.id} className={activeMenu === group.id || groupIsActive(group) ? "active" : ""} aria-expanded={activeMenu === group.id} aria-controls={`submenu-${group.id}`} onMouseEnter={() => setActiveMenu(group.id)} onClick={() => setActiveMenu(group.id)}>{group.label}<span>⌄</span></button>)}
           <button type="button" className="site-search-trigger" onClick={() => { setActiveMenu(null); setSearchOpen(true); }} aria-label="Buscar en todo el sitio"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg></button>
         </nav>
-        <a className="button button-dark header-action" href={CONTACT.virtualOffice} target="_blank" rel="noreferrer">Oficina virtual <span>→</span></a>
+        <a className="button button-dark header-action" href={virtualOffice} target="_blank" rel="noreferrer">Oficina virtual <span>→</span></a>
         <button className="menu-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label="Abrir menú"><i /><i /><i /></button>
       </header>
       {selectedGroup && <>
@@ -57,7 +60,7 @@ export function Header() {
       {menuGroups.map((group) => <details key={group.id}><summary>{group.label}<span>＋</span></summary>{group.links.map(([label, href]) => <Link key={href} href={href} onClick={() => setMobileOpen(false)}>{label}<span>→</span></Link>)}</details>)}
       <Link href="/noticias" onClick={() => setMobileOpen(false)}>Noticias <span>→</span></Link>
       <button className="mobile-search-trigger" onClick={() => { setMobileOpen(false); setSearchOpen(true); }}>Buscar en el sitio <span>⌕</span></button>
-      <a className="button button-dark" href={CONTACT.virtualOffice}>Oficina Virtual →</a>
+      <a className="button button-dark" href={virtualOffice}>Oficina Virtual →</a>
     </nav>
     {searchOpen && <SiteSearch onClose={() => setSearchOpen(false)} />}
   </>;
@@ -91,9 +94,15 @@ export function NewsCards({ items }: { items: NewsArticle[] }) {
 }
 
 export function Contact() {
-  return <section className="contact-band"><div><span className="eyebrow eyebrow-dark">Atención cercana</span><h2>Estamos para<br />acompañarte.</h2></div><a className="contact-item" href={`https://wa.me/${CONTACT.whatsapp}`}><span className="contact-icon">W</span><span><small>WhatsApp comercial</small><strong>{CONTACT.whatsappDisplay}</strong></span><b>↗</b></a><a className="contact-item" href="tel:+542974364961"><span className="contact-icon">24</span><span><small>Guardia de energía</small><strong>{CONTACT.energyGuard}</strong></span><b>↗</b></a></section>;
+  const officialWhatsApp = usePublicContact("general", "general_contact")?.value;
+  const officialEnergyGuard = usePublicContact("energy", "emergency")?.value;
+  const whatsapp = officialWhatsApp || CONTACT.whatsapp;
+  const energyGuard = officialEnergyGuard || CONTACT.energyGuard;
+  return <section className="contact-band"><div><span className="eyebrow eyebrow-dark">Atención cercana</span><h2>Estamos para<br />acompañarte.</h2></div><a className="contact-item" href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}><span className="contact-icon">W</span><span><small>WhatsApp comercial</small><strong>{officialWhatsApp || CONTACT.whatsappDisplay}</strong></span><b>↗</b></a><a className="contact-item" href={`tel:${energyGuard.replace(/[^\d+]/g, "")}`}><span className="contact-icon">24</span><span><small>Guardia de energía</small><strong>{energyGuard}</strong></span><b>↗</b></a></section>;
 }
 
 export function Footer() {
-  return <footer className="site-footer"><div className="footer-lead"><Brand /><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><b>Servicios</b><Link href="/energia">Energía</Link><Link href="/internet">Internet y fibra</Link><Link href="/telefonia">Telefonía</Link><Link href="/sepelio">Sepelio</Link></div><div><b>Ayuda</b><Link href="/centro-de-ayuda">Centro de ayuda</Link><Link href="/tramites">Trámites</Link><Link href="/cortes-programados">Estado de servicios</Link><Link href="/privacidad">Privacidad</Link></div><div><b>Atención</b><p>{CONTACT.hours}</p><p>{CONTACT.office}</p></div><div className="footer-bottom"><small>© 2026 COOPSAR</small><small>Servicios esenciales, compromiso local.</small></div></footer>;
+  const officeHours = usePublicContact("general", "office_hours")?.value;
+  const officeAddress = usePublicContact("general", "office_address")?.value;
+  return <footer className="site-footer"><div className="footer-lead"><Brand /><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><b>Servicios</b><Link href="/energia">Energía</Link><Link href="/internet">Internet y fibra</Link><Link href="/telefonia">Telefonía</Link><Link href="/sepelio">Sepelio</Link></div><div><b>Ayuda</b><Link href="/centro-de-ayuda">Centro de ayuda</Link><Link href="/tramites">Trámites</Link><Link href="/cortes-programados">Estado de servicios</Link><Link href="/privacidad">Privacidad</Link></div><div><b>Atención</b><p>{officeHours || "Horario de atención no publicado."}</p><p>{officeAddress || CONTACT.office}</p></div><div className="footer-bottom"><small>© 2026 COOPSAR</small><small>Servicios esenciales, compromiso local.</small></div></footer>;
 }
