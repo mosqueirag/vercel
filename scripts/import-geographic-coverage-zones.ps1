@@ -13,12 +13,17 @@ param(
 $ErrorActionPreference = 'Stop'
 $ExpectedSupabaseUrl = 'https://wwvqlbycwzxvjnexklwg.supabase.co'
 $AllowedLayers = @{ 'ZONA FIBRA OPTICA' = @('FTTH'); 'INTERNET ADSL' = @('ADSL'); 'REGIMIENTO' = @('ADSL'); 'URBANO' = @('ADSL', 'WIRELESS') }
+$ImporterUserAgent = 'COOPSAR-Geographic-Coverage-Importer/1.0'
 
 function Assert-Condition([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
 function Get-Sha256([string]$Value) { $sha = [Security.Cryptography.SHA256]::Create(); try { return 'sha256:' + (($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Value)) | ForEach-Object { $_.ToString('x2') }) -join '') } finally { $sha.Dispose() } }
+function New-SupabaseHeaders([string]$ApiKey) {
+  # sb_secret_* keys are API keys, not JWTs. They must never be sent as Bearer tokens.
+  @{ apikey = $ApiKey }
+}
 function Invoke-Supabase([string]$Method, [string]$Path, $Body = $null) {
-  $headers = @{ apikey = $script:ServiceKey; Authorization = "Bearer $script:ServiceKey" }
-  $params = @{ Method = $Method; Uri = "$script:SupabaseUrl/rest/v1/$Path"; Headers = $headers; ErrorAction = 'Stop' }
+  $headers = New-SupabaseHeaders $script:ServiceKey
+  $params = @{ Method = $Method; Uri = "$script:SupabaseUrl/rest/v1/$Path"; Headers = $headers; UserAgent = $ImporterUserAgent; ErrorAction = 'Stop' }
   if ($null -ne $Body) { $params.ContentType = 'application/json; charset=utf-8'; $params.Body = ($Body | ConvertTo-Json -Depth 30 -Compress) }
   Invoke-RestMethod @params
 }
@@ -52,7 +57,11 @@ function Test-PureFunctions {
   Test-Geometry $polygon
   Assert-Condition ((Get-Sha256 'stable') -eq (Get-Sha256 'stable')) 'Hashing must be deterministic.'
   $chunks = @(1000, 1000, 137); Assert-Condition (($chunks | Measure-Object -Sum).Sum -eq 2137) 'Synthetic pagination count failed.'
-  Write-Host 'SelfTest OK: geometry validation, approved technologies, deterministic hash and pagination.'
+  $headers = New-SupabaseHeaders 'test-secret-key'
+  Assert-Condition ($headers.ContainsKey('apikey')) 'A Supabase API key header is required.'
+  Assert-Condition (-not $headers.ContainsKey('Authorization')) 'Secret API keys must not be sent as Bearer tokens.'
+  Assert-Condition ($ImporterUserAgent -eq 'COOPSAR-Geographic-Coverage-Importer/1.0') 'A server-side User-Agent is required.'
+  Write-Host 'SelfTest OK: geometry validation, approved technologies, deterministic hash, pagination and secret-key headers.'
 }
 
 if ($SelfTest) { Test-PureFunctions; exit 0 }
