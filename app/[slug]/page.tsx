@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { servicePages } from "../../lib/service-pages";
+import { servicePages, withPublicContacts } from "../../lib/service-pages";
+import { getPublicContacts } from "../../lib/data/public-content";
 import { Contact, Footer, Header } from "../ui";
 
 const serviceImages: Record<string, { src: string; alt: string }> = {
@@ -21,5 +22,6 @@ const serviceImages: Record<string, { src: string; alt: string }> = {
 };
 
 export function generateStaticParams() { return Object.keys(servicePages).map((slug) => ({ slug })); }
+export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const page = servicePages[slug]; return page ? { title: page.title, description: page.intro } : {}; }
-export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const page = servicePages[slug]; if (!page) notFound(); const visual = serviceImages[slug]; return <main><Header /><section className="page-hero-shell"><Link className="page-back" href="/">← Volver al inicio</Link><div className="visual-hero">{visual && <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 800px) 100vw, 1400px" priority />}<div className="visual-hero-shade" /><div className="visual-hero-title"><span className="tag">{page.eyebrow}</span><h1>{page.title}</h1></div><div className="visual-hero-summary"><p>{page.intro}</p></div></div></section><section className="section cards">{page.items.map(([title, text, href]) => <article key={title}><h3>{title}</h3><p>{text}</p><Link className="text-link" href={href}>Continuar →</Link></article>)}</section><Contact /><Footer /></main>; }
+export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const template = servicePages[slug]; if (!template) notFound(); const page = withPublicContacts(template, await getPublicContacts()); const visual = serviceImages[slug]; return <main><Header /><section className="page-hero-shell"><Link className="page-back" href="/">← Volver al inicio</Link><div className="visual-hero">{visual && <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 800px) 100vw, 1400px" priority />}<div className="visual-hero-shade" /><div className="visual-hero-title"><span className="tag">{page.eyebrow}</span><h1>{page.title}</h1></div><div className="visual-hero-summary"><p>{page.intro}</p></div></div></section><section className="section cards">{page.items.map(([title, text, href]) => <article key={title}><h3>{title}</h3><p>{text}</p><Link className="text-link" href={href}>Continuar →</Link></article>)}</section><Contact /><Footer /></main>; }
