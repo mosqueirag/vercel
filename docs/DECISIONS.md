@@ -8,6 +8,7 @@
 - El outbox guarda tipo de evento y número de solicitud, no datos de contacto, y deja reintentos exponenciales para una futura integración autorizada.
 - Las tarjetas/constantes en `lib/coopsar-data.ts` son una compatibilidad limitada, no una fuente comercial confirmada. La migración se detalla en `AI_KNOWLEDGE.md`.
 - P2 de roles: la autorización de contenidos reutiliza `news_admins`/`requireNewsAdmin()`. En una fase posterior se reemplazará por roles explícitos como `platform_admin` y `content_admin`; mientras tanto, las rutas administrativas usan un cliente server-side y no hay grants directos para `authenticated`.
+- La bandeja comercial reutiliza `internet_requests` y sus estados existentes. No crea un CRM ni una tabla paralela de lista de espera: `fiber_waitlist` es un `request_type` privado. Las acciones de contacto sólo abren WhatsApp o email y nunca envían mensajes desde backend.
 
 - `public_contact_channels` es la fuente administrable de canales públicos. Los componentes cliente la consumen por `/api/public/contacts` y las rutas server-side mediante `lib/data/public-content.ts`; los valores de compatibilidad sólo aplican si falta el dato oficial. El horario del Footer no conserva el fallback histórico.
 - El Lote Oficial 1 se importa con dry-run y upsert idempotente, sin PII ni topología de red. La cobertura se identifica por `street_normalized + street_number + technology` y puede no tener un plan comercial confirmado.
