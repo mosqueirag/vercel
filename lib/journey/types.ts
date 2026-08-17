@@ -11,6 +11,7 @@ export const journeyEventTypes = [
   "news_opened", "payment_information_viewed", "human_handoff_requested",
   "whatsapp_opened", "journey_completed", "journey_abandoned", "navigation_recommended",
   "complaint_intent_detected", "complaint_route_resolved", "complaint_whatsapp_opened",
+  "commercial_inbox_viewed", "lead_viewed", "lead_contact_opened", "lead_status_changed", "fiber_demand_viewed",
   "navigation_executed", "contextual_component_rendered", "action_clicked", "form_started", "form_completed",
 ] as const;
 

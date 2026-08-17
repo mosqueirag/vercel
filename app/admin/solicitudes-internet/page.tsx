@@ -1,2 +1,5 @@
-import { Brand } from "../../ui";
-export default function InternetRequestsAdmin() { return <main><header className="site-header"><Brand /><b>Administración</b></header><section className="admin"><span className="eyebrow">Gestión comercial</span><h1>Solicitudes de internet</h1><p>Las solicitudes validadas aparecerán aquí cuando la migración y las variables privadas estén configuradas.</p></section></main>; }
+import { redirect } from "next/navigation";
+
+export default function InternetRequestsAdmin() {
+  redirect("/admin/comercial");
+}

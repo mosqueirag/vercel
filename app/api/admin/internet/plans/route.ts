@@ -1,11 +1,34 @@
 import { z } from "zod";
-import { requireNewsAdmin } from "../../../../../lib/admin-auth";
+import { isSameOrigin, requireNewsAdmin } from "../../../../../lib/admin-auth";
 
 const schema = z.object({ id: z.string().uuid().optional(), slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120), name: z.string().trim().min(2).max(120), description: z.string().trim().max(1000).nullable().optional(), audience: z.enum(["home", "business", "enterprise", "all"]).nullable(), technology: z.string().trim().max(100).nullable().optional(), speedDownMbps: z.number().int().positive().nullable().optional(), speedUpMbps: z.number().int().positive().nullable().optional(), priceAmount: z.number().nonnegative().nullable().optional(), currency: z.string().regex(/^[A-Z]{3}$/).nullable().optional(), installationPrice: z.number().nonnegative().nullable().optional(), installationNotes: z.string().trim().max(1000).nullable().optional(), benefits: z.array(z.string().trim().min(1).max(160)).max(20), conditions: z.string().trim().max(2000).nullable().optional(), status: z.enum(["draft", "published", "archived"]), sortOrder: z.number().int().nonnegative().default(0) }).refine((value) => (value.priceAmount === null) === (value.currency === null), { message: "currency" }).refine((value) => value.status !== "published" || value.audience !== null, { message: "audience" });
 
 const columns = "id,slug,name,description,audience,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,installation_price,installation_notes,benefits,conditions,status,sort_order,published_at,updated_at";
 const values = (data: z.infer<typeof schema>) => ({ slug: data.slug, name: data.name, description: data.description || null, audience: data.audience, technology: data.technology || null, speed_down_mbps: data.speedDownMbps ?? null, speed_up_mbps: data.speedUpMbps ?? null, price_amount: data.priceAmount ?? null, currency: data.currency ?? null, installation_price: data.installationPrice ?? null, installation_notes: data.installationNotes || null, benefits: data.benefits, conditions: data.conditions || null, status: data.status, sort_order: data.sortOrder, published_at: data.status === "published" ? new Date().toISOString() : null });
 
-export async function GET() { const session = await requireNewsAdmin(); if (!session) return Response.json({ error: "No autorizado." }, { status: 401 }); const { data, error } = await session.admin.from("internet_plans").select(columns).order("sort_order"); return error ? Response.json({ error: "No pudimos cargar los planes." }, { status: 503 }) : Response.json({ plans: data }); }
-export async function POST(request: Request) { const session = await requireNewsAdmin(); if (!session) return Response.json({ error: "No autorizado." }, { status: 401 }); const parsed = schema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 }); const { data, error } = await session.admin.from("internet_plans").insert(values(parsed.data)).select(columns).single(); return error ? Response.json({ error: "No pudimos guardar el plan." }, { status: 503 }) : Response.json({ plan: data }, { status: 201 }); }
-export async function PATCH(request: Request) { const session = await requireNewsAdmin(); if (!session) return Response.json({ error: "No autorizado." }, { status: 401 }); const parsed = schema.safeParse(await request.json().catch(() => null)); if (!parsed.success || !parsed.data.id) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 }); const { data, error } = await session.admin.from("internet_plans").update(values(parsed.data)).eq("id", parsed.data.id).select(columns).single(); return error ? Response.json({ error: "No pudimos actualizar el plan." }, { status: 503 }) : Response.json({ plan: data }); }
+export async function GET() {
+  const session = await requireNewsAdmin();
+  if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  const { data, error } = await session.admin.from("internet_plans").select(columns).order("sort_order");
+  return error ? Response.json({ error: "No pudimos cargar los planes." }, { status: 503 }) : Response.json({ plans: data });
+}
+
+export async function POST(request: Request) {
+  const session = await requireNewsAdmin();
+  if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 });
+  const { data, error } = await session.admin.from("internet_plans").insert(values(parsed.data)).select(columns).single();
+  return error ? Response.json({ error: "No pudimos guardar el plan." }, { status: 503 }) : Response.json({ plan: data }, { status: 201 });
+}
+
+export async function PATCH(request: Request) {
+  const session = await requireNewsAdmin();
+  if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success || !parsed.data.id) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 });
+  const { data, error } = await session.admin.from("internet_plans").update(values(parsed.data)).eq("id", parsed.data.id).select(columns).single();
+  return error ? Response.json({ error: "No pudimos actualizar el plan." }, { status: 503 }) : Response.json({ plan: data });
+}

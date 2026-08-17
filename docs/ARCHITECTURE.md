@@ -10,6 +10,7 @@ Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el 
 - **Noticias:** Google OAuth identifica al usuario, pero el acceso editorial exige además presencia en `news_admins`. Imágenes se cargan con URL firmada para administradores.
 - **Canales públicos:** `public_contact_channels` es la fuente oficial administrable. Las rutas server-side leen mediante `lib/data/public-content.ts`; los componentes cliente leen la proyección permitida de `/api/public/contacts`. Los fallbacks de compatibilidad no reemplazan un canal publicado.
 - **Reclamos:** el router `lib/complaints/router.ts` decide en `America/Argentina/Buenos_Aires` y recibe canales oficiales ya publicados. No crea `service_requests`: la interacción continúa en WhatsApp sin PII en el enlace ni en analytics.
+- **Bandeja comercial:** `/admin/comercial` usa Google OAuth + `news_admins` y una API server-side para leer `internet_requests`. Reutiliza `request_type='fiber_waitlist'`; los contactos se abren manualmente y la demanda de fibra se agrega sin PII.
 
 ## Datos y acceso
 

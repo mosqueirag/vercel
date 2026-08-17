@@ -15,3 +15,6 @@ PR #3 (`data-internet-fibra`) permanece en borrador contra `platform-coopsar-ai`
 ## Fase 3A — enrutamiento de reclamos
 
 COOPIA no mantiene tickets ni almacena reclamos. Detecta el servicio, resuelve de manera determinística el horario Argentina y deriva por WhatsApp al canal publicado correspondiente. Durante la recepción (lunes a viernes, 08:00–14:00) usa el canal general; fuera de ese horario usa la guardia oficial de energía, comunicaciones o sepelio. La trazabilidad es anónima y no incluye el texto del reclamo ni datos personales.
+# Fase 3B — operación comercial interna
+
+`internet_requests` es el registro privado único de solicitudes de Internet/Fibra. La bandeja `/admin/comercial` está disponible sólo para administradores autorizados y separa solicitudes de instalación de `fiber_waitlist`. La lectura y los cambios de estado ocurren server-side; la demanda se muestra sólo agregada y los contactos se abren manualmente.

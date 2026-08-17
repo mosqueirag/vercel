@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import { isVerifiedGoogleUser, matchesNewsAdmin, normalizeAdminEmail } from "../../../../lib/admin-auth";
 import { createSupabaseAdmin } from "../../../../lib/supabase";
 
 export async function GET(request: NextRequest) {
@@ -11,11 +12,12 @@ export async function GET(request: NextRequest) {
   const pending: { name: string; value: string; options: CookieOptions }[] = [];
   const supabase = createServerClient(url, key, { cookies: { getAll: () => request.cookies.getAll(), setAll: (cookies) => { pending.push(...cookies); } } });
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error || !data.user.email) return NextResponse.redirect(new URL("/admin?error=oauth", request.url));
+  const email = normalizeAdminEmail(data.user?.email);
+  if (error || !isVerifiedGoogleUser(data.user) || !email) return NextResponse.redirect(new URL("/admin?error=oauth", request.url));
 
   const admin = createSupabaseAdmin();
-  const allowed = admin ? await admin.from("news_admins").select("email").eq("email", data.user.email.toLowerCase()).maybeSingle() : null;
-  if (!allowed?.data) {
+  const allowed = admin ? await admin.from("news_admins").select("email").eq("email", email).maybeSingle() : null;
+  if (!matchesNewsAdmin(email, allowed?.data?.email)) {
     await supabase.auth.signOut();
     return NextResponse.redirect(new URL("/admin?error=unauthorized", request.url));
   }
