@@ -7,3 +7,7 @@
 5. Completar checklist de producción, backup/rollback y validación legal de privacidad/consentimientos.
 
 Quedan fuera de esta rama: CRM, Brevo, campañas, OneSignal, nuevos trámites, reclamos y despliegue productivo.
+
+## Cierre Fase 2C
+
+Antes de avanzar se requiere revisión humana de PR #3, sin convertirla automáticamente a Ready ni hacer merge. Los próximos datos a aprobar son los 7 planes y 20 FAQ en `draft`; las 85 coberturas excluidas requieren revisión oficial previa a cualquier carga posterior.

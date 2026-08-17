@@ -26,3 +26,11 @@
 - [ ] Probar móvil, teclado, foco, formularios, login admin, COOPIA, cobertura y solicitudes con datos no reales.
 - [ ] Habilitar monitoreo, logs sanitizados, analítica aprobada, alertas y procedimiento de rollback.
 - [ ] Registrar fecha, responsable y autorización explícita de promoción.
+
+## Evidencia de staging (no autoriza producción)
+
+- [x] Lote Oficial 1 e idempotencia validados en `coopsar-staging`: 7 planes en `draft`, 10 contactos publicados, 2.126 coberturas oficiales y 20 FAQ en `draft`.
+- [x] 85 coberturas pendientes de revisión excluidas de la importación.
+- [x] Smoke tests de COOPIA, contactos, cobertura exacta/cercana/desconocida y UI pública completados contra staging.
+- [x] Footer y rutas de asistencia consumen contactos oficiales administrables desde Supabase.
+- [x] Producción no fue modificada.
