@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { quickActions } from "../../lib/coopsar-data";
 import type { PublicServiceStatus } from "../../lib/tools/service-status";
+import { usePublicContact } from "./public-contact-context";
 
 const actionGroups = [
   { id: "facturas", label: "Facturas y cuenta", image: "/images/quick-access-billing.webp", imageAlt: "Atención personalizada para consultar una factura", titles: ["Pagar factura", "Descargar factura", "Consultar deuda"] },
@@ -21,7 +22,17 @@ export function ServiceStatusPanel({ services }: { services: { name: string; sta
 export function SelfService() {
   const [active, setActive] = useState<(typeof actionGroups)[number]["id"]>("facturas");
   const group = actionGroups.find((item) => item.id === active) ?? actionGroups[0];
-  const actions = quickActions.filter(([title]) => group.titles.some((item) => item === title));
+  const officialVirtualOffice = usePublicContact("billing", "virtual_office")?.value;
+  const officialEnergyGuard = usePublicContact("energy", "emergency")?.value;
+  const officialWhatsApp = usePublicContact("general", "general_contact")?.value;
+  const actions = quickActions
+    .map(([title, description, href, icon]) => {
+      if (["Pagar factura", "Descargar factura", "Consultar deuda"].includes(title) && officialVirtualOffice) return [title, description, officialVirtualOffice, icon] as const;
+      if (title === "Falta de energía" && officialEnergyGuard) return [title, `Guardia: ${officialEnergyGuard}.`, href, icon] as const;
+      if (title === "WhatsApp" && officialWhatsApp) return [title, description, `https://wa.me/${officialWhatsApp.replace(/\D/g, "")}`, icon] as const;
+      return [title, description, href, icon] as const;
+    })
+    .filter(([title]) => group.titles.some((item) => item === title));
   const [featured, ...secondary] = actions;
 
   return <section className="self-service" id="tramites"><div className="section-heading"><div><span className="eyebrow">Accesos rápidos</span><h2>¿Qué necesitás hacer?</h2></div><p>Elegí una categoría y accedé directamente a la gestión o al canal de atención correspondiente.</p></div><div className="quick-access"><div className="quick-tabs" role="tablist" aria-label="Categorías de gestiones">{actionGroups.map((item) => <button type="button" role="tab" aria-selected={active === item.id} className={active === item.id ? "active" : ""} key={item.id} onClick={() => setActive(item.id)}><span>{item.label}</span><b>→</b></button>)}</div><div className="quick-panel" role="tabpanel" aria-live="polite"><div className="quick-panel-heading"><small>{group.label}</small><strong>Accesos disponibles</strong></div>{featured && <a className="quick-featured" href={featured[2]}><Image className="quick-featured-image" src={group.image} alt={group.imageAlt} fill sizes="(max-width: 900px) 100vw, 48vw" /><span>{featured[3]}</span><div><small>Acceso principal</small><h3>{featured[0]}</h3><p>{featured[1]}</p></div><b>↗</b></a>}<div className="quick-secondary">{secondary.map(([title, description, href, icon]) => <a href={href} key={title}><span>{icon}</span><div><h3>{title}</h3><p>{description}</p></div><b>→</b></a>)}</div></div></div></section>;
