@@ -9,6 +9,7 @@ type ResultConfig = Pick<AssistantResult, "message"> & {
   ui?: AssistantResult["ui"];
   actions: AssistantRecommendedAction[];
   requiresHuman?: boolean;
+  complaintRoute?: AssistantResult["complaintRoute"];
 };
 
 function createResult(detection: IntentDetection, journeyId: string, tool: ToolResolution, config: ResultConfig): AssistantResult {
@@ -25,6 +26,7 @@ function createResult(detection: IntentDetection, journeyId: string, tool: ToolR
     requiresHuman: config.requiresHuman ?? false,
     tool: { name: tool.name, kind: tool.kind, status: tool.status },
     journey: { journeyId, currentStep: detection.suggestedAction },
+    complaintRoute: config.complaintRoute,
   };
 }
 
@@ -38,6 +40,24 @@ function whatsappHref(value: string) {
 
 async function officialContactValue(service: string, purpose: string, fallback: string) {
   return (await getPublicContact(service, purpose))?.value || fallback;
+}
+
+function complaintRoute(tool: ToolResolution): AssistantResult["complaintRoute"] | undefined {
+  const routingWindow = tool.data?.routingWindow;
+  const contactPurpose = tool.data?.contactPurpose;
+  const contactLabel = tool.data?.contactLabel;
+  return routingWindow === "office_hours" || routingWindow === "after_hours"
+    ? typeof contactPurpose === "string" && typeof contactLabel === "string"
+      ? { routingWindow, contactPurpose, contactLabel }
+      : undefined
+    : undefined;
+}
+
+function complaintWhatsappAction(tool: ToolResolution): AssistantRecommendedAction[] {
+  const href = tool.data?.whatsappUrl;
+  return typeof href === "string" && href.startsWith("https://wa.me/")
+    ? [{ id: "OPEN_COMPLAINT_WHATSAPP", label: "Continuar tu reclamo por WhatsApp", href }]
+    : [];
 }
 
 export async function resolveAssistantResult(detection: IntentDetection, journeyId: string, tool: ToolResolution): Promise<AssistantResult> {
@@ -63,27 +83,27 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
       return createResult(detection, journeyId, tool, { message: "Podés dejar una solicitud para que el equipo evalúe y te avise cuando exista información oficial para tu zona.", ui: { type: "fiber_coverage", data: { waitlist: true } }, actions: [{ id: "START_FIBER_WAITLIST", label: "Quiero que me avisen" }], requiresHuman: true });
     case "internet_problem":
       {
-        const support = await officialContactValue("internet", "support", CONTACT.internetSupport);
       return createResult(detection, journeyId, tool, {
         message: ["outage", "partial", "maintenance"].includes(String(status)) ? "Detectamos una incidencia informada." : "No encontramos una incidencia general informada. Podemos revisar tu caso.",
         ui: { type: "service_status", data: { service: "Internet", status: status || "unknown" } },
         actions: [
           { id: "START_DIAGNOSIS", label: "Comenzar diagnóstico", href: "/tramites" },
-          { id: "OPEN_WHATSAPP", label: "Contactar soporte", href: telephoneHref(support) },
+          ...complaintWhatsappAction(tool),
         ],
+        complaintRoute: complaintRoute(tool),
         requiresHuman: !["outage", "partial", "maintenance"].includes(String(status)),
       });
       }
     case "energy_problem":
       {
-        const guard = await officialContactValue("energy", "emergency", CONTACT.energyGuard);
       return createResult(detection, journeyId, tool, {
         message: ["outage", "partial", "maintenance"].includes(String(status)) ? "Hay una incidencia informada para el servicio." : "No encontramos una interrupción general informada.",
         ui: { type: "service_status", data: { service: "Energía", status: status || "unknown" } },
         actions: [
           { id: "REPORT_ENERGY_PROBLEM", label: "Informar falta de energía", href: "/energia" },
-          { id: "OPEN_WHATSAPP", label: "Contactar guardia", href: telephoneHref(guard) },
+          ...complaintWhatsappAction(tool),
         ],
+        complaintRoute: complaintRoute(tool),
         requiresHuman: !["outage", "partial", "maintenance"].includes(String(status)),
       });
       }
@@ -100,8 +120,22 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
         ],
       });
       }
-    case "create_complaint":
-      return serviceRequestResult("complaint", detection, journeyId, tool);
+    case "resolve_complaint": {
+      if (detection.service === "general") return createResult(detection, journeyId, tool, {
+        message: "¿Por qué servicio necesitás hacer el reclamo? Elegí una opción para derivarte al canal oficial.",
+        ui: { type: "complaint_service_picker", data: {} },
+        actions: [],
+        requiresHuman: true,
+      });
+      const route = complaintRoute(tool);
+      const actions = complaintWhatsappAction(tool);
+      return createResult(detection, journeyId, tool, {
+        message: actions.length ? `Podés continuar por ${route?.contactLabel || "el canal oficial"}.` : "No encontramos un canal oficial disponible para este reclamo. Comunicate con COOPSAR por los canales publicados.",
+        actions,
+        requiresHuman: true,
+        complaintRoute: route,
+      });
+    }
     case "ownership_change":
       return serviceRequestResult("ownership_change", detection, journeyId, tool);
     case "new_supply":

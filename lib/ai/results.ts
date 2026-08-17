@@ -2,7 +2,7 @@ import type { AssistantIntent, AssistantService } from "./intents";
 
 export const assistantActions = [
   "CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "SELECT_INTERNET_PLAN", "START_FIBER_WAITLIST", "REQUEST_INSTALLATION", "SHOW_SERVICE_STATUS", "START_DIAGNOSIS",
-  "REPORT_ENERGY_PROBLEM", "OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS",
+  "REPORT_ENERGY_PROBLEM", "OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS", "OPEN_COMPLAINT_WHATSAPP",
   "DOWNLOAD_INVOICE", "OPEN_WHATSAPP",
   "START_COMPLAINT", "SUBMIT_COMPLAINT", "START_OWNERSHIP_CHANGE", "SUBMIT_OWNERSHIP_CHANGE",
   "START_NEW_SUPPLY", "SUBMIT_NEW_SUPPLY", "START_DIGITAL_INVOICE", "SUBMIT_DIGITAL_INVOICE",
@@ -11,7 +11,7 @@ export const assistantActions = [
 ] as const;
 
 export type AssistantAction = (typeof assistantActions)[number];
-export type AssistantUIType = "fiber_coverage" | "internet_plans" | "service_status" | "payment" | "service_request_form" | "human_handoff";
+export type AssistantUIType = "fiber_coverage" | "internet_plans" | "service_status" | "payment" | "service_request_form" | "human_handoff" | "complaint_service_picker";
 export type AssistantRecommendedAction = { id: AssistantAction; label: string; href?: string };
 export type AssistantResult = {
   message: string;
@@ -27,6 +27,7 @@ export type AssistantResult = {
   requiresHuman: boolean;
   tool: { name: string; kind: "read" | "write"; status: "ready" | "completed" | "unavailable" };
   journey: { journeyId: string; currentStep: string };
+  complaintRoute?: { routingWindow: "office_hours" | "after_hours"; contactPurpose: string; contactLabel: string };
 };
 
 export type NavigationContextValue = {

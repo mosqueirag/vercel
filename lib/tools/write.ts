@@ -16,7 +16,6 @@ const errors = ["invalid_input", "confirmation_required", "rate_limit", "unavail
 function requestTool(name: AssistantToolName, requestType: ServiceRequestType): WriteToolDefinition { return { name, requestType, kind: "write", requiresConfirmation: true, inputSchema: serviceRequestConfigs[requestType].payloadSchema, outputSchema, errors }; }
 
 export const writeToolDefinitions = {
-  createComplaint: requestTool("createComplaint", "complaint"),
   createOwnershipChangeRequest: requestTool("createOwnershipChangeRequest", "ownership_change"),
   createNewSupplyRequest: requestTool("createNewSupplyRequest", "new_supply"),
   createDigitalInvoiceRequest: requestTool("createDigitalInvoiceRequest", "digital_invoice"),

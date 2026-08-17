@@ -13,6 +13,10 @@ describe("detectIntent", () => {
     ["¿Cuánto sale Internet?", "internet_plans"],
     ["Quiero que me avisen cuando llegue fibra", "fiber_waitlist"],
     ["No tengo internet desde ayer", "internet_problem"],
+    ["No funciona mi fibra", "internet_problem"],
+    ["No funciona el teléfono", "resolve_complaint"],
+    ["Necesito hacer un reclamo de sepelio", "resolve_complaint"],
+    ["Quiero hacer un reclamo", "resolve_complaint"],
     ["Quiero pagar una factura", "pay_invoice"],
     ["Necesito cambiar la titularidad", "ownership_change"],
   ])("classifies %s", (message, intent) => expect(detectIntent(message).intent).toBe(intent));
