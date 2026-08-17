@@ -140,10 +140,10 @@ function Get-Cell($Row, [int]$Index) { return $Row["__$Index"] }
 
 function Get-ComparableValue($Row, [string]$Field) {
   $value = if ($Row -is [Collections.IDictionary]) { $Row[$Field] } elseif ($Row.PSObject.Properties[$Field]) { $Row.PSObject.Properties[$Field].Value } else { $null }
-  if ($null -eq $value) { return '<null>' }
-  if ($value -is [datetime]) { return $value.ToUniversalTime().ToString('o') }
-  if ($value -is [System.Collections.IEnumerable] -and -not ($value -is [string])) { return (@($value | ForEach-Object { [string]$_ } | Sort-Object) -join ',') }
-  if ($value -is [double] -or $value -is [decimal]) { return ([decimal]$value).ToString([Globalization.CultureInfo]::InvariantCulture) }
+  if ($null -eq $value -or $value -is [DBNull]) { return '<null>' }
+  if ($Field -in @('published_at','verified_at')) { $instant=[DateTimeOffset]::MinValue; if([DateTimeOffset]::TryParse([string]$value,[Globalization.CultureInfo]::InvariantCulture,[Globalization.DateTimeStyles]::AssumeUniversal,[ref]$instant)){ return $instant.ToUniversalTime().ToString('o') } }
+  if ($Field -in @('price_amount','installation_price','speed_down_mbps','speed_up_mbps','sort_order','street_number')) { $number=[decimal]0; if([decimal]::TryParse([string]$value,[Globalization.NumberStyles]::Any,[Globalization.CultureInfo]::InvariantCulture,[ref]$number)){ return $number.ToString('0.############################',[Globalization.CultureInfo]::InvariantCulture) } }
+  if ($value -is [System.Collections.IEnumerable] -and -not ($value -is [string])) { return (@($value | ForEach-Object { ([string]$_).Trim() } | Sort-Object) -join ',') }
   return ([string]$value).Trim()
 }
 function Get-RowSignature($Row, [string[]]$Fields) { return (($Fields | Sort-Object | ForEach-Object { "$($_)=$(Get-ComparableValue $Row $_)" }) -join '|') }
@@ -159,7 +159,9 @@ function Invoke-Supabase([string]$Method, [string]$Path, $Body = $null, [hashtab
 function Get-AllRows([string]$Path) {
   $all = [Collections.Generic.List[object]]::new(); $from = 0
   while ($true) {
-    $rows = @(Invoke-Supabase 'Get' "$Path&offset=$from&limit=1000")
+    $response = Invoke-Supabase 'Get' "$Path&offset=$from&limit=1000"
+    $rows = [Collections.Generic.List[object]]::new()
+    foreach ($row in @($response)) { $rows.Add($row) }
     foreach ($row in $rows) { $all.Add($row) }
     if ($rows.Count -lt 1000) { break }; $from += 1000
   }
@@ -192,6 +194,11 @@ function Test-PureFunctions {
   $remote.slug='changed'
   Assert-Condition ((Get-RowSignature $local @('slug')) -ne (Get-RowSignature $remote @('slug'))) 'Changed values must be updates.'
   Assert-Condition ((Get-IsoDate '2026-08-16') -eq (Get-IsoDate '2026-08-16')) 'Deterministic timestamps failed.'
+  Assert-Condition ((Get-ComparableValue @{ published_at='2026-08-16T00:00:00Z' } 'published_at') -eq (Get-ComparableValue @{ published_at='2026-08-16T00:00:00+00:00' } 'published_at')) 'Timestamp canonicalization failed.'
+  Assert-Condition ((Get-ComparableValue @{ price_amount='39058.8' } 'price_amount') -eq (Get-ComparableValue @{ price_amount='39058.80' } 'price_amount')) 'Numeric canonicalization failed.'
+  Assert-Condition ((Get-ComparableValue @{ sort_order=0 } 'sort_order') -eq (Get-ComparableValue @{ sort_order='0.00' } 'sort_order')) 'Zero canonicalization failed.'
+  Assert-Condition ((Get-ComparableValue @{ value=$null } 'value') -eq (Get-ComparableValue @{ value=[DBNull]::Value } 'value')) 'Null canonicalization failed.'
+  Assert-Condition ((@((1..1000).Count,(1..1000).Count,(1..137).Count) | Measure-Object -Sum).Sum -eq 2137) 'Synthetic pagination failed.'
   Assert-Condition ((New-UpsertPath 'internet_plans' 'slug') -eq 'internet_plans?on_conflict=slug') 'Plan upsert path failed.'
   Assert-Condition ((New-UpsertPath 'public_contact_channels' 'service,channel_type,purpose') -eq 'public_contact_channels?on_conflict=service,channel_type,purpose') 'Contact upsert path failed.'
   Assert-Condition ((New-UpsertPath 'service_address_coverage' 'street_normalized,street_number,technology') -eq 'service_address_coverage?on_conflict=street_normalized,street_number,technology') 'Coverage upsert path failed.'
