@@ -15,7 +15,7 @@ describe("resolveAssistantResult", () => {
     ["Quiero pagar mi factura", "payment"],
     ["No tengo luz", "service_status"],
     ["Quiero cambiar la titularidad", "service_request_form"],
-    ["Quiero hacer un reclamo", "service_request_form"],
+    ["Quiero hacer un reclamo", "complaint_service_picker"],
   ])("maps %s to approved UI %s", async (message, ui) => {
     expect((await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).ui?.type).toBe(ui);
   });
@@ -36,10 +36,17 @@ describe("resolveAssistantResult", () => {
     expect(result.recommendedActions).toEqual(result.actions);
   });
 
-  it("marks write tools as confirmation-required", async () => {
+  it("routes a generic complaint without creating a service request", async () => {
     const message = "Quiero hacer un reclamo";
     const result = await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message));
-    expect(result).toMatchObject({ requiresConfirmation: true, tool: { name: "createComplaint", kind: "write", status: "ready" } });
+    expect(result).toMatchObject({ requiresConfirmation: false, tool: { name: "resolveComplaintChannel", kind: "read", status: "ready" }, ui: { type: "complaint_service_picker" } });
+    expect(result.ui?.type).not.toBe("service_request_form");
+  });
+  it("offers the compliant WhatsApp handoff for a resolved complaint", async () => {
+    const message = "No tengo Internet";
+    const result = await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message, { status: "unknown", routingWindow: "after_hours", contactPurpose: "support", contactLabel: "Guardia de Comunicaciones", whatsappUrl: "https://wa.me/5491111111111?text=Hola" }));
+    expect(result.actions).toContainEqual({ id: "OPEN_COMPLAINT_WHATSAPP", label: "Continuar tu reclamo por WhatsApp", href: "https://wa.me/5491111111111?text=Hola" });
+    expect(result.complaintRoute).toEqual({ routingWindow: "after_hours", contactPurpose: "support", contactLabel: "Guardia de Comunicaciones" });
   });
   it("selects a trusted request type for the UI", async () => {
     const message = "Quiero una nueva conexión";

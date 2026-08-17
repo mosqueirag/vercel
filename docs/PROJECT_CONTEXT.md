@@ -11,3 +11,7 @@ Antes de producción se requiere información oficial validada, canales operativ
 ## Cierre de Fase 2 (staging)
 
 PR #3 (`data-internet-fibra`) permanece en borrador contra `platform-coopsar-ai`. El Lote Oficial 1 fue cargado exclusivamente en `coopsar-staging` (`wwvqlbycwzxvjnexklwg`): 7 planes en `draft`, 10 contactos publicados, 2.126 coberturas oficiales y 20 FAQ en `draft`. Las 85 coberturas pendientes de revisión no se importaron y la idempotencia fue validada. La UI pública, COOPIA y las páginas de servicio consumen contactos publicados desde `public_contact_channels` mediante `lib/data/public-content.ts` o `/api/public/contacts`; los fallbacks históricos sólo operan ante ausencia del dato oficial y no lo sobrescriben. Producción permanece fuera de alcance.
+
+## Fase 3A — enrutamiento de reclamos
+
+COOPIA no mantiene tickets ni almacena reclamos. Detecta el servicio, resuelve de manera determinística el horario Argentina y deriva por WhatsApp al canal publicado correspondiente. Durante la recepción (lunes a viernes, 08:00–14:00) usa el canal general; fuera de ese horario usa la guardia oficial de energía, comunicaciones o sepelio. La trazabilidad es anónima y no incluye el texto del reclamo ni datos personales.

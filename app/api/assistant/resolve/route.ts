@@ -15,6 +15,10 @@ export async function POST(request: NextRequest) {
   const context = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: parsed.data.page, intent: detection.intent, service: detection.service };
   const tool = await resolveAssistantTool(detection, context);
   const result = await resolveAssistantResult(detection, parsed.data.journeyId, tool);
+  if (detection.intent === "resolve_complaint" || detection.intent === "internet_problem" || detection.intent === "energy_problem") {
+    await recordJourneyEvent({ ...context, eventType: "complaint_intent_detected", agent: "coopia" });
+    if (result.complaintRoute) await recordJourneyEvent({ ...context, eventType: "complaint_route_resolved", agent: "coopia", result: result.complaintRoute.routingWindow, metadata: { routingWindow: result.complaintRoute.routingWindow, contactPurpose: result.complaintRoute.contactPurpose } });
+  }
   if (result.ui) await recordJourneyEvent({ ...context, eventType: "navigation_recommended", agent: "coopia", action: result.ui.type, result: detection.intent });
   return Response.json(result, { headers: { "Cache-Control": "no-store" } });
 }
