@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(15);
+select plan(17);
 
 insert into public.coverage_zones (zone_name, availability, status, source_layer, source_version, technologies, geometry, active)
 values
@@ -20,6 +20,15 @@ select is((select count(*)::integer from public.resolve_coverage_zones(20, 20)),
 select lives_ok(
   $$ select public.upsert_geographic_coverage_zone('TEST IMPORT', 'Test import', array['FTTH'], '{"type":"Polygon","coordinates":[[[9,0],[10,0],[10,1],[9,0]]]}'::jsonb, 'test.geojson', 'test-import-v1') $$,
   'service importer accepts a valid Polygon and converts it to MultiPolygon'
+);
+select lives_ok(
+  $$ select public.upsert_geographic_coverage_zone('TEST IMPORT', 'Test import v2', array['ADSL'], '{"type":"Polygon","coordinates":[[[9,0],[10,0],[10,1],[9,0]]]}'::jsonb, 'test.geojson', 'test-import-v2') $$,
+  'service importer accepts a future source version'
+);
+select is(
+  (select count(*)::integer from public.coverage_zones where source_layer = 'TEST IMPORT' and active),
+  1,
+  'only one version of a source layer remains active'
 );
 select throws_ok(
   $$ insert into public.coverage_zones (zone_name, availability, status, source_layer, source_version, technologies, active) values ('BAD TECH', 'evaluation', 'draft', 'BAD TECH', 'bad-v1', array['SATELLITE'], true) $$,

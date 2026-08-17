@@ -15,6 +15,11 @@ describe("geographic coverage resolver", () => {
     expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "available", commercialAvailability: true });
   });
 
+  it("keeps exact planned coverage above a possible geographic zone", () => {
+    const result = resolveCoverageFromRecords([{ street_number: 10, plan_name: null, technology: "FTTH", coverage_status: "planned" }], 10, [published]);
+    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "planned", plans: [] });
+  });
+
   it("derives a conservative FTTH zone result and only published compatible plans", () => {
     const result = resolveCoverageFromZones([{ technologies: ["FTTH"] }], [published, draft]);
     expect(result).toMatchObject({ coverageSource: "geographic_zone", coverageStatus: "available", commercialAvailability: false, nextAction: "coverage_validation" });
