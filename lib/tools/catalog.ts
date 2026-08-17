@@ -1,6 +1,7 @@
 import type { IntentDetection } from "../ai/intents";
 import type { JourneyContext } from "../journey/types";
 import { getPaymentInformation } from "./read-only";
+import { getPublishedInternetPlans } from "../data/public-content";
 import { getServiceStatus } from "./service-status";
 
 export const assistantToolNames = [
@@ -52,6 +53,10 @@ export async function resolveAssistantTool(detection: IntentDetection, context: 
   if (selection.name === "getPaymentInformation") {
     const output = await getPaymentInformation.execute({}, context);
     return output.ok ? { ...selection, status: "completed", data: output.data } : { ...selection, status: "unavailable" };
+  }
+  if (selection.name === "getInternetPlans") {
+    const plans = await getPublishedInternetPlans();
+    return { ...selection, status: "completed", data: { publishedPlans: plans.length, pricePublished: plans.some((plan) => plan.price_amount !== null) } };
   }
   // Coverage needs validated address inputs. The approved UI gathers them and
   // invokes the existing server-side coverage endpoint.

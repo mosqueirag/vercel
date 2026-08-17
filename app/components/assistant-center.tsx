@@ -7,6 +7,7 @@ import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import type { AssistantResult } from "../../lib/ai/results";
 import { AssistantUIRenderer } from "./assistant-ui";
 import { useNavigationContext } from "./navigation-context";
+import { usePublicContact } from "./public-contact-context";
 
 type Message = { role: "user" | "assistant"; content: string };
 const suggestions = ["Pagar una factura", "Informar un problema", "Contratar internet", "Consultar cobertura", "Descargar factura", "Ver cortes programados"];
@@ -32,6 +33,7 @@ function AssistantCenterContent() {
   const [limited, setLimited] = useState(false);
   const [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null);
   const navigation = useNavigationContext();
+  const officialWhatsApp = usePublicContact("general", "general_contact")?.value;
   const endRef = useRef<HTMLDivElement>(null);
   const journeyRef = useRef<{ journeyId: string; sessionId: string } | null>(null);
 
@@ -84,7 +86,8 @@ function AssistantCenterContent() {
 
   function submit(event: FormEvent) { event.preventDefault(); void ask(input); }
   const summary = messages.map((message) => `${message.role === "user" ? "Socio" : "COOPIA"}: ${message.content}`).join("\n");
-  const whatsapp = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(`Hola, necesito ayuda con esta consulta:\n${summary.slice(-1200)}`)}`;
+  const whatsappNumber = (officialWhatsApp || CONTACT.whatsapp).replace(/\D/g, "");
+  const whatsapp = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, necesito ayuda con esta consulta:\n${summary.slice(-1200)}`)}`;
 
   return (
     <section className="ai-center" id="asistente" aria-labelledby="assistant-title">

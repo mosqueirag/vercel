@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { CONTACT, knowledgeBase } from "../../../lib/coopsar-data";
+import { getAssistantKnowledge } from "../../../lib/data/public-content";
 import { detectIntent } from "../../../lib/ai/intents";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
@@ -18,11 +18,11 @@ const schema = z.object({
 
 function fallbackAnswer(message: string) {
   const value = message.toLowerCase();
-  if (/luz|energ|corte/.test(value)) return `**Te ayudamos con el servicio de energía**\n\nPara informar una falta de energía, comunicate con la guardia: **${CONTACT.energyGuard}**.\n\nLos cortes programados se informan únicamente cuando existe información confirmada.`;
+  if (/luz|energ|corte/.test(value)) return `**Te ayudamos con el servicio de energía**\n\nNo puedo consultar la información oficial en este momento. Podés reintentar más tarde o usar un canal publicado por COOPSAR.`;
   if (/internet|fibra|cobertura|plan/.test(value)) return `**Consultemos el servicio disponible**\n\nPodés ingresar tu domicilio en la consulta de cobertura. El sistema buscará el plan registrado para esa dirección o una altura cercana.\n\nLa disponibilidad final siempre requiere validación técnica.`;
-  if (/factura|pagar|deuda/.test(value)) return `**Consultá o pagá tu factura**\n\nIngresá a la Oficina Virtual para revisar tu deuda, descargar facturas o realizar un pago.\n\nPor seguridad, no compartas contraseñas ni datos bancarios en este chat.`;
-  if (/sepelio|funeral/.test(value)) return `**Estamos para acompañarte**\n\nPara recibir información confirmada sobre el Servicio Solidario o comunicar una urgencia, llamá al **${CONTACT.funeralGuard}**.`;
-  if (/persona|operador|whatsapp/.test(value)) return `**Podés hablar con nuestro equipo**\n\nContinuá la atención por WhatsApp al **${CONTACT.whatsappDisplay}**. Vamos a derivar tu consulta para que una persona pueda ayudarte.`;
+  if (/factura|pagar|deuda/.test(value)) return `**Consultá o pagá tu factura**\n\nNo puedo consultar el canal oficial en este momento. Reintentá más tarde y no compartas contraseñas ni datos bancarios en este chat.`;
+  if (/sepelio|funeral/.test(value)) return `**Estamos para acompañarte**\n\nNo puedo consultar el canal oficial en este momento. Reintentá más tarde o contactá a COOPSAR por un canal verificado.`;
+  if (/persona|operador|whatsapp/.test(value)) return `**Podés hablar con nuestro equipo**\n\nNo puedo consultar un canal oficial en este momento. Reintentá más tarde.`;
   return `**Quiero orientarte correctamente**\n\nNo tengo información oficial suficiente para responder esa consulta con certeza. Puedo ayudarte con energía, facturas, internet, fibra, telefonía, sepelio o derivarte a un operador.`;
 }
 
@@ -49,12 +49,14 @@ export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
 
   try {
+    const officialKnowledge = await getAssistantKnowledge();
+    if (!officialKnowledge) return new Response(fallbackAnswer(latest), { headers });
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const stream = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-5.4-nano",
       stream: true,
       max_output_tokens: 450,
-      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad y ofrecé un canal real. La capa de navegación detectó internamente la intención "${detection.intent}" y el servicio "${detection.service}"; usalos solamente para orientar la respuesta, sin mostrar etiquetas técnicas ni JSON.\n\nBASE OFICIAL:\n${knowledgeBase}`,
+      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad. La capa de navegación detectó internamente la intención "${detection.intent}" y el servicio "${detection.service}"; usalos solamente para orientar la respuesta, sin mostrar etiquetas técnicas ni JSON.\n\nBASE OFICIAL:\n${officialKnowledge}`,
       input: parsed.data.messages.map((message) => ({ role: message.role, content: message.content })),
     });
     const encoder = new TextEncoder();

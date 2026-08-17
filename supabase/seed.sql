@@ -58,6 +58,10 @@ insert into public.service_alerts (service, title, detail, status, starts_at, en
 select 'energia-test', 'Alerta TEST activa', 'Alerta sintética para validar el selector de estados en staging.', 'maintenance', now() - interval '5 minutes', now() + interval '1 hour', true, now()
 where not exists (select 1 from public.service_alerts a where a.title = 'Alerta TEST activa');
 
+insert into public.public_contact_channels (service, channel_type, label, value, public_value, purpose, status, sort_order, published_at)
+select 'internet', 'whatsapp', 'WhatsApp TEST', '5490000000000', 'Canal TEST no comercial', 'commercial', 'published', 999, now()
+where not exists (select 1 from public.public_contact_channels c where c.label = 'WhatsApp TEST');
+
 insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology, speed_down_mbps, source_updated_at)
 values
   ('TEST', 100, 'Plan TEST sin precio', 'TEST', null, current_date),

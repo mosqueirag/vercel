@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(33);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -28,9 +28,14 @@ insert into public.faqs (question, answer, category, status, published_at) value
 insert into public.internet_plans (slug, name, audience, status, published_at) values
   ('plan-publico-test', 'Plan público', 'home', 'published', now()),
   ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null);
+insert into public.internet_plans (slug, name, audience, status)
+values ('plan-incompleto-test', 'Plan incompleto', null, 'draft');
 insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
   ('10000000-0000-0000-0000-000000000001', 'Zona pública test', 'available', 'published', now()),
   ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
+insert into public.public_contact_channels (service, channel_type, label, value, public_value, purpose, status, published_at) values
+  ('internet', 'whatsapp', 'Contacto público test', '5490000000001', 'Canal público test', 'support', 'published', now()),
+  ('internet', 'phone', 'Contacto borrador test', '2974000000', 'Canal borrador test', 'support', 'draft', null);
 
 set local role anon;
 select is((select count(*)::integer from public.services where slug like 'pgtap-%'), 1, 'anon reads only published services');
@@ -39,7 +44,14 @@ select is((select count(*)::integer from public.news_articles where slug like '%
 select is((select count(*)::integer from public.help_articles where slug like '%-test'), 1, 'anon reads only published help articles');
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
+select is((select audience from public.internet_plans where slug = 'plan-incompleto-test'), null, 'draft plan may have no confirmed audience');
 select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
+select throws_ok(
+  $$ select public_value, value, updated_by_email from public.public_contact_channels $$,
+  '42501',
+  'permission denied for table public_contact_channels',
+  'anon cannot read public contacts or internal audit columns directly'
+);
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',
@@ -67,6 +79,30 @@ select throws_ok(
 reset role;
 set local role service_role;
 select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE NULL TEST', 100, null, 'FTTH') $$,
+  'service role can store coverage with a null plan name'
+);
+select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE UNIQUE TEST', 200, null, 'FTTH') $$,
+  'first address and technology coverage row is accepted'
+);
+select throws_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE UNIQUE TEST', 200, null, 'FTTH') $$,
+  '23505', null, 'same address and technology is unique independently of plan name'
+);
+select lives_ok(
+  $$ insert into public.service_address_coverage (street_normalized, street_number, plan_name, technology) values ('CALLE MULTI TEST', 300, null, 'FTTH'), ('CALLE MULTI TEST', 300, null, 'ADSL') $$,
+  'same address supports distinct technology rows'
+);
+select lives_ok($$ select count(*) from public.service_address_coverage $$, 'service role can read private address coverage');
+select throws_ok(
+  $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
+  '23514',
+  null,
+  'published plan requires a confirmed audience'
+);
+select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 2, 'server role can read public and draft contacts through the DAL backend');
+select lives_ok(
   $$ insert into public.internet_requests
      (request_number, customer_type, full_name, phone, email, address, zone, consent)
      values ('NET-2026-BBBBBBBB', 'hogar', 'Persona Servidor', '2974000001', 'server@test.local', 'Calle 2', '', true) $$,
@@ -76,6 +112,13 @@ select is((select count(*)::integer from public.internet_requests where request_
 
 reset role;
 set local role authenticated;
+select throws_ok($$ select count(*) from public.service_address_coverage $$, '42501', 'permission denied for table service_address_coverage', 'authenticated cannot read address-level coverage');
+select throws_ok(
+  $$ select updated_by_email from public.public_contact_channels $$,
+  '42501',
+  'permission denied for table public_contact_channels',
+  'authenticated users cannot read public contacts or updated_by_email directly'
+);
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');
