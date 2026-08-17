@@ -166,10 +166,16 @@ function Get-AllRows([string]$Path) {
   return $all
 }
 
+function New-UpsertPath([string]$Table, [string]$ConflictColumns) {
+  return "${Table}?on_conflict=${ConflictColumns}"
+}
+
 function Invoke-BatchedUpsert([string]$Table, [string]$ConflictColumns, [object[]]$Rows) {
+  $path = New-UpsertPath $Table $ConflictColumns
+  Write-Host "Upsert: $path"
   for ($offset = 0; $offset -lt $Rows.Count; $offset += $BatchSize) {
     $end = [Math]::Min($offset + $BatchSize - 1, $Rows.Count - 1)
-    Invoke-Supabase 'Post' "$Table?on_conflict=$ConflictColumns" $Rows[$offset..$end] @{ Prefer = 'resolution=merge-duplicates,return=minimal' } | Out-Null
+    Invoke-Supabase 'Post' $path $Rows[$offset..$end] @{ Prefer = 'resolution=merge-duplicates,return=minimal' } | Out-Null
   }
 }
 
@@ -186,6 +192,9 @@ function Test-PureFunctions {
   $remote.slug='changed'
   Assert-Condition ((Get-RowSignature $local @('slug')) -ne (Get-RowSignature $remote @('slug'))) 'Changed values must be updates.'
   Assert-Condition ((Get-IsoDate '2026-08-16') -eq (Get-IsoDate '2026-08-16')) 'Deterministic timestamps failed.'
+  Assert-Condition ((New-UpsertPath 'internet_plans' 'slug') -eq 'internet_plans?on_conflict=slug') 'Plan upsert path failed.'
+  Assert-Condition ((New-UpsertPath 'public_contact_channels' 'service,channel_type,purpose') -eq 'public_contact_channels?on_conflict=service,channel_type,purpose') 'Contact upsert path failed.'
+  Assert-Condition ((New-UpsertPath 'service_address_coverage' 'street_normalized,street_number,technology') -eq 'service_address_coverage?on_conflict=street_normalized,street_number,technology') 'Coverage upsert path failed.'
   Write-Host 'SelfTest OK: normalización de tecnología, nulos, slug y calle.'
 }
 
