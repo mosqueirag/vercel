@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireNewsAdmin } from "../../../../lib/admin-auth";
+import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
 import { aggregateFiberDemand, commercialStatuses, type CommercialLead } from "../../../../lib/commercial-inbox";
 import { createJourneyId, createSessionId } from "../../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../../lib/journey/recorder";
@@ -8,11 +8,6 @@ const requestTypes = ["installation", "coverage_validation", "fiber_waitlist"] a
 const writeSchema = z.object({ id: z.string().uuid(), status: z.enum(commercialStatuses) });
 const eventSchema = z.object({ id: z.string().uuid(), action: z.enum(["view", "contact_opened"]) });
 const columns = "id,created_at,request_type,status,full_name,phone,email,address,street,zone,coverage_status,selected_plan,journey_id,consent,marketing_opt_in";
-
-function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  return Boolean(origin && origin === new URL(request.url).origin);
-}
 
 function eventContext(eventType: "commercial_inbox_viewed" | "lead_viewed" | "lead_contact_opened" | "lead_status_changed" | "fiber_demand_viewed", metadata: Record<string, string>) {
   return {
@@ -64,7 +59,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  if (!sameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const parsed = writeSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Estado inválido." }, { status: 400 });
   const { data, error } = await session.admin.from("internet_requests").update({ status: parsed.data.status }).eq("id", parsed.data.id).select(columns).single();
@@ -76,7 +71,7 @@ export async function PATCH(request: Request) {
 export async function POST(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  if (!sameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const parsed = eventSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Acción inválida." }, { status: 400 });
   const { data, error } = await session.admin.from("internet_requests").select("request_type").eq("id", parsed.data.id).maybeSingle();

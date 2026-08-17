@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireNewsAdmin } from "../../../../lib/admin-auth";
+import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
 
 const articleSchema = z.object({
   id: z.string().uuid().optional(),
@@ -26,6 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const parsed = articleSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Revisá los campos de la noticia." }, { status: 400 });
   const baseSlug = slugify(parsed.data.title) || `noticia-${crypto.randomUUID().slice(0, 8)}`;
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const parsed = articleSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !parsed.data.id) return Response.json({ error: "Revisá los campos de la noticia." }, { status: 400 });
   const { data: current } = await session.admin.from("news_articles").select("published_at").eq("id", parsed.data.id).maybeSingle();
@@ -52,6 +54,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const id = new URL(request.url).searchParams.get("id");
   if (!id || !z.string().uuid().safeParse(id).success) return Response.json({ error: "Identificador inválido." }, { status: 400 });
   const { error } = await session.admin.from("news_articles").delete().eq("id", id);
