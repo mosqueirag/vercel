@@ -6,6 +6,7 @@
 [CmdletBinding()]
 param(
   [string]$WorkbookPath = (Join-Path $PSScriptRoot '..\private-imports\COOPSAR_Datos_Internet_Fibra_MAESTRO.xlsx'),
+  [string]$DefaultPublishedAt,
   [switch]$DryRun,
   [switch]$Apply,
   [switch]$SelfTest
@@ -137,7 +138,15 @@ function Read-Worksheet([string]$ConnectionString, [string]$Sheet, [string]$Rang
 function Get-ObjectValue($Row, [string]$Name) { return $Row[$Name] }
 function Get-Cell($Row, [int]$Index) { return $Row["__$Index"] }
 
-function Get-RowSignature($Row, [string[]]$Fields) { return (($Fields | ForEach-Object { "$($_)=$($Row[$_])" }) -join '|') }
+function Get-ComparableValue($Row, [string]$Field) {
+  $value = if ($Row -is [Collections.IDictionary]) { $Row[$Field] } elseif ($Row.PSObject.Properties[$Field]) { $Row.PSObject.Properties[$Field].Value } else { $null }
+  if ($null -eq $value) { return '<null>' }
+  if ($value -is [datetime]) { return $value.ToUniversalTime().ToString('o') }
+  if ($value -is [System.Collections.IEnumerable] -and -not ($value -is [string])) { return (@($value | ForEach-Object { [string]$_ } | Sort-Object) -join ',') }
+  if ($value -is [double] -or $value -is [decimal]) { return ([decimal]$value).ToString([Globalization.CultureInfo]::InvariantCulture) }
+  return ([string]$value).Trim()
+}
+function Get-RowSignature($Row, [string[]]$Fields) { return (($Fields | Sort-Object | ForEach-Object { "$($_)=$(Get-ComparableValue $Row $_)" }) -join '|') }
 
 function Invoke-Supabase([string]$Method, [string]$Path, $Body = $null, [hashtable]$ExtraHeaders = @{}) {
   $headers = @{ apikey = $script:ServiceKey; Authorization = "Bearer $script:ServiceKey" }
@@ -171,6 +180,12 @@ function Test-PureFunctions {
   Assert-Condition ((Normalize-Audience 'No especificado') -eq $null) 'Unknown audience must remain null.'
   Assert-Condition ((New-Slug 'Plan Hogar 50 MB') -eq 'plan-hogar-50-mb') 'Slug generation failed.'
   Assert-Condition ((Normalize-Street ('Av. San Mart' + [char]0x00ED + 'n')) -eq 'SAN MARTIN') 'Street normalization failed.'
+  $local=@{ slug='test'; benefits=@('a','b'); published_at='2026-08-16T00:00:00.0000000Z' }
+  $remote=[pscustomobject]@{ slug='test'; benefits=@('b','a'); published_at='2026-08-16T00:00:00.0000000Z' }
+  Assert-Condition ((Get-RowSignature $local @('slug','benefits','published_at')) -eq (Get-RowSignature $remote @('slug','benefits','published_at'))) 'Hashtable/PSCustomObject comparison failed.'
+  $remote.slug='changed'
+  Assert-Condition ((Get-RowSignature $local @('slug')) -ne (Get-RowSignature $remote @('slug'))) 'Changed values must be updates.'
+  Assert-Condition ((Get-IsoDate '2026-08-16') -eq (Get-IsoDate '2026-08-16')) 'Deterministic timestamps failed.'
   Write-Host 'SelfTest OK: normalización de tecnología, nulos, slug y calle.'
 }
 
@@ -206,7 +221,9 @@ foreach ($row in $contactsSheet) {
   if (-not (Get-Confirmed (Get-Cell $row 0))) { continue }
   $service=Normalize-Null (Get-Cell $row 2); $type=Normalize-Null (Get-Cell $row 3); $purpose=Normalize-Null (Get-Cell $row 6); $value=Normalize-Null (Get-Cell $row 5)
   if ($null -eq $service -or $null -eq $type -or $null -eq $purpose -or $null -eq $value) { $contactErrors++; continue }
-  $publishedAt=Get-IsoDate (Get-Cell $row 8); if ($null -eq $publishedAt) { $publishedAt=(Get-Date).ToUniversalTime().ToString('o') }
+  $publishedAt=Get-IsoDate (Get-Cell $row 8)
+  if ($null -eq $publishedAt) { $publishedAt=Get-IsoDate $DefaultPublishedAt }
+  if ($null -eq $publishedAt) { if ($Apply) { throw 'Contacto confirmado sin fecha oficial ni -DefaultPublishedAt.' } else { $contactErrors++; continue } }
   $contacts.Add(@{ service=$service.ToLowerInvariant(); channel_type=$type.ToLowerInvariant(); label=(Normalize-Null (Get-Cell $row 4)); value=$value; public_value=$value; purpose=$purpose.ToLowerInvariant(); sort_order=([int](Get-OrDefault (Get-Integer (Get-Cell $row 7)) 0)); status='published'; published_at=$publishedAt; updated_by_email=$null })
 }
 
@@ -261,9 +278,9 @@ $excelIgnored = [bool]($ignoreExit -eq 0)
 Write-Host "Excel ignore confirmed: $excelIgnored."
 $gate = @{ delete=0; truncate=0; pii=0; fictitious_plan_name=(@($coverage | Where-Object { $_.plan_name }).Count); invented_data=0; production=$false; excel_git=$excelIgnored }
 Write-Host "Security gate: DELETE=$($gate.delete); TRUNCATE=$($gate.truncate); PII=$($gate.pii); plan_name_ficticio=$($gate.fictitious_plan_name); producción=$($gate.production); ExcelGit=$(-not $gate.excel_git)."
-$gateOk = (($gate.delete -eq 0) -and ($gate.truncate -eq 0) -and ($gate.pii -eq 0) -and ($gate.fictitious_plan_name -eq 0) -and (-not ($gate.production)) -and (-not ($gate.excel_git)))
+$legacyGateDiagnostics = (($gate.delete -eq 0) -and ($gate.truncate -eq 0) -and ($gate.pii -eq 0) -and ($gate.fictitious_plan_name -eq 0))
 Write-Host "Security terms: delete=$($gate.delete -eq 0); truncate=$($gate.truncate -eq 0); pii=$($gate.pii -eq 0); plan=$($gate.fictitious_plan_name -eq 0); nonprod=$(-not ($gate.production)); ignored=$(-not ($gate.excel_git))."
- $gateOk = (($gate.delete -eq 0) -and ($gate.truncate -eq 0) -and ($gate.pii -eq 0) -and ($gate.fictitious_plan_name -eq 0) -and $excelIgnored)
+ $gateOk = (($gate.delete -eq 0) -and ($gate.truncate -eq 0) -and ($gate.pii -eq 0) -and ($gate.fictitious_plan_name -eq 0) -and (-not $gate.production) -and $excelIgnored)
 Write-Host "Security gate ok: $gateOk."
 if (-not $gateOk) { throw 'Security gate failed; no data was written.' }
 
