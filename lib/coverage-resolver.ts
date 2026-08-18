@@ -1,10 +1,10 @@
 import { selectCoverage, type CoverageRecord, type CoverageStatus } from "./coverage-results";
 
 export type CoverageTechnology = "FTTH" | "ADSL" | "WIRELESS";
-export type CoverageSource = "exact_address" | "geographic_zone" | "unknown";
+export type CoverageSource = "exact_address" | "geographic_zone" | "nearby_address" | "unknown";
 export type PublishedPlan = { id: string; name: string; slug: string; technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null; price_amount: number | null; currency: string | null; status?: string; published_at?: string | null };
 export type ZoneMatch = { technologies: string[] | null };
-export type CoverageResolution = { coverageStatus: CoverageStatus; coverageSource: CoverageSource; confidence: "confirmed" | "zone" | "unknown"; technologies: CoverageTechnology[]; commercialAvailability: boolean; plans: PublishedPlan[]; nextAction: "show_plans" | "coverage_validation" | "fiber_waitlist"; message: string; zoneMatch: boolean };
+export type CoverageResolution = { coverageStatus: CoverageStatus; coverageSource: CoverageSource; confidence: "confirmed" | "zone" | "nearby" | "unknown"; technologies: CoverageTechnology[]; commercialAvailability: boolean; plans: PublishedPlan[]; nextAction: "installation" | "coverage_validation" | "fiber_waitlist"; message: string; zoneMatch: boolean };
 
 export function canonicalTechnology(value: string | null | undefined): CoverageTechnology | null {
   const normalized = (value ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toUpperCase();
@@ -36,11 +36,11 @@ export function resolveCoverageFromRecords(records: CoverageRecord[], requestedN
   const commercialAvailability = selection.status === "available" && compatible.length > 0;
   return {
     coverageStatus: selection.status,
-    coverageSource: "exact_address", confidence: "confirmed",
+    coverageSource: selection.distance === 0 ? "exact_address" : "nearby_address", confidence: selection.distance === 0 ? "confirmed" : "nearby",
     technologies,
     commercialAvailability,
     plans: compatible,
-    nextAction: commercialAvailability ? "show_plans" : selection.status === "nearby" || selection.status === "planned" ? "coverage_validation" : "fiber_waitlist",
+    nextAction: commercialAvailability ? "installation" : selection.status === "nearby" || selection.status === "planned" ? "coverage_validation" : "fiber_waitlist",
     zoneMatch: false,
     message: commercialAvailability ? "Encontramos disponibilidad informada para tu domicilio. Podés revisar los planes publicados compatibles." : selection.status === "nearby" || selection.status === "planned" ? "Encontramos información cercana o en planificación. La disponibilidad requiere validación técnica." : "No tenemos disponibilidad comercial confirmada para este domicilio.",
   };
@@ -51,9 +51,21 @@ export function resolveCoverageFromZones(zones: ZoneMatch[], plans: PublishedPla
   if (!technologies.length) return { coverageStatus: "unknown", coverageSource: "unknown", confidence: "unknown", technologies: [], commercialAvailability: false, plans: [], nextAction: "fiber_waitlist", zoneMatch: false, message: "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial." };
   const compatible = publishedCompatiblePlans(plans, technologies, null);
   const message = technologies.length === 1 && technologies[0] === "FTTH"
-    ? "Tu domicilio está dentro de una zona habilitada para Fibra Óptica COOPSAR. La disponibilidad final requiere validación técnica."
+    ? "Tu domicilio está dentro de una zona habilitada para Fibra Óptica COOPSAR. La disponibilidad final de instalación requiere validación técnica."
     : technologies.length === 1 && technologies[0] === "ADSL"
-      ? "Tu domicilio está dentro de una zona con servicio ADSL. La disponibilidad final requiere validación técnica."
-      : "En tu zona contamos con alternativas ADSL e Internet inalámbrico. La disponibilidad final requiere validación técnica.";
+      ? "Tu domicilio está dentro de una zona con servicio ADSL. La disponibilidad final de instalación requiere validación técnica."
+      : "En tu zona contamos con alternativas ADSL e Internet inalámbrico. La disponibilidad final de instalación requiere validación técnica.";
   return { coverageStatus: "available", coverageSource: "geographic_zone", confidence: "zone", technologies, commercialAvailability: false, plans: compatible, nextAction: "coverage_validation", zoneMatch: true, message };
+}
+
+export function hasExactCoverage(records: CoverageRecord[], requestedNumber: number) {
+  return records.some((record) => record.street_number === requestedNumber);
+}
+
+/** Exact address data wins; matching zones win over rows from nearby heights. */
+export function resolveCoverageWithPriority(records: CoverageRecord[], requestedNumber: number, plans: PublishedPlan[], zones: ZoneMatch[]): CoverageResolution | null {
+  if (hasExactCoverage(records, requestedNumber)) return resolveCoverageFromRecords(records, requestedNumber, plans);
+  const zoneResolution = resolveCoverageFromZones(zones, plans);
+  if (zoneResolution.zoneMatch) return zoneResolution;
+  return resolveCoverageFromRecords(records, requestedNumber, plans);
 }

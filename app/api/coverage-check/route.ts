@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { configuredCoverageMargin, normalizeStreet } from "../../../lib/coverage";
-import { coverageAnalytics, resolveCoverageFromRecords, resolveCoverageFromZones, type PublishedPlan, type ZoneMatch } from "../../../lib/coverage-resolver";
+import { coverageAnalytics, hasExactCoverage, resolveCoverageFromRecords, resolveCoverageWithPriority, type PublishedPlan, type ZoneMatch } from "../../../lib/coverage-resolver";
 import type { CoverageRecord } from "../../../lib/coverage-results";
 import { geocodeSarmientoAddress } from "../../../lib/georef";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
@@ -42,18 +42,22 @@ export async function POST(request: NextRequest) {
   }
 
   const plans = (planRows ?? []) as PublishedPlan[];
-  let resolution = resolveCoverageFromRecords((addressRows ?? []) as CoverageRecord[], parsed.data.number, plans);
+  const records = (addressRows ?? []) as CoverageRecord[];
+  let resolution = hasExactCoverage(records, parsed.data.number)
+    ? resolveCoverageFromRecords(records, parsed.data.number, plans)
+    : null;
 
-  // Address-level data is the source of truth whenever it has a result.
-  // Geographic zones are only a conservative fallback for an otherwise unknown address.
+  // Exact address data is authoritative. Nearby records are held until after
+  // zone resolution, so a close-by row cannot mask official geographic coverage.
   if (!resolution) {
     const point = await geocodeSarmientoAddress(parsed.data.street, parsed.data.number);
     if (point) {
       const { data: zones, error: zoneError } = await supabase.rpc("resolve_coverage_zones", { p_longitude: point.longitude, p_latitude: point.latitude });
       if (zoneError) console.error("Coverage zone lookup failed", zoneError.code);
-      else resolution = resolveCoverageFromZones((zones ?? []) as ZoneMatch[], plans);
+      else resolution = resolveCoverageWithPriority(records, parsed.data.number, plans, (zones ?? []) as ZoneMatch[]);
     }
   }
+  resolution ??= resolveCoverageFromRecords(records, parsed.data.number, plans);
   resolution ??= unknown;
   if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: resolution.coverageStatus, metadata: coverageAnalytics(resolution) });
 
