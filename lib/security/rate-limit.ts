@@ -12,6 +12,16 @@ function digest(scope: string, value: string) {
   return salt ? createHash("sha256").update(`${salt}:${scope}:${value}`).digest("hex") : null;
 }
 
+export function supabaseCredentialDiagnostic(url: string | undefined, secret: string | undefined) {
+  return {
+    supabaseUrlMatchesStaging: url === "https://wwvqlbycwzxvjnexklwg.supabase.co",
+    secretPresent: Boolean(secret),
+    secretLength: secret?.length ?? 0,
+    startsWithSbSecret: secret?.startsWith("sb_secret_") ?? false,
+    secretFingerprint: secret ? createHash("sha256").update(secret).digest("hex").slice(0, 12) : null,
+  };
+}
+
 export async function consumeRateLimit(request: NextRequest, scope: string, limit: number, windowSeconds: number, identifier?: string) {
   const raw = identifier || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
   const keyHash = digest(scope, raw);
@@ -28,6 +38,7 @@ export async function consumeRateLimit(request: NextRequest, scope: string, limi
       body: JSON.stringify({ p_scope: scope, p_key_hash: keyHash, p_limit: limit, p_window_seconds: windowSeconds }),
     });
     if (!response.ok) {
+      if (response.status === 401) console.error("Supabase credential diagnostic", supabaseCredentialDiagnostic(url, key));
       console.error("Distributed rate limit unavailable", response.status);
       return { allowed: false, available: false };
     }

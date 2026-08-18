@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { configuredAiSessionLimit, consumeRateLimit } from "./rate-limit";
+import { configuredAiSessionLimit, consumeRateLimit, supabaseCredentialDiagnostic } from "./rate-limit";
 
 describe("COOPIA session limit", () => {
   it("uses two interactions when the setting is absent", () => expect(configuredAiSessionLimit(undefined)).toBe(2));
@@ -10,6 +10,21 @@ describe("COOPIA session limit", () => {
 });
 
 describe("distributed rate limiting", () => {
+  it("returns only safe metadata for a Supabase credential diagnostic", () => {
+    const secret = "sb_secret_do_not_log_this_value";
+    const diagnostic = supabaseCredentialDiagnostic("https://wwvqlbycwzxvjnexklwg.supabase.co", secret);
+
+    expect(diagnostic).toEqual({
+      supabaseUrlMatchesStaging: true,
+      secretPresent: true,
+      secretLength: secret.length,
+      startsWithSbSecret: true,
+      secretFingerprint: "cfdd4fef7e18",
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain(secret);
+    expect(Object.keys(diagnostic)).not.toContain("secret");
+  });
+
   it("uses a new server key as apikey only when calling the RPC", async () => {
     const previous = { url: process.env.NEXT_PUBLIC_SUPABASE_URL, key: process.env.SUPABASE_SECRET_KEY };
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
