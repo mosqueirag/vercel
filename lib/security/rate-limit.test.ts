@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { configuredAiSessionLimit, consumeRateLimit, supabaseCredentialDiagnostic } from "./rate-limit";
+import { configuredAiSessionLimit, consumeRateLimit, sanitizeSupabaseErrorBody, supabaseCredentialDiagnostic, supabaseUnauthorizedRequestDiagnostic } from "./rate-limit";
 
 describe("COOPIA session limit", () => {
   it("uses two interactions when the setting is absent", () => expect(configuredAiSessionLimit(undefined)).toBe(2));
@@ -23,6 +23,33 @@ describe("distributed rate limiting", () => {
     });
     expect(JSON.stringify(diagnostic)).not.toContain(secret);
     expect(Object.keys(diagnostic)).not.toContain("secret");
+  });
+
+  it("sanitizes the unauthorized request diagnostic without exposing credentials", () => {
+    const secret = "sb_secret_do_not_log_this_value";
+    const headers = new Headers({ apikey: secret, "User-Agent": "COOPSAR-Server-Supabase/1.0" });
+    const diagnostic = supabaseUnauthorizedRequestDiagnostic(
+      "https://wwvqlbycwzxvjnexklwg.supabase.co/rest/v1/rpc/consume_rate_limit",
+      headers,
+      "POST",
+      JSON.stringify({ code: "401", message: `invalid ${secret}`, extra: "discarded" }),
+    );
+
+    expect(diagnostic).toMatchObject({
+      httpStatus: 401,
+      supabaseHostPath: "wwvqlbycwzxvjnexklwg.supabase.co/rest/v1/rpc/consume_rate_limit",
+      method: "POST",
+      apikeyPresent: true,
+      apikeyLength: secret.length,
+      userAgent: "COOPSAR-Server-Supabase/1.0",
+      authorizationPresent: false,
+      errorBody: '{"code":"401","message":"invalid [REDACTED]"}',
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain(secret);
+  });
+
+  it("redacts token-like values from non-JSON errors", () => {
+    expect(sanitizeSupabaseErrorBody("error sb_secret_example eyJheader.payload.signature")).toBe("error [REDACTED] [REDACTED]");
   });
 
   it("uses a new server key as apikey only when calling the RPC", async () => {
