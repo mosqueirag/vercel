@@ -1,4 +1,5 @@
 import { requireNewsAdmin } from "../admin-auth";
+import { coopiaPulseLabel } from "../coopia/presentation-labels";
 
 export type CoopiaPeriod = "today" | "7d" | "30d";
 export type CoopiaOutcome = "resolved" | "information_provided" | "action_completed" | "conversion" | "handoff" | "abandoned" | "unresolved" | "error";
@@ -74,9 +75,9 @@ function learningTopics(rows: EventRow[], bySession: Map<string, { at: string; o
 function trend(current: number, previous: number, id: "messages" | "handoffs" | "unresolved", label: string) { return previous < minimumComparableBase ? { id, label, current, previous, changePercent: null, status: "insufficient" as const } : { id, label, current, previous, changePercent: Math.round(((current - previous) / previous) * 100), status: "comparable" as const }; }
 function pulse(current: { intents: CountItem[]; services: CountItem[]; unresolved: number; handoffs: number }, previous: { intents: CountItem[]; services: CountItem[]; unresolved: number; handoffs: number }) {
   const alerts: Array<{ label: string; detail: string }> = [];
-  const compareLabels = (kind: "Tema" | "Servicio", values: CountItem[], baseline: CountItem[]) => { const baselineCounts = new Map(baseline.map((item) => [item.label, item.count])); for (const item of values) { const prior = baselineCounts.get(item.label) || 0; if (item.count >= 6 && prior >= minimumComparableBase && item.count - prior >= 3 && (item.count - prior) / prior >= 0.5) alerts.push({ label: `Posible aumento: ${kind.toLowerCase()} ${item.label.replaceAll("_", " ")}`, detail: `Consultas agregadas: ${item.count} frente a ${prior} en el período comparable.` }); } };
-  compareLabels("Tema", current.intents, previous.intents); compareLabels("Servicio", current.services, previous.services);
-  for (const [label, currentValue, previousValue] of [["Consultas sin resolver", current.unresolved, previous.unresolved], ["Derivaciones humanas", current.handoffs, previous.handoffs]] as const) if (currentValue >= 6 && previousValue >= minimumComparableBase && currentValue - previousValue >= 3 && (currentValue - previousValue) / previousValue >= 0.5) alerts.push({ label: `Posible aumento: ${label.toLowerCase()}`, detail: `${currentValue} frente a ${previousValue} en el período comparable.` });
+  const compareLabels = (kind: "topic" | "service", values: CountItem[], baseline: CountItem[]) => { const baselineCounts = new Map(baseline.map((item) => [item.label, item.count])); for (const item of values) { const prior = baselineCounts.get(item.label) || 0; if (item.count >= 6 && prior >= minimumComparableBase && item.count - prior >= 3 && (item.count - prior) / prior >= 0.5) alerts.push({ label: coopiaPulseLabel(kind, item.label), detail: `Consultas agregadas: ${item.count} frente a ${prior} en el período comparable.` }); } };
+  compareLabels("topic", current.intents, previous.intents); compareLabels("service", current.services, previous.services);
+  for (const [label, currentValue, previousValue] of [["consultas sin resolver", current.unresolved, previous.unresolved], ["derivaciones humanas", current.handoffs, previous.handoffs]] as const) if (currentValue >= 6 && previousValue >= minimumComparableBase && currentValue - previousValue >= 3 && (currentValue - previousValue) / previousValue >= 0.5) alerts.push({ label: `Posible incremento de ${label}.`, detail: `${currentValue} frente a ${previousValue} en el período comparable.` });
   return alerts.slice(0, 4);
 }
 function aggregatePeriod(rows: EventRow[]) {

@@ -38,7 +38,8 @@ describe("aggregateCoopiaEvents", () => {
     const result = aggregateCoopiaEvents(current, "7d", 0, previous);
     expect(result.needsLearning).toContainEqual({ kind: "intent", label: "fiber_coverage", count: 6 });
     expect(result.trends.find((item) => item.id === "messages")?.changePercent).toBe(100);
-    expect(result.pulse[0]?.label).toContain("tema fiber coverage");
+    expect(result.pulse[0]?.label).toBe("Posible incremento de consultas sobre el tema cobertura de fibra.");
+    expect(result.pulse.every((item) => item.label.startsWith("Posible incremento"))).toBe(true);
     expect(JSON.stringify(result)).not.toContain("pregunta");
   });
 
