@@ -45,7 +45,7 @@ select is((select count(*)::integer from public.help_articles where slug like '%
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
 select is((select audience from public.internet_plans where slug = 'plan-incompleto-test'), null, 'draft plan may have no confirmed audience');
-select is((select count(*)::integer from public.coverage_zones where zone_name like '%test'), 1, 'anon reads only published coverage zones');
+select throws_ok($$ select count(*) from public.coverage_zones $$, '42501', 'permission denied for table coverage_zones', 'anon cannot read private geographic coverage zones');
 select throws_ok(
   $$ select public_value, value, updated_by_email from public.public_contact_channels $$,
   '42501',

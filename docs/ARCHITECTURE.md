@@ -5,7 +5,7 @@ Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el 
 ## Flujos actuales
 
 - **COOPIA:** consulta → detección de intención → respuesta OpenAI con fallback oficial → acción estructurada → tracking mínimo. OpenAI no confirma cobertura, planes, precios, cortes ni requisitos.
-- **Cobertura:** `/api/coverage-check` consulta `service_address_coverage` desde servidor; solo expone un resultado comercial agregado, no infraestructura ni padrón.
+- **Cobertura:** `/api/coverage-check` consulta primero `service_address_coverage` exacto desde servidor. Si no existe coincidencia exacta, intenta Georef y, sólo si Georef no entrega coordenadas válidas, Geoapify server-side. Las coordenadas validadas se resuelven únicamente contra `coverage_zones` mediante PostGIS. La prioridad final es `exact_address > geographic_zone > nearby_address > unknown`; sólo expone un resultado comercial agregado, no infraestructura ni padrón.
 - **Internet/fibra:** `/api/internet-leads` valida, exige consentimiento operativo y usa `create_internet_request_v2_with_outbox` para crear solicitud y evento outbox en una transacción. La entrega a n8n permanece desactivada sin variables configuradas.
 - **Noticias:** Google OAuth identifica al usuario, pero el acceso editorial exige además presencia en `news_admins`. Imágenes se cargan con URL firmada para administradores.
 - **Canales públicos:** `public_contact_channels` es la fuente oficial administrable. Las rutas server-side leen mediante `lib/data/public-content.ts`; los componentes cliente leen la proyección permitida de `/api/public/contacts`. Los fallbacks de compatibilidad no reemplazan un canal publicado.
@@ -21,6 +21,10 @@ Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el 
 | Admin only | `news_admins` y operaciones editoriales/de alertas/base de conocimiento |
 
 Las tablas privadas tienen RLS y no otorgan lectura a `anon` ni a `authenticated`. Las funciones SECURITY DEFINER relevantes tienen `search_path=''` y ejecución limitada a `service_role`.
+
+## Fase 3C — cobertura geográfica
+
+La migración `20260817203507_geographic_coverage_zones` y cuatro zonas oficiales privadas están aplicadas exclusivamente en `coopsar-staging`. Las geometrías son `MultiPolygon` con SRID 4326 y la función PostGIS usa `ST_Covers`, incluyendo bordes. `Geoapify` es un proveedor server-side de dirección a coordenadas: no se expone al navegador, no decide cobertura, no recibe acceso a geometrías y no reemplaza PostGIS ni los datos oficiales de COOPSAR. El caso de aceptación España 450 resolvió `geographic_zone`, `FTTH`, `zoneMatch=true` y `coverage_validation`.
 
 ## CI
 

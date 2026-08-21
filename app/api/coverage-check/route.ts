@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { configuredCoverageMargin, normalizeStreet } from "../../../lib/coverage";
-import { createSupabaseAdmin } from "../../../lib/supabase";
+import { coverageAnalytics, hasExactCoverage, resolveCoverageFromRecords, resolveCoverageWithPriority, type PublishedPlan, type ZoneMatch } from "../../../lib/coverage-resolver";
+import type { CoverageRecord } from "../../../lib/coverage-results";
+import { geocodeSarmientoAddressWithSource } from "../../../lib/georef";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { consumeRateLimit } from "../../../lib/security/rate-limit";
-import { selectCoverage } from "../../../lib/coverage-results";
+import { createSupabaseAdmin } from "../../../lib/supabase";
 
 const schema = z.object({
   street: z.string().trim().min(3).max(120),
@@ -14,8 +16,7 @@ const schema = z.object({
   sessionId: z.string().refine(isSessionId).optional(),
 }).refine((value) => Boolean(value.journeyId) === Boolean(value.sessionId));
 
-type CoverageRow = { street_number: number; plan_name: string | null; technology: string; speed_down_mbps: number | null; coverage_status: "available" | "nearby" | "planned" | "unavailable" | "unknown" };
-type PlanRow = { id: string; name: string; slug: string; technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null; price_amount: number | null; currency: string | null };
+const unknown = { coverageStatus: "unknown" as const, coverageSource: "unknown" as const, confidence: "unknown" as const, technologies: [], commercialAvailability: false, plans: [], nextAction: "fiber_waitlist" as const, zoneMatch: false, message: "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial." };
 
 export async function POST(request: NextRequest) {
   const rate = await consumeRateLimit(request, "coverage", 20, 60);
@@ -31,34 +32,36 @@ export async function POST(request: NextRequest) {
   if (!supabase) return Response.json({ status: "configuration_pending", message: "La consulta de cobertura está pendiente de configuración." }, { status: 503 });
 
   const margin = configuredCoverageMargin();
-  const { data, error } = await supabase
-    .from("service_address_coverage")
-    .select("street_number,plan_name,technology,speed_down_mbps,coverage_status")
-    .eq("street_normalized", streetNormalized)
-    .gte("street_number", parsed.data.number - margin)
-    .lte("street_number", parsed.data.number + margin)
-    .limit(100);
-
-  if (error) {
-    console.error("Coverage lookup failed", error.code);
+  const [{ data: addressRows, error: addressError }, { data: planRows, error: planError }] = await Promise.all([
+    supabase.from("service_address_coverage").select("street_number,plan_name,technology,coverage_status").eq("street_normalized", streetNormalized).gte("street_number", parsed.data.number - margin).lte("street_number", parsed.data.number + margin).limit(100),
+    supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,status,published_at").eq("status", "published").lte("published_at", new Date().toISOString()),
+  ]);
+  if (addressError || planError) {
+    console.error("Coverage lookup failed", addressError?.code ?? planError?.code);
     return Response.json({ status: "configuration_pending", message: "La base de cobertura todavía no está disponible." }, { status: 503 });
   }
 
-  const rows = (data ?? []) as CoverageRow[];
-  if (!rows.length) { if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: "unknown" }); return Response.json({ coverageStatus: "unknown", technology: null, commercialAvailability: false, plans: [], nextAction: "fiber_waitlist", message: "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial." }); }
+  const plans = (planRows ?? []) as PublishedPlan[];
+  const records = (addressRows ?? []) as CoverageRecord[];
+  let resolution = hasExactCoverage(records, parsed.data.number)
+    ? resolveCoverageFromRecords(records, parsed.data.number, plans)
+    : null;
 
-  const selection = selectCoverage(rows, parsed.data.number);
-  const nearestDistance = selection.distance!;
-  const nearest = selection.nearest;
-  const coverageStatus = selection.status;
-  const technology = nearest[0]?.technology ?? null;
-  const { data: publishedPlans } = await supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency").eq("status", "published").lte("published_at", new Date().toISOString());
-  const plans = ((publishedPlans ?? []) as PlanRow[]).filter((plan) => plan.name === nearest[0]?.plan_name || (plan.technology && plan.technology === technology));
-  const commercialAvailability = coverageStatus === "available" && plans.length > 0;
-  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: coverageStatus, metadata: { distance: nearestDistance } });
+  // Exact address data is authoritative. Nearby records are held until after
+  // zone resolution, so a close-by row cannot mask official geographic coverage.
+  let geocoderSource: "georef" | "geoapify" | "none" = "none";
+  if (!resolution) {
+    const geocoded = await geocodeSarmientoAddressWithSource(parsed.data.street, parsed.data.number);
+    if (geocoded) {
+      geocoderSource = geocoded.source;
+      const { data: zones, error: zoneError } = await supabase.rpc("resolve_coverage_zones", { p_longitude: geocoded.longitude, p_latitude: geocoded.latitude });
+      if (zoneError) console.error("Coverage zone lookup failed", zoneError.code);
+      else resolution = resolveCoverageWithPriority(records, parsed.data.number, plans, (zones ?? []) as ZoneMatch[]);
+    }
+  }
+  resolution ??= resolveCoverageFromRecords(records, parsed.data.number, plans);
+  resolution ??= unknown;
+  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: resolution.coverageStatus, metadata: { ...coverageAnalytics(resolution), geocoder_source: geocoderSource } });
 
-  return Response.json({
-    coverageStatus, technology, commercialAvailability, plans: plans.map((plan) => ({ ...plan, price_amount: plan.price_amount, speed_down_mbps: plan.speed_down_mbps, speed_up_mbps: plan.speed_up_mbps })), nextAction: commercialAvailability ? "show_plans" : coverageStatus === "nearby" ? "coverage_validation" : "fiber_waitlist",
-    message: coverageStatus === "available" && commercialAvailability ? "Tenemos disponibilidad en tu domicilio. Podés revisar los planes compatibles." : coverageStatus === "nearby" ? "Tu domicilio requiere validación técnica. No podemos confirmar cobertura todavía." : "Actualmente no tenemos fibra confirmada para este domicilio. Podés pedir que te avisemos cuando haya información oficial.",
-  });
+  return Response.json({ ...resolution, technology: resolution.technologies[0] ?? null });
 }
