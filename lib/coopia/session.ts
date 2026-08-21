@@ -32,6 +32,12 @@ export function handoffSummary(input: { intent?: AssistantIntent; service?: Assi
   return `Hola, necesito asistencia de COOPSAR. Motivo: ${input.intent || "consulta"}. Servicio: ${input.service || "general"}. Gestión: ${input.lastStep || "orientación"}.`;
 }
 
+export function officialWhatsAppHandoffUrl(contactValue: string | null | undefined, summary: string) {
+  const number = (contactValue || "").replace(/\D/g, "");
+  if (number.length < 8) return null;
+  return `https://wa.me/${number}?text=${encodeURIComponent(summary)}`;
+}
+
 export type StoredCoopiaSession = {
   messages: CoopiaMessage[];
   limited: boolean;

@@ -4,8 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import type { AssistantResult } from "../../lib/ai/results";
 import type { AssistantIntent, AssistantService } from "../../lib/ai/intents";
-import { compactMessages, coopiaEventMetadata, coopiaRequestContext, coopiaSessionStorageKey, handoffSummary, parseCoopiaSession, shouldRecordPageView, type CoopiaMessage } from "../../lib/coopia/session";
+import { compactMessages, coopiaEventMetadata, coopiaRequestContext, coopiaSessionStorageKey, handoffSummary, officialWhatsAppHandoffUrl, parseCoopiaSession, shouldRecordPageView, type CoopiaMessage } from "../../lib/coopia/session";
 import { useNavigationContext } from "./navigation-context";
+import { usePublicContact } from "./public-contact-context";
+import { CONTACT } from "../../lib/coopsar-data";
 
 type CoopiaValue = {
   messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null;
@@ -20,6 +22,7 @@ function page() { return `${location.pathname}${location.hash}`; }
 
 export function CoopiaProvider({ children }: { children: ReactNode }) {
   const navigation = useNavigationContext();
+  const officialWhatsApp = usePublicContact("general", "general_contact")?.value;
   const [messages, setMessages] = useState<CoopiaMessage[]>([]), [input, setInput] = useState(""), [loading, setLoading] = useState(false), [error, setError] = useState(""), [limited, setLimited] = useState(false), [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null), [isOpen, setOpenState] = useState(false), [ids, setIds] = useState({ journeyId: "", sessionId: "" });
   const recordedPages = useRef<string[]>([]);
 
@@ -66,7 +69,7 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
     finally { setLoading(false); }
   }, [ids, limited, loading, messages, navigation, track]);
   const feedback = useCallback((helpful: boolean) => track("coopia_feedback", coopiaEventMetadata({ helpful, uiType: assistantResult?.ui?.type })), [assistantResult?.ui?.type, track]);
-  const handoffUrl = `https://wa.me/?text=${encodeURIComponent(handoffSummary({ intent: navigation.intent, service: navigation.service, lastStep: assistantResult?.nextStep }))}`;
+  const handoffUrl = officialWhatsAppHandoffUrl(officialWhatsApp || CONTACT.whatsapp, handoffSummary({ intent: navigation.intent, service: navigation.service, lastStep: assistantResult?.nextStep })) || "#";
   const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, limited, assistantResult, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, setInput, ask, setOpen, track, feedback, handoffUrl }), [ask, assistantResult, error, feedback, handoffUrl, ids, input, isOpen, limited, loading, messages, navigation.intent, navigation.service, setOpen, track]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
