@@ -18,3 +18,7 @@ La primera etapa operativa de reclamos es routing a WhatsApp, no ticketing. Qued
 # Fase 3B — Bandeja comercial interna
 
 La fase incorpora una vista administrativa mínima para solicitudes de Internet y lista de espera de Fibra, con estados ya existentes, contacto manual y demanda agregada sin PII. CRM, n8n, Brevo y automatizaciones quedan explícitamente fuera de alcance.
+
+# Fase 3C — Cobertura geográfica inteligente
+
+**COMPLETADA en staging.** Cuatro zonas oficiales privadas se resuelven mediante PostGIS, con prioridad de domicilio exacto sobre zona y de zona sobre registros cercanos. El fallback Geoapify server-side permite geocodificar cuando Georef no entrega coordenadas, sin convertirlo en fuente de cobertura. España 450 validó zona FTTH y derivación a validación técnica. P2 pendiente no bloqueante: aplicar, sólo con autorización expresa, `20260817234002_ensure_one_active_geographic_zone_version` para evitar dos versiones activas de una misma capa.
