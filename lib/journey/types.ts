@@ -13,6 +13,7 @@ export const journeyEventTypes = [
   "complaint_intent_detected", "complaint_route_resolved", "complaint_whatsapp_opened",
   "commercial_inbox_viewed", "lead_viewed", "lead_contact_opened", "lead_status_changed", "fiber_demand_viewed",
   "navigation_executed", "contextual_component_rendered", "action_clicked", "form_started", "form_completed",
+  "coopia_global_opened", "coopia_global_closed", "coopia_question", "coopia_action_clicked", "coopia_feedback", "coopia_unresolved", "coopia_handoff",
 ] as const;
 
 export type JourneyEventType = (typeof journeyEventTypes)[number];

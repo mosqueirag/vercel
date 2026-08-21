@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { detectIntent } from "../../../../lib/ai/intents";
+import { detectIntent, intentNames } from "../../../../lib/ai/intents";
 import { resolveAssistantResult } from "../../../../lib/ai/resolver";
 import { isJourneyId, isSessionId } from "../../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../../lib/journey/recorder";
 import { resolveAssistantTool } from "../../../../lib/tools/catalog";
 
-const schema = z.object({ message: z.string().trim().min(1).max(1200), journeyId: z.string().refine(isJourneyId), sessionId: z.string().refine(isSessionId), page: z.string().max(160).default("/") });
+const schema = z.object({ message: z.string().trim().min(1).max(1200), journeyId: z.string().refine(isJourneyId), sessionId: z.string().refine(isSessionId), page: z.string().max(160).default("/"), intent: z.enum(intentNames).optional(), service: z.enum(["billing", "internet", "fiber", "energy", "phone", "funeral", "general"]).optional() });
 
 export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => null));

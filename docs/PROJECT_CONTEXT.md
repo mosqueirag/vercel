@@ -18,3 +18,7 @@ COOPIA no mantiene tickets ni almacena reclamos. Detecta el servicio, resuelve d
 # Fase 3B — operación comercial interna
 
 `internet_requests` es el registro privado único de solicitudes de Internet/Fibra. La bandeja `/admin/comercial` está disponible sólo para administradores autorizados y separa solicitudes de instalación de `fiber_waitlist`. La lectura y los cambios de estado ocurren server-side; la demanda se muestra sólo agregada y los contactos se abren manualmente.
+
+## Fase 4B — COOPIA global
+
+COOPIA es una capa transversal de las páginas públicas. La home mantiene el centro de atención protagonista y el resto del portal ofrece un panel compacto bajo demanda, ambos sobre una única sesión temporal. La conversación, intención y acciones sobreviven a la navegación de la pestaña; no se muestra el asistente dentro de `/admin`. La analítica es mínima y best-effort, sin texto completo del chat ni datos personales.

@@ -4,7 +4,7 @@ Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el 
 
 ## Flujos actuales
 
-- **COOPIA:** consulta → detección de intención → respuesta OpenAI con fallback oficial → acción estructurada → tracking mínimo. OpenAI no confirma cobertura, planes, precios, cortes ni requisitos.
+- **COOPIA:** es una capa transversal del portal público, no una función exclusiva de la portada. Un `CoopiaProvider` mantiene una sola conversación temporal por pestaña, `journeyId`, `sessionId`, intención, servicio, resultado y acciones mientras el usuario navega. La home usa el centro amplio; las demás páginas ofrecen el panel global bajo demanda. Consulta → detección de intención → respuesta OpenAI con fallback oficial → acción estructurada → seguimiento anónimo. OpenAI no confirma cobertura, planes, precios, cortes ni requisitos.
 - **Cobertura:** `/api/coverage-check` consulta primero `service_address_coverage` exacto desde servidor. Si no existe coincidencia exacta, intenta Georef y, sólo si Georef no entrega coordenadas válidas, Geoapify server-side. Las coordenadas validadas se resuelven únicamente contra `coverage_zones` mediante PostGIS. La prioridad final es `exact_address > geographic_zone > nearby_address > unknown`; sólo expone un resultado comercial agregado, no infraestructura ni padrón.
 - **Internet/fibra:** `/api/internet-leads` valida, exige consentimiento operativo y usa `create_internet_request_v2_with_outbox` para crear solicitud y evento outbox en una transacción. La entrega a n8n permanece desactivada sin variables configuradas.
 - **Noticias:** Google OAuth identifica al usuario, pero el acceso editorial exige además presencia en `news_admins`. Imágenes se cargan con URL firmada para administradores.
@@ -29,6 +29,10 @@ La migración `20260817203507_geographic_coverage_zones` y cuatro zonas oficiale
 ## CI
 
 `quality` ejecuta instalación limpia, typecheck, lint, tests y build. `supabase-tests` inicia un stack efímero, reconstruye las migraciones, ejecuta pgTAP/RLS y `db lint`. Ninguno usa credenciales remotas o productivas.
+
+## Trazabilidad de COOPIA
+
+La persistencia temporal vive sólo en `sessionStorage` y se limita al historial necesario de la pestaña; no se replica como analytics. Los eventos best-effort no contienen texto de la conversación ni PII. Los eventos de la capa global incluyen apertura/cierre, pregunta, acción, feedback, handoff y consulta no resuelta; el fallo de telemetría nunca impide una gestión real. Una futura evolución multiagente puede delegar desde el resolver por dominio, pero el usuario siempre interactúa con COOPIA.
 
 ## Estado del release candidate de Fase 2
 
