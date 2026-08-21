@@ -15,7 +15,7 @@ export function createCoopiaSummaryCache<T>(ttl = ttlMs) {
 const cache = createCoopiaSummaryCache<CoopiaAnalyticsSummary>();
 
 export function coopiaAggregatePayload(data: CoopiaAnalytics) {
-  return { period: data.period, totals: data.totals, resolution: data.resolution, funnel: data.funnel.map(({ id, count }) => ({ id, count })), intents: data.intents, services: data.services, needsLearning: data.needsLearning, trends: data.trends, pulse: data.pulse, commercialRequests: data.commercialRequests };
+  return { period: data.period, totals: data.totals, resolution: data.resolution, funnel: data.funnel.map(({ id, count, rateFromPrevious, rateFromOpened }) => ({ id, count, rateFromPrevious, rateFromOpened })), intents: data.intents, services: data.services, needsLearning: data.needsLearning, trends: data.trends, pulse: data.pulse, commercialRequests: data.commercialRequests };
 }
 export function summarizeCoopiaAnalytics(data: CoopiaAnalytics): CoopiaAnalyticsSummary {
   if (!data.totals.messages) return { source: "deterministic", summary: "Todavía no hay consultas suficientes para generar un resumen operativo.", insights: [], recommendations: ["Verificar que la telemetría de COOPIA esté disponible en staging."] };

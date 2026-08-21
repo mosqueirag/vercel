@@ -4,7 +4,7 @@ export type CoopiaPeriod = "today" | "7d" | "30d";
 export type CoopiaOutcome = "resolved" | "information_provided" | "action_completed" | "conversion" | "handoff" | "abandoned" | "unresolved" | "error";
 export type EventRow = { created_at: string; session_id: string; event_type: string; intent: string | null; service: string | null; action: string | null; result: string | null; metadata: Record<string, unknown> | null; duration_ms: number | null };
 export type CountItem = { label: string; count: number };
-export type FunnelStep = { id: "opened" | "message_sent" | "intent_detected" | "action_shown" | "action_completed" | "result"; label: string; count: number; rateFromPrevious: number | null };
+export type FunnelStep = { id: "opened" | "message_sent" | "intent_detected" | "action_shown" | "action_completed" | "result"; label: string; count: number; rateFromPrevious: number | null; rateFromOpened: number | null };
 export type OutcomeBreakdown = Record<CoopiaOutcome, number>;
 export type CoopiaAnalytics = {
   available: boolean; period: CoopiaPeriod; eventSourceComplete: boolean;
@@ -62,8 +62,8 @@ function funnel(rows: EventRow[]): FunnelStep[] {
   const definitions: Array<{ id: FunnelStep["id"]; label: string; eventTypes: string[] }> = [
     { id: "opened", label: "Abrió COOPIA", eventTypes: ["coopia_global_opened", "assistant_opened"] }, { id: "message_sent", label: "Envió consulta", eventTypes: ["coopia_message_sent", "coopia_question", "assistant_question_sent"] }, { id: "intent_detected", label: "Intent detectado", eventTypes: ["coopia_intent_detected", "intent_detected"] }, { id: "action_shown", label: "Acción mostrada", eventTypes: ["coopia_action_shown", "navigation_recommended"] }, { id: "action_completed", label: "Acción iniciada", eventTypes: ["coopia_action_clicked"] }, { id: "result", label: "Resultado registrado", eventTypes: ["coopia_result"] },
   ];
-  let previous: number | null = null;
-  return definitions.map((definition) => { const count = uniqueSessionCount(rows, definition.eventTypes); const rateFromPrevious = previous && previous > 0 ? Math.round((count / previous) * 100) : null; previous = count; return { id: definition.id, label: definition.label, count, rateFromPrevious }; });
+  let previous: number | null = null; let opened: number | null = null;
+  return definitions.map((definition) => { const count = uniqueSessionCount(rows, definition.eventTypes); if (definition.id === "opened") opened = count; const rateFromPrevious = previous && previous > 0 ? Math.round((count / previous) * 100) : null; const rateFromOpened = opened && opened > 0 ? Math.round((count / opened) * 100) : null; previous = count; return { id: definition.id, label: definition.label, count, rateFromPrevious, rateFromOpened }; });
 }
 function learningTopics(rows: EventRow[], bySession: Map<string, { at: string; outcome: CoopiaOutcome }>) {
   const sessions = new Set([...bySession.entries()].filter(([, value]) => ["unresolved", "handoff", "error"].includes(value.outcome)).map(([sessionId]) => sessionId)); const relevant = rows.filter((row) => sessions.has(row.session_id));
