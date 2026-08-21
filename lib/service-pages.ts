@@ -1,7 +1,8 @@
 import { CONTACT } from "./coopsar-data";
 import type { PublicContact } from "./data/public-content";
 
-export const servicePages: Record<string, { eyebrow: string; title: string; intro: string; items: [string, string, string][] }> = {
+export type ServicePageContent = { eyebrow: string; title: string; intro: string; items: [string, string, string][] };
+export const servicePages: Record<string, ServicePageContent> = {
   energia: { eyebrow: "Energía eléctrica", title: "Energía para la comunidad", intro: "Accedé a guardias, trámites y orientación sobre el suministro eléctrico.", items: [["Simulador de consumo", "Estimá cuántos kWh consumen los artefactos de tu hogar.", "/simulador-energia"], ["Falta de energía", `Guardia 24 horas: ${CONTACT.energyGuard}.`, `tel:+542974364961`], ["Cortes programados", "Consultá únicamente alertas confirmadas.", "/cortes-programados"], ["Nueva conexión", "Iniciá una consulta sobre requisitos y factibilidad.", "/tramites"], ["Facturas", "Consultá deuda y comprobantes en Oficina Virtual.", CONTACT.virtualOffice]] },
   internet: { eyebrow: "Conectividad", title: "Internet para cada necesidad", intro: "Planes, soporte y solicitudes de cobertura con atención local.", items: [["Contratar internet", "Usá el recomendador y solicitá contacto.", "/#internet"], ["Consultar cobertura", "La disponibilidad requiere evaluación técnica.", "/#contratar"], ["Soporte", `Comunicaciones: ${CONTACT.internetSupport}.`, `tel:+542974641110`], ["Fibra óptica", "Conocé la tecnología y pedí una evaluación.", "/fibra-optica"]] },
   "fibra-optica": { eyebrow: "Fibra óptica", title: "Conectividad de nueva generación", intro: "Consultá disponibilidad de FTTH para tu hogar, comercio o empresa.", items: [["Cobertura", "Pendiente de evaluación técnica por zona.", "/#contratar"], ["Planes", "Velocidades y precios pendientes de confirmación.", "/#internet"], ["Solicitud", "Registrá tus datos para recibir asesoramiento.", "/#contratar"], ["Soporte", `Canal técnico: ${CONTACT.internetSupport}.`, `tel:+542974641110`]] },
@@ -21,7 +22,7 @@ const phoneHref = (value: string) => `tel:${value.replace(/[^\d+]/g, "")}`;
 const whatsappHref = (value: string) => `https://wa.me/${value.replace(/\D/g, "")}`;
 
 /** Resolves only visible contact cards; published Supabase values always win. */
-export function withPublicContacts(page: (typeof servicePages)[string], contacts: PublicContact[]) {
+export function withPublicContacts(page: ServicePageContent, contacts: PublicContact[]): ServicePageContent {
   const whatsapp = contactValue(contacts, "general", "general_contact", CONTACT.whatsapp);
   const energy = contactValue(contacts, "energy", "emergency", CONTACT.energyGuard);
   const internet = contactValue(contacts, "internet", "support", CONTACT.internetSupport);

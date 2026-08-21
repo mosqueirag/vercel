@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Brand } from "../../ui";
 
 type Article = {
   id: string;
@@ -96,10 +95,8 @@ export default function AdminNewsPage() {
   }
 
   return (
-    <main>
-      <header className="site-header"><Brand /><nav className="desktop-nav"><Link href="/">Ver sitio</Link><Link href="/noticias">Ver noticias</Link></nav><b className="button button-dark">Panel editorial</b></header>
-      <section className="inner"><span className="tag">Administración</span><h1>Noticias</h1><p>Creá borradores, publicá información oficial y cargá imágenes.</p></section>
-      <section className="admin">
+    <section className="admin-page">
+      <header className="admin-page-header"><div><span className="eyebrow">Contenidos</span><h1>Noticias</h1><p>Creá borradores, publicá información oficial y cargá imágenes.</p></div></header>
         {message && <div className="admin-message" role="status">{message}</div>}
         {editing ? (
           <form className="news-editor" onSubmit={save}>
@@ -119,7 +116,6 @@ export default function AdminNewsPage() {
             <div className="admin-table-wrap"><table><thead><tr><th>Título</th><th>Categoría</th><th>Fecha</th><th>Estado</th><th>Enlace</th><th>Acción</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td><b>{item.title}</b></td><td>{item.category}</td><td>{new Date(item.published_at || item.created_at).toLocaleDateString("es-AR")}</td><td className={item.status === "published" ? "ok" : ""}>{item.status === "published" ? "Publicada" : "Borrador"}</td><td>{item.status === "published" ? <Link className="text-link" href={`/noticias/${item.slug}`} target="_blank">Ver noticia ↗</Link> : <small>Disponible al publicar</small>}</td><td><button onClick={() => setEditing(item)}>Editar</button> <button onClick={() => void remove(item)}>Eliminar</button></td></tr>)}</tbody></table></div>
           </>
         )}
-      </section>
-    </main>
+    </section>
   );
 }

@@ -1,2 +1,1 @@
-import { Brand } from "../../ui";
-export default function QueriesAdmin() { return <main><header className="site-header"><Brand /><b>Administración</b></header><section className="admin"><span className="eyebrow">Analítica anónima</span><h1>Consultas del asistente</h1><p>Panel preparado para temas, intenciones, consultas sin respuesta y derivaciones, sin conservar conversaciones completas.</p></section></main>; }
+export default function QueriesAdmin() { return <section className="admin-page"><header className="admin-page-header"><div><span className="eyebrow">Analítica anónima</span><h1>Consultas del asistente</h1><p>Panel preparado para temas, intenciones, consultas sin respuesta y derivaciones, sin conservar conversaciones completas.</p></div></header></section>; }
