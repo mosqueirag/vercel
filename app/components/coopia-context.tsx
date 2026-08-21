@@ -73,10 +73,10 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
       if (structuredResponse.ok) {
         const result = await structuredResponse.json() as AssistantResult;
         setAssistantResult(result); navigation.applyResult(result, ids.sessionId);
-        const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "human_handoff" : result.nextStep.includes("coverage") ? "coverage_validation" : result.recommendedActions.length ? "action_recommended" : "information_provided";
+        const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "handoff" : result.nextStep.includes("coverage") ? "action_completed" : "information_provided";
         if (result.recommendedActions.length || result.ui) track("coopia_action_shown", { ui_type: result.ui?.type || "actions" }, result.recommendedActions[0]?.id, result.intent);
         track("coopia_result", { outcome }, undefined, result.intent, Date.now() - started);
-        if (outcome === "unresolved" || outcome === "human_handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent);
+        if (outcome === "unresolved" || outcome === "handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent);
       }
       if (!response.ok) { const data = await response.json().catch(() => ({})) as { error?: string }; if (data.error === "session_limit") setLimited(true); else throw new Error(data.error || "No pudimos responder."); return; }
       setMessages((current) => [...current, { role: "assistant", content: "" }]);

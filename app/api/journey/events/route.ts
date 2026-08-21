@@ -29,16 +29,22 @@ const schema = z.object({
     previous_page: z.string().trim().max(160).nullable().optional(),
     message_length: z.number().int().min(0).max(1200).optional(),
     confidence: z.number().min(0).max(1).optional(),
-    outcome: z.enum(["information_provided", "action_recommended", "coverage_validation", "human_handoff", "unresolved", "error"]).optional(),
+    outcome: z.enum(["resolved", "information_provided", "action_completed", "conversion", "handoff", "abandoned", "unresolved", "error", "action_recommended", "coverage_validation", "human_handoff"]).optional(),
   }).optional(),
   durationMs: z.number().int().min(0).max(120000).optional(),
 });
+
+export function sanitizePublicCoopiaMetadata(metadata: z.infer<typeof schema>["metadata"]) {
+  if (!metadata) return undefined;
+  const { routingWindow, contactPurpose, helpful, ui_type, fallback_type, last_step, page_type, message_length, confidence, outcome } = metadata;
+  return { ...(routingWindow ? { routingWindow } : {}), ...(contactPurpose ? { contactPurpose } : {}), ...(typeof helpful === "boolean" ? { helpful } : {}), ...(ui_type ? { ui_type } : {}), ...(fallback_type ? { fallback_type } : {}), ...(last_step ? { last_step } : {}), ...(page_type ? { page_type } : {}), ...(typeof message_length === "number" ? { message_length } : {}), ...(typeof confidence === "number" ? { confidence } : {}), ...(outcome ? { outcome } : {}) };
+}
 
 export async function POST(request: NextRequest) {
   const rate = await consumeRateLimit(request, "journey-events", 30, 60);
   if (!rate.allowed) return Response.json({ error: rate.available ? "rate_limit" : "protection_unavailable" }, { status: rate.available ? 429 : 503 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !journeyEventTypes.includes(parsed.data.eventType)) return Response.json({ error: "invalid_event" }, { status: 400 });
-  await recordJourneyEvent({ ...parsed.data, agent: "coopia" });
+  await recordJourneyEvent({ ...parsed.data, metadata: sanitizePublicCoopiaMetadata(parsed.data.metadata), agent: "coopia" });
   return new Response(null, { status: 204 });
 }

@@ -1,14 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { aggregateCoopiaEvents } from "./coopia-analytics";
+import { aggregateCoopiaEvents, type EventRow } from "./coopia-analytics";
+
+const row = (session_id: string, event_type: string, created_at: string, extra: Partial<EventRow> = {}): EventRow => ({ created_at, session_id, event_type, intent: null, service: null, action: null, result: null, metadata: null, duration_ms: null, ...extra });
 
 describe("aggregateCoopiaEvents", () => {
-  it("aggregates anonymous event data without conversation content", () => {
-    const result = aggregateCoopiaEvents([
-      { created_at: "2026-08-21T12:00:00Z", session_id: "s-1", event_type: "coopia_message_sent", intent: null, service: null, action: null, result: null, metadata: null, duration_ms: null },
-      { created_at: "2026-08-21T12:00:02Z", session_id: "s-1", event_type: "coopia_result", intent: null, service: null, action: null, result: "internet_signup", metadata: { outcome: "action_recommended" }, duration_ms: 1200 },
-      { created_at: "2026-08-21T12:00:03Z", session_id: "s-2", event_type: "coopia_feedback", intent: null, service: null, action: null, result: null, metadata: { helpful: true }, duration_ms: null },
-    ], "7d", 2);
+  it("uses metadata.outcome rather than the historical result intent", () => {
+    const result = aggregateCoopiaEvents([row("s-1", "coopia_message_sent", "2026-08-21T12:00:00Z"), row("s-1", "coopia_result", "2026-08-21T12:00:02Z", { result: "internet_signup", metadata: { outcome: "information_provided" }, duration_ms: 1200 }), row("s-2", "coopia_feedback", "2026-08-21T12:00:03Z", { metadata: { helpful: true } })], "7d", 2);
     expect(result.totals).toMatchObject({ sessions: 2, messages: 1, feedbackPositive: 1, averageResponseMs: 1200 });
+    expect(result.outcomes.information_provided).toBe(1);
     expect(JSON.stringify(result)).not.toContain("content");
+  });
+
+  it("deduplicates the funnel by session and does not invent a legacy result", () => {
+    const result = aggregateCoopiaEvents([row("s-1", "coopia_global_opened", "2026-08-21T12:00:00Z"), row("s-1", "coopia_global_opened", "2026-08-21T12:00:01Z"), row("s-1", "coopia_message_sent", "2026-08-21T12:00:02Z"), row("s-1", "coopia_intent_detected", "2026-08-21T12:00:03Z", { result: "billing" }), row("s-1", "coopia_result", "2026-08-21T12:00:04Z", { result: "billing" })], "7d", null);
+    expect(result.funnel.find((item) => item.id === "opened")?.count).toBe(1);
+    expect(result.resolution.rate).toBeNull();
+  });
+
+  it("groups learnings, trends and pulse only from aggregate event fields", () => {
+    const current: EventRow[] = []; const previous: EventRow[] = [];
+    for (let index = 0; index < 6; index += 1) current.push(row(`c-${index}`, "coopia_message_sent", "2026-08-21T12:00:00Z"), row(`c-${index}`, "coopia_intent_detected", "2026-08-21T12:00:01Z", { result: "fiber_coverage" }), row(`c-${index}`, "coopia_service_detected", "2026-08-21T12:00:02Z", { result: "fiber" }), row(`c-${index}`, "coopia_unresolved", "2026-08-21T12:00:03Z"));
+    for (let index = 0; index < 3; index += 1) previous.push(row(`p-${index}`, "coopia_message_sent", "2026-08-14T12:00:00Z"), row(`p-${index}`, "coopia_intent_detected", "2026-08-14T12:00:01Z", { result: "fiber_coverage" }));
+    const result = aggregateCoopiaEvents(current, "7d", 0, previous);
+    expect(result.needsLearning).toContainEqual({ kind: "intent", label: "fiber_coverage", count: 6 });
+    expect(result.trends.find((item) => item.id === "messages")?.changePercent).toBe(100);
+    expect(result.pulse[0]?.label).toContain("tema fiber coverage");
+    expect(JSON.stringify(result)).not.toContain("pregunta");
   });
 });
