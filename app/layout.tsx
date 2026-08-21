@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./contextual.css";
-import { NavigationProvider } from "./components/navigation-context";
 import { PublicContactProvider } from "./components/public-contact-context";
-import { CoopiaProvider } from "./components/coopia-context";
-import { GlobalCoopiaAssistant } from "./components/global-coopia-assistant";
+import { CoopiaPublicShell } from "./components/coopia-public-shell";
 
 export const metadata: Metadata = {
   title: { default: "COOPSAR | Servicios para Sarmiento", template: "%s | COOPSAR" },
@@ -15,5 +13,5 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   const appEnvironment = process.env.NEXT_PUBLIC_APP_ENV;
   const isStaging = appEnvironment === "staging";
 
-  return <html lang="es"><body>{isStaging ? <div className="environment-banner" role="status">Entorno de prueba · STAGING</div> : null}<NavigationProvider><PublicContactProvider><CoopiaProvider>{children}<GlobalCoopiaAssistant /></CoopiaProvider></PublicContactProvider></NavigationProvider></body></html>;
+  return <html lang="es"><body>{isStaging ? <div className="environment-banner" role="status">Entorno de prueba · STAGING</div> : null}<PublicContactProvider><CoopiaPublicShell>{children}</CoopiaPublicShell></PublicContactProvider></body></html>;
 }

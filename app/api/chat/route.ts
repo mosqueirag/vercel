@@ -6,6 +6,7 @@ import { detectIntent, intentNames } from "../../../lib/ai/intents";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { configuredAiSessionLimit, consumeRateLimit } from "../../../lib/security/rate-limit";
+import { coopiaContextMetadata, deriveCoopiaPageContext } from "../../../lib/coopia/page-context";
 
 export const runtime = "nodejs";
 
@@ -40,9 +41,11 @@ export async function POST(request: NextRequest) {
   const latest = parsed.data.messages.at(-1)?.content || "";
   const detection = detectIntent(latest);
   const journey = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: parsed.data.page, intent: detection.intent, service: detection.service };
+  const pageContext = coopiaContextMetadata(deriveCoopiaPageContext(parsed.data.page));
   await Promise.all([
     recordJourneyEvent({ ...journey, eventType: "assistant_question_sent", agent: "coopia", metadata: { message_length: latest.length } }),
-    recordJourneyEvent({ ...journey, eventType: "intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.intent, metadata: { confidence: detection.confidence } }),
+    recordJourneyEvent({ ...journey, eventType: "coopia_intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.intent, metadata: { confidence: detection.confidence, ...pageContext } }),
+    recordJourneyEvent({ ...journey, eventType: "coopia_service_detected", agent: "coopia", result: detection.service, metadata: pageContext }),
   ]);
   const headers = new Headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
   headers.set("X-COOPSAR-Journey-ID", parsed.data.journeyId);
