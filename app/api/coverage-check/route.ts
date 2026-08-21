@@ -3,7 +3,7 @@ import { z } from "zod";
 import { configuredCoverageMargin, normalizeStreet } from "../../../lib/coverage";
 import { coverageAnalytics, hasExactCoverage, resolveCoverageFromRecords, resolveCoverageWithPriority, type PublishedPlan, type ZoneMatch } from "../../../lib/coverage-resolver";
 import type { CoverageRecord } from "../../../lib/coverage-results";
-import { geocodeSarmientoAddress } from "../../../lib/georef";
+import { geocodeSarmientoAddressWithSource } from "../../../lib/georef";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { consumeRateLimit } from "../../../lib/security/rate-limit";
@@ -49,17 +49,19 @@ export async function POST(request: NextRequest) {
 
   // Exact address data is authoritative. Nearby records are held until after
   // zone resolution, so a close-by row cannot mask official geographic coverage.
+  let geocoderSource: "georef" | "geoapify" | "none" = "none";
   if (!resolution) {
-    const point = await geocodeSarmientoAddress(parsed.data.street, parsed.data.number);
-    if (point) {
-      const { data: zones, error: zoneError } = await supabase.rpc("resolve_coverage_zones", { p_longitude: point.longitude, p_latitude: point.latitude });
+    const geocoded = await geocodeSarmientoAddressWithSource(parsed.data.street, parsed.data.number);
+    if (geocoded) {
+      geocoderSource = geocoded.source;
+      const { data: zones, error: zoneError } = await supabase.rpc("resolve_coverage_zones", { p_longitude: geocoded.longitude, p_latitude: geocoded.latitude });
       if (zoneError) console.error("Coverage zone lookup failed", zoneError.code);
       else resolution = resolveCoverageWithPriority(records, parsed.data.number, plans, (zones ?? []) as ZoneMatch[]);
     }
   }
   resolution ??= resolveCoverageFromRecords(records, parsed.data.number, plans);
   resolution ??= unknown;
-  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: resolution.coverageStatus, metadata: coverageAnalytics(resolution) });
+  if (context) await recordJourneyEvent({ ...context, eventType: "fiber_coverage_result", service: "fiber", result: resolution.coverageStatus, metadata: { ...coverageAnalytics(resolution), geocoder_source: geocoderSource } });
 
   return Response.json({ ...resolution, technology: resolution.technologies[0] ?? null });
 }
