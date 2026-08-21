@@ -6,6 +6,11 @@ describe("coverage address normalization", () => {
     expect(normalizeStreet("Av. José Hernández")).toBe("JOSE HERNANDEZ");
   });
 
+  it("treats accented and unaccented street searches as equivalent", () => {
+    const variants = ["España", "ESPAÑA", "espana", "ESPANA"];
+    expect(variants.map(normalizeStreet)).toEqual(["ESPANA", "ESPANA", "ESPANA", "ESPANA"]);
+  });
+
   it("parses trailing and leading house numbers", () => {
     expect(parseServiceAddress("San Martín 1234")).toEqual({ streetNormalized: "SAN MARTIN", streetNumber: 1234 });
     expect(parseServiceAddress("1234 Calle Belgrano")).toEqual({ streetNormalized: "BELGRANO", streetNumber: 1234 });

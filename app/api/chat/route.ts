@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { getAssistantKnowledge } from "../../../lib/data/public-content";
-import { detectIntent } from "../../../lib/ai/intents";
+import { detectIntent, intentNames } from "../../../lib/ai/intents";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { configuredAiSessionLimit, consumeRateLimit } from "../../../lib/security/rate-limit";
@@ -14,6 +14,8 @@ const schema = z.object({
   journeyId: z.string().refine(isJourneyId),
   sessionId: z.string().refine(isSessionId),
   page: z.string().trim().max(160).default("/"),
+  intent: z.enum(intentNames).optional(),
+  service: z.enum(["billing", "internet", "fiber", "energy", "phone", "funeral", "general"]).optional(),
 });
 
 function fallbackAnswer(message: string) {

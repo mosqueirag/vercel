@@ -7,12 +7,23 @@ const draft = { ...published, id: "draft", name: "Borrador", status: "draft" };
 describe("geographic coverage resolver", () => {
   it("keeps an exact unavailable address ahead of a possible geographic zone", () => {
     const result = resolveCoverageFromRecords([{ street_number: 10, plan_name: null, technology: "FTTH", coverage_status: "unavailable" }], 10, [published]);
-    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "unavailable", plans: [] });
+    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "unavailable", plans: [], nextAction: "fiber_waitlist" });
   });
 
   it("keeps exact coverage above any fallback", () => {
     const result = resolveCoverageFromRecords([{ street_number: 10, plan_name: null, technology: "FTTH", coverage_status: "available" }], 10, [published]);
-    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "available", commercialAvailability: true });
+    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "available", technologies: ["FTTH"], commercialAvailability: true, nextAction: "installation" });
+  });
+
+  it("keeps exact FTTH coverage confirmed when no compatible published plan exists", () => {
+    const result = resolveCoverageFromRecords([{ street_number: 451, plan_name: null, technology: "FTTH", coverage_status: "available" }], 451, [draft]);
+    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "available", technologies: ["FTTH"], commercialAvailability: false, nextAction: "coverage_validation" });
+    expect(result?.message).toContain("cobertura técnica está confirmada");
+  });
+
+  it("keeps exact ADSL coverage confirmed without treating it as a waitlist", () => {
+    const result = resolveCoverageFromRecords([{ street_number: 451, plan_name: null, technology: "ADSL", coverage_status: "available" }], 451, []);
+    expect(result).toMatchObject({ coverageSource: "exact_address", coverageStatus: "available", technologies: ["ADSL"], nextAction: "coverage_validation" });
   });
 
   it("keeps exact planned coverage above a possible geographic zone", () => {

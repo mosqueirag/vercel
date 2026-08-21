@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
+import { normalizeStreet } from "../../../../lib/coverage";
 
 const patchSchema = z.object({ id: z.number().int().positive(), coverageStatus: z.enum(["available", "nearby", "planned", "unavailable", "unknown"]), technology: z.string().trim().min(1).max(100), source: z.enum(["manual_admin", "csv_import", "network_export", "verified_internal"]), verifiedAt: z.string().datetime().nullable() });
 
 export async function GET(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const query = new URL(request.url).searchParams.get("street")?.trim().toUpperCase();
+  const street = new URL(request.url).searchParams.get("street");
+  const query = street ? normalizeStreet(street) : "";
   let builder = session.admin.from("service_address_coverage").select("id,street_normalized,street_number,plan_name,technology,coverage_status,source,verified_at,updated_at").order("street_normalized").order("street_number").limit(100);
   if (query) builder = builder.ilike("street_normalized", `%${query}%`);
   const { data, error } = await builder;
