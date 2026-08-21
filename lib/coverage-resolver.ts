@@ -34,15 +34,27 @@ export function resolveCoverageFromRecords(records: CoverageRecord[], requestedN
   const technologies = technologiesFrom(selection.nearest);
   const compatible = selection.status === "available" ? publishedCompatiblePlans(plans, technologies, selection.nearest[0]?.plan_name ?? null) : [];
   const commercialAvailability = selection.status === "available" && compatible.length > 0;
+  const exactAddress = selection.distance === 0;
+  const confirmedTechnicalCoverage = exactAddress && selection.status === "available";
   return {
     coverageStatus: selection.status,
-    coverageSource: selection.distance === 0 ? "exact_address" : "nearby_address", confidence: selection.distance === 0 ? "confirmed" : "nearby",
+    coverageSource: exactAddress ? "exact_address" : "nearby_address", confidence: exactAddress ? "confirmed" : "nearby",
     technologies,
     commercialAvailability,
     plans: compatible,
-    nextAction: commercialAvailability ? "installation" : selection.status === "nearby" || selection.status === "planned" ? "coverage_validation" : "fiber_waitlist",
+    nextAction: commercialAvailability
+      ? "installation"
+      : confirmedTechnicalCoverage || selection.status === "nearby" || selection.status === "planned"
+        ? "coverage_validation"
+        : "fiber_waitlist",
     zoneMatch: false,
-    message: commercialAvailability ? "Encontramos disponibilidad informada para tu domicilio. Podés revisar los planes publicados compatibles." : selection.status === "nearby" || selection.status === "planned" ? "Encontramos información cercana o en planificación. La disponibilidad requiere validación técnica." : "No tenemos disponibilidad comercial confirmada para este domicilio.",
+    message: commercialAvailability
+      ? "Encontramos cobertura confirmada para tu domicilio y planes publicados compatibles. Podés revisar las alternativas disponibles."
+      : confirmedTechnicalCoverage
+        ? "La cobertura técnica está confirmada para tu domicilio. Todavía no hay un plan publicado compatible para contratación online; podés solicitar validación técnica o contacto comercial."
+        : selection.status === "nearby" || selection.status === "planned"
+          ? "Encontramos información cercana o en planificación. La disponibilidad requiere validación técnica."
+          : "No encontramos cobertura confirmada para este domicilio. Podés solicitar que te avisemos cuando exista información oficial.",
   };
 }
 
