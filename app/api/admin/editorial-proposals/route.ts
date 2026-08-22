@@ -1,11 +1,12 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialCandidate, getEditorialCandidates, getEditorialProposals } from "../../../../lib/data/editorial-content";
+import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
 import { contentSourceHash, editorialBatchOrder, editorialPromptVersion, extractProtectedFacts, isEditorialBatchCandidate, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
+import { canPublishEditorialProposal } from "../../../../lib/editorial/publication";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
-const reviewActions = new Set(["approved", "rejected", "needs_validation", "applied"]);
+const reviewActions = new Set(["approved", "rejected", "needs_validation", "applied", "published"]);
 const proposalText = (proposal: unknown, key: string) => proposal && typeof proposal === "object" && typeof (proposal as Record<string, unknown>)[key] === "string" ? (proposal as Record<string, string>)[key].trim() : "";
 
 function draftUpdate(entityType: EditorialEntityType, proposal: unknown) {
@@ -22,8 +23,8 @@ const entityTable: Record<EditorialEntityType, string> = { service: "services", 
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const [candidates, proposals] = await Promise.all([getEditorialCandidates(), getEditorialProposals()]);
-  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending })), proposals });
+  const [candidates, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getEditorialProposals()]);
+  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus })), proposals });
 }
 
 export async function POST(request: Request) {
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
   try {
     if (typeof body.batchLimit === "number") {
       const limit = Math.max(1, Math.min(10, Math.floor(body.batchLimit)));
-      const candidates = (await getEditorialCandidates()).filter((candidate) => candidate.status === "draft" && isEditorialBatchCandidate(candidate.entityType)).sort((a, b) => editorialBatchOrder.indexOf(a.entityType) - editorialBatchOrder.indexOf(b.entityType)).slice(0, limit);
+      const candidates = (await getHistoricalEditorialCandidates()).filter((candidate) => candidate.status === "draft" && isEditorialBatchCandidate(candidate.entityType)).sort((a, b) => editorialBatchOrder.indexOf(a.entityType) - editorialBatchOrder.indexOf(b.entityType)).slice(0, limit);
       const results = [];
       for (const candidate of candidates) results.push(await create(candidate));
       return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length });
@@ -74,6 +75,18 @@ export async function PATCH(request: Request) {
   const { data: proposal, error } = await session.admin.from("content_editorial_proposals").select("*").eq("id", body.proposalId).maybeSingle();
   if (error || !proposal) return Response.json({ error: "Propuesta no encontrada." }, { status: 404 });
   const audit = async (action: string, metadata: Record<string, unknown> = {}) => session.admin.from("content_editorial_proposal_audit").insert({ proposal_id: proposal.id, action, actor_email: session.email, metadata });
+  if (body.action === "published") {
+    const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
+    const validationFlags = Array.isArray(proposal.validation_flags) ? proposal.validation_flags.filter((value: unknown): value is string => typeof value === "string") : [];
+    const gate = candidate && canPublishEditorialProposal({ entityType: proposal.entity_type as EditorialEntityType, proposalStatus: proposal.status, candidateStatus: candidate.status, riskLevel: proposal.risk_level, validationFlags, validationPending: candidate.validationPending });
+    if (!candidate || !gate?.allowed) {
+      await audit("publication_blocked", { reason: gate?.reason ?? "historical_candidate_required", risk: proposal.risk_level, validation_pending: candidate?.validationPending ?? true });
+      return Response.json({ error: "La publicación fue bloqueada por los controles de seguridad." }, { status: 409 });
+    }
+    const { error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update({ status: "published", published_at: new Date().toISOString() }).eq("id", candidate.id).eq("status", "draft");
+    if (publishError || (await audit("published", { entity_type: candidate.entityType, previous_status: "draft", new_status: "published", risk: proposal.risk_level })).error) return Response.json({ error: "No pudimos publicar el contenido en staging." }, { status: 503 });
+    return Response.json({ published: true });
+  }
   if (body.action !== "applied") {
     const { data, error: updateError } = await session.admin.from("content_editorial_proposals").update({ status: body.action, reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).select("*").single();
     const { error: auditError } = await audit(body.action);

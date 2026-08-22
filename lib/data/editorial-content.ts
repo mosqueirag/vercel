@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseAdmin } from "../supabase";
 import type { EditorialEntityType } from "../editorial/proposals";
+import { isHistoricalEditorialEntityType, validationForSourceSlugs } from "../editorial/historical-corpus";
+export { historicalEditorialEntityTypes } from "../editorial/historical-corpus";
 
 export type EditorialCandidate = {
   id: string;
@@ -11,12 +13,15 @@ export type EditorialCandidate = {
   status: "draft" | "published" | "archived";
   provenanceCount: number;
   validationPending: boolean;
+  validationReason?: string;
+  validationPriority?: "P0" | "P1" | "P2" | "P3";
+  sourceSlugs: string[];
+  historicalCorpus: boolean;
 };
 
 type RawCandidate = { id: string; status: EditorialCandidate["status"] };
 const asText = (value: unknown) => typeof value === "string" ? value : "";
 const joinText = (...values: unknown[]) => values.map(asText).filter(Boolean).join("\n\n");
-
 /** Private projection for the editorial console. Never use this from a client component. */
 export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
   const supabase = createSupabaseAdmin();
@@ -27,17 +32,21 @@ export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
     supabase.from("faqs").select("id,question,answer,status"),
     supabase.from("internet_plans").select("id,name,description,conditions,installation_notes,status"),
     supabase.from("public_contact_channels").select("id,label,public_value,purpose,status"),
-    supabase.from("content_import_provenance").select("entity_type,entity_id"),
-    supabase.from("content_import_validation_queue").select("status"),
+    supabase.from("content_import_provenance").select("entity_type,entity_id,source_slug"),
+    supabase.from("content_import_validation_queue").select("status,source_slugs,reason,priority"),
   ]);
   if ([services, articles, faqs, plans, contacts, provenance, queue].some((result) => result.error)) return [];
-  const provenanceById = new Map<string, number>();
-  for (const row of provenance.data ?? []) if (row.entity_id) provenanceById.set(row.entity_id, (provenanceById.get(row.entity_id) ?? 0) + 1);
-  const hasValidation = (queue.data ?? []).some((row) => row.status === "open");
+  const provenanceById = new Map<string, { count: number; sourceSlugs: string[]; historical: boolean }>();
+  for (const row of provenance.data ?? []) if (row.entity_id) {
+    const previous = provenanceById.get(row.entity_id) ?? { count: 0, sourceSlugs: [], historical: false };
+    provenanceById.set(row.entity_id, { count: previous.count + 1, sourceSlugs: row.source_slug ? [...previous.sourceSlugs, row.source_slug] : previous.sourceSlugs, historical: previous.historical || isHistoricalEditorialEntityType(row.entity_type) });
+  }
   const map = (rows: RawCandidate[] | null, entityType: EditorialEntityType, values: (row: Record<string, unknown>) => { title: string; text: string }) =>
     (rows ?? []).map((row) => {
       const value = values(row as Record<string, unknown>);
-      return { id: row.id, entityType, title: value.title, originalText: value.text, status: row.status, provenanceCount: provenanceById.get(row.id) ?? 0, validationPending: hasValidation && (provenanceById.get(row.id) ?? 0) > 0 };
+      const provenanceEntry = provenanceById.get(row.id) ?? { count: 0, sourceSlugs: [], historical: false };
+      const validation = validationForSourceSlugs(provenanceEntry.sourceSlugs, queue.data ?? []);
+      return { id: row.id, entityType, title: value.title, originalText: value.text, status: row.status, provenanceCount: provenanceEntry.count, validationPending: validation.pending, validationReason: validation.reason, validationPriority: validation.priority, sourceSlugs: provenanceEntry.sourceSlugs, historicalCorpus: provenanceEntry.historical && isHistoricalEditorialEntityType(entityType) };
     });
   return [
     ...map(services.data, "service", (row) => ({ title: asText(row.name), text: joinText(row.name, row.description) })),
@@ -48,8 +57,17 @@ export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
   ].sort((a, b) => a.entityType.localeCompare(b.entityType) || a.title.localeCompare(b.title, "es-AR"));
 }
 
+/** The bounded Fase 4D historical corpus. Plans, contacts and unrelated drafts stay out. */
+export async function getHistoricalEditorialCandidates(): Promise<EditorialCandidate[]> {
+  return (await getEditorialCandidates()).filter((candidate) => candidate.historicalCorpus);
+}
+
 export async function getEditorialCandidate(entityType: EditorialEntityType, id: string) {
   return (await getEditorialCandidates()).find((candidate) => candidate.entityType === entityType && candidate.id === id) ?? null;
+}
+
+export async function getHistoricalEditorialCandidate(entityType: EditorialEntityType, id: string) {
+  return (await getHistoricalEditorialCandidates()).find((candidate) => candidate.entityType === entityType && candidate.id === id) ?? null;
 }
 
 export type EditorialProposalRow = { id: string; entity_type: EditorialEntityType; entity_id: string; source_hash: string; prompt_version: string; proposal: unknown; detected_facts: unknown; validation_flags: string[]; risk_level: "low" | "medium" | "high" | "restricted"; status: string; created_at: string; updated_at: string };
