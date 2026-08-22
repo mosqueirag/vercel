@@ -8,3 +8,8 @@ export function coopiaActionEventTypes(action: AssistantAction) {
         : null;
   return domainEvent ? ["coopia_action_clicked", domainEvent] as const : ["coopia_action_clicked"] as const;
 }
+
+/** The handoff card has one canonical visible CTA: opening WhatsApp. */
+export function humanHandoffActionEventTypes() {
+  return ["coopia_action_clicked", "whatsapp_opened", "human_handoff_requested", "human_handoff_opened", "coopia_handoff"] as const;
+}

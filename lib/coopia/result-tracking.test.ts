@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantResult } from "../ai/results";
-import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, visibleAssistantActions, withEventTrackingContext } from "./result-tracking";
+import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, visibleActionIdsForResult, visibleAssistantActions, withEventTrackingContext } from "./result-tracking";
 
-function result(input: Pick<AssistantResult, "intent" | "service" | "orchestration" | "recommendedActions">): AssistantResult {
+function result(input: Pick<AssistantResult, "intent" | "service" | "orchestration" | "recommendedActions" | "ui">): AssistantResult {
   return {
     ...input,
     message: "Respuesta controlada",
@@ -26,11 +26,12 @@ const energy = result({
 });
 const interest = result({
   intent: "internet_signup", service: "internet", orchestration: { intent: "internet_interest", analyticsKey: "internet_interest", detection: "rule" },
+  ui: { type: "fiber_coverage", data: {} },
   recommendedActions: [
     { id: "CHECK_COVERAGE", label: "Cobertura" },
-    { id: "SHOW_INTERNET_PLANS", label: "Planes" },
-    { id: "REQUEST_INSTALLATION", label: "Instalación" },
-    { id: "OPEN_WHATSAPP", label: "WhatsApp" },
+    { id: "SHOW_INTERNET_PLANS", label: "Planes", href: "/internet#planes" },
+    { id: "REQUEST_INSTALLATION", label: "Instalación", href: "/internet#contratar" },
+    { id: "OPEN_WHATSAPP", label: "WhatsApp", href: "https://wa.me/5491111111111" },
   ],
 });
 const funeral = result({
@@ -39,6 +40,33 @@ const funeral = result({
     { id: "SHOW_FUNERAL_SERVICE", label: "Ver servicio de sepelio", href: "/sepelio" },
     { id: "CALL_FUNERAL_GUARD", label: "Llamar a guardia de sepelio", href: "tel:+542974000000" },
   ],
+});
+const handoff = result({
+  intent: "contact_operator", service: "general", orchestration: { intent: "human_handoff", analyticsKey: "human_handoff", detection: "rule" },
+  ui: { type: "human_handoff", data: {} },
+  recommendedActions: [
+    { id: "REQUEST_HUMAN_HANDOFF", label: "Solicitar atención" },
+    { id: "OPEN_WHATSAPP", label: "Abrir WhatsApp", href: "https://wa.me/5491111111111" },
+  ],
+});
+const paymentResult = result({
+  intent: "pay_invoice", service: "billing", orchestration: { intent: "payment", analyticsKey: "payment", detection: "rule" },
+  ui: { type: "payment", data: {} },
+  recommendedActions: [
+    { id: "OPEN_VIRTUAL_OFFICE", label: "Oficina virtual", href: "https://example.test" },
+    { id: "SHOW_PAYMENT_METHODS", label: "Medios de pago", href: "/medios-de-pago" },
+    { id: "DOWNLOAD_INVOICE", label: "Descargar factura", href: "https://example.test" },
+  ],
+});
+const internetIssue = result({
+  intent: "internet_problem", service: "internet", orchestration: { intent: "internet_issue", analyticsKey: "internet_issue", detection: "rule" },
+  ui: { type: "service_status", data: {} },
+  recommendedActions: [{ id: "OPEN_COMPLAINT_WHATSAPP", label: "Informar problema", href: "/tramites" }],
+});
+const complaintForm = result({
+  intent: "energy_problem", service: "energy", orchestration: { intent: "energy_outage", analyticsKey: "energy_outage", detection: "rule" },
+  ui: { type: "service_request_form", data: {} },
+  recommendedActions: [{ id: "REPORT_ENERGY_PROBLEM", label: "Informar problema" }, { id: "OPEN_WHATSAPP", label: "WhatsApp", href: "https://wa.me/5491111111111" }],
 });
 
 describe("COOPIA result tracking", () => {
@@ -77,7 +105,7 @@ describe("COOPIA result tracking", () => {
   it("records every action shown once, including across a render retry", () => {
     const seen = new Set<string>();
     const key = resultTrackingKey(interest, 2);
-    const actionIds = interest.recommendedActions.map((action) => action.id);
+    const actionIds = visibleActionIdsForResult(interest);
     const first = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: actionIds, seen });
     const retry = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: actionIds, seen });
     expect(first.map((event) => event.action)).toEqual(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION", "OPEN_WHATSAPP"]);
@@ -91,10 +119,10 @@ describe("COOPIA result tracking", () => {
 
   it("uses only typed result fields in its client-side fingerprint and metadata", () => {
     const key = resultTrackingKey(interest, 3);
-    const event = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: interest.recommendedActions.map((action) => action.id), seen: new Set() })[0];
+    const event = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: visibleActionIdsForResult(interest), seen: new Set() })[0];
     expect(key).not.toContain(interest.message);
     expect(JSON.stringify(event)).not.toContain(interest.message);
-    expect(event.metadata).toEqual({ ui_type: "actions", orchestration_intent: "internet_interest" });
+    expect(event.metadata).toEqual({ ui_type: "fiber_coverage", orchestration_intent: "internet_interest" });
   });
 
   it("tracks only generic actions that are actually executable in the rendered card", () => {
@@ -106,5 +134,25 @@ describe("COOPIA result tracking", () => {
 
   it("does not create action-shown analytics for non-rendered actions", () => {
     expect(takeShownActionEvents({ journeyId: "journey-test", resultKey: resultTrackingKey(funeral, 5), result: funeral, visibleActionIds: [], seen: new Set() })).toEqual([]);
+  });
+
+  it("recognizes the coverage form control even though it has no href", () => {
+    expect(visibleActionIdsForResult(interest)).toEqual(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION", "OPEN_WHATSAPP"]);
+  });
+
+  it("uses only the visible WhatsApp CTA for human handoff", () => {
+    expect(visibleActionIdsForResult(handoff)).toEqual(["OPEN_WHATSAPP"]);
+    const events = takeShownActionEvents({ journeyId: "journey-test", resultKey: resultTrackingKey(handoff, 6), result: handoff, visibleActionIds: visibleActionIdsForResult(handoff), seen: new Set() });
+    expect(events.map((event) => event.action)).toEqual(["OPEN_WHATSAPP"]);
+  });
+
+  it("keeps all three visible payment controls traceable", () => {
+    expect(visibleActionIdsForResult(paymentResult)).toEqual(["OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS", "DOWNLOAD_INVOICE"]);
+  });
+
+  it("mirrors the specialized internet, energy, and complaint controls", () => {
+    expect(visibleActionIdsForResult(internetIssue)).toEqual(["OPEN_COMPLAINT_WHATSAPP"]);
+    expect(visibleActionIdsForResult(complaintForm)).toEqual(["REPORT_ENERGY_PROBLEM"]);
+    expect(takeShownActionEvents({ journeyId: "journey-test", resultKey: resultTrackingKey(energy, 7), result: energy, visibleActionIds: ["REPORT_ENERGY_PROBLEM"], seen: new Set() })[0]?.context).toMatchObject({ intent: "energy_problem", service: "energy" });
   });
 });

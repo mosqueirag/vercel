@@ -172,7 +172,10 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
         return createResult(detection, journeyId, tool, { message: "Te mostramos los canales oficiales del servicio solidario.", actions: [{ id: "SHOW_FUNERAL_SERVICE", label: "Ver información", href: "/sepelio" }, { id: "CALL_FUNERAL_GUARD", label: "Llamar a la guardia", href: telephoneHref(guard) }], requiresHuman: true });
       }
     default:
-      return createResult(detection, journeyId, tool, { message: "¿Qué necesitás resolver? Puedo orientarte sobre facturas, energía, internet, fibra, sepelio o atención con una persona.", ui: { type: "human_handoff", data: {} }, actions: [{ id: "REQUEST_HUMAN_HANDOFF", label: "Hablar con una persona" }], requiresHuman: false });
+      {
+        const whatsapp = await officialContactValue("general", "general_contact", CONTACT.whatsapp);
+        return createResult(detection, journeyId, tool, { message: "¿Qué necesitás resolver? Puedo orientarte sobre facturas, energía, internet, fibra, sepelio o atención con una persona.", ui: { type: "human_handoff", data: {} }, actions: [{ id: "REQUEST_HUMAN_HANDOFF", label: "Hablar con una persona" }, { id: "OPEN_WHATSAPP", label: "Abrir WhatsApp", href: whatsappHref(whatsapp) }], requiresHuman: false });
+      }
   }
 }
 

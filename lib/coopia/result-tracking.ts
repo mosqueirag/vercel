@@ -42,6 +42,25 @@ export function visibleAssistantActions(actions: AssistantResult["recommendedAct
   return actions.filter((action) => Boolean(action.href));
 }
 
+/**
+ * Single source of truth for action-shown analytics. This mirrors the controls
+ * rendered by AssistantUIRenderer; analytics must never infer visibility first.
+ */
+export function visibleActionIdsForResult(result: AssistantResult): AssistantResult["recommendedActions"][number]["id"][] {
+  const declared = new Set(result.actions.map((action) => action.id));
+  const has = (id: AssistantResult["recommendedActions"][number]["id"]) => declared.has(id);
+  const linkActions = visibleAssistantActions(result.actions).map((action) => action.id);
+
+  if (result.ui?.type === "fiber_coverage" || result.ui?.type === "internet_plans") {
+    const coverageActionIds: AssistantResult["recommendedActions"][number]["id"][] = ["CHECK_COVERAGE", ...linkActions];
+    return coverageActionIds.filter((id) => has(id));
+  }
+  if (result.ui?.type === "human_handoff") return has("OPEN_WHATSAPP") ? ["OPEN_WHATSAPP"] : [];
+  if (result.ui?.type === "service_request_form") return result.actions.slice(0, 1).map((action) => action.id);
+  if (result.ui?.type === "complaint_service_picker") return [];
+  return linkActions;
+}
+
 export function resultTrackingContext(result: AssistantResult): CoopiaResultTrackingContext {
   return { intent: result.intent, service: result.service, orchestrationIntent: result.orchestration.intent };
 }

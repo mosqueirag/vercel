@@ -8,7 +8,7 @@ import { ServiceRequestForm } from "./service-request-form";
 import { HumanHandoffCard } from "./human-handoff-card";
 import { coveragePresentation } from "../../lib/coverage-presentation";
 import { coopiaActionEventTypes } from "../../lib/coopia/action-events";
-import { visibleAssistantActions } from "../../lib/coopia/result-tracking";
+import { visibleActionIdsForResult, visibleAssistantActions } from "../../lib/coopia/result-tracking";
 
 type Plan = { id: string; name: string; technology: string | null; speed_down_mbps: number | null; price_amount: number | null; currency: string | null };
 type Coverage = { coverageStatus: "available" | "nearby" | "planned" | "unavailable" | "unknown"; coverageSource: "exact_address" | "geographic_zone" | "nearby_address" | "unknown"; technologies: string[]; message: string; commercialAvailability: boolean; plans: Plan[]; nextAction: string };
@@ -34,20 +34,15 @@ function GenericActionsCard({ result }: { result: AssistantResult }) {
   return <section className="assistant-card generic-actions-card"><small>{serviceTitles[result.service]}</small><h3>{serviceTitles[result.service]}</h3><p>{result.message}</p><div className="assistant-card-actions">{actions.map((action) => <ActionLink action={action} complaintRoute={result.complaintRoute} resultContext={result} key={action.id} />)}</div></section>;
 }
 
-function renderedActionIds(result: AssistantResult) {
-  if (result.ui?.type === "service_request_form" || result.ui?.type === "human_handoff" || result.ui?.type === "complaint_service_picker") return [];
-  return visibleAssistantActions(result.actions).map((action) => action.id);
-}
-
 export function AssistantUIRenderer({ result, resultKey, onComplaintServiceSelect }: { result: AssistantResult; resultKey: string; onComplaintServiceSelect?: (service: string) => void }) {
   const nav = useNavigationContext();
   const { recordShownActions } = useCoopia();
-  const actionIds = renderedActionIds(result);
+  const actionIds = visibleActionIdsForResult(result);
   useEffect(() => { track(nav.journeyId, nav.sessionId, "contextual_component_rendered", result.ui?.type, result.intent, undefined, result); }, [nav.journeyId, nav.sessionId, result]);
   useEffect(() => { recordShownActions(result, resultKey, actionIds); }, [actionIds, recordShownActions, result, resultKey]);
   if (result.ui?.type === "fiber_coverage" || result.ui?.type === "internet_plans") return <FiberCoverageCard result={result} />;
   if (result.ui?.type === "service_request_form") return <ServiceRequestForm requestType={String(result.ui.data.requestType || "")} />;
-  if (result.ui?.type === "human_handoff") return <HumanHandoffCard />;
+  if (result.ui?.type === "human_handoff") return <HumanHandoffCard result={result} />;
   if (result.ui?.type === "complaint_service_picker" && onComplaintServiceSelect) return <ComplaintServicePicker onSelect={onComplaintServiceSelect} />;
   if (result.ui?.type === "service_status" || result.ui?.type === "payment") return <SimpleCard result={result} />;
   return <GenericActionsCard result={result} />;
