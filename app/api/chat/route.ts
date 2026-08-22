@@ -7,6 +7,7 @@ import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { configuredAiSessionLimit, consumeRateLimit } from "../../../lib/security/rate-limit";
 import { coopiaContextMetadata, deriveCoopiaPageContext } from "../../../lib/coopia/page-context";
+import { deterministicCoopiaResponse } from "../../../lib/coopia/deterministic-response";
 
 export const runtime = "nodejs";
 
@@ -44,12 +45,17 @@ export async function POST(request: NextRequest) {
   const pageContext = coopiaContextMetadata(deriveCoopiaPageContext(parsed.data.page));
   await Promise.all([
     recordJourneyEvent({ ...journey, eventType: "assistant_question_sent", agent: "coopia", metadata: { message_length: latest.length } }),
-    recordJourneyEvent({ ...journey, eventType: "coopia_intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.intent, metadata: { confidence: detection.confidence, ...pageContext } }),
+    recordJourneyEvent({ ...journey, eventType: "coopia_intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.orchestrationIntent || detection.intent, metadata: { confidence: detection.confidence, orchestration_intent: detection.orchestrationIntent || "unknown", ...pageContext } }),
     recordJourneyEvent({ ...journey, eventType: "coopia_service_detected", agent: "coopia", result: detection.service, metadata: pageContext }),
   ]);
   const headers = new Headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
   headers.set("X-COOPSAR-Journey-ID", parsed.data.journeyId);
   headers.set("X-COOPSAR-Session-ID", parsed.data.sessionId);
+
+  // Clear operational needs are answered through the deterministic router and
+  // structured server-side actions. The model is reserved for ambiguous text.
+  const deterministic = deterministicCoopiaResponse(detection);
+  if (deterministic) return new Response(deterministic, { headers });
 
   if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
 

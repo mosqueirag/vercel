@@ -4,6 +4,7 @@ import type { ToolResolution } from "../tools/catalog";
 import type { IntentDetection } from "./intents";
 import type { AssistantRecommendedAction, AssistantResult } from "./results";
 import { serviceRequestConfigs, type ServiceRequestType } from "../service-requests/config";
+import type { CoopiaIntentId } from "../coopia/intents";
 
 type ResultConfig = Pick<AssistantResult, "message"> & {
   ui?: AssistantResult["ui"];
@@ -13,6 +14,7 @@ type ResultConfig = Pick<AssistantResult, "message"> & {
 };
 
 function createResult(detection: IntentDetection, journeyId: string, tool: ToolResolution, config: ResultConfig): AssistantResult {
+  const orchestrationIntent = detection.orchestrationIntent ?? legacyOrchestrationIntent(detection.intent);
   return {
     message: config.message,
     intent: detection.intent,
@@ -27,7 +29,20 @@ function createResult(detection: IntentDetection, journeyId: string, tool: ToolR
     tool: { name: tool.name, kind: tool.kind, status: tool.status },
     journey: { journeyId, currentStep: detection.suggestedAction },
     complaintRoute: config.complaintRoute,
+    orchestration: { intent: orchestrationIntent, analyticsKey: orchestrationIntent, detection: orchestrationIntent === "unknown" ? "unknown" : "rule" },
   };
+}
+
+function legacyOrchestrationIntent(intent: IntentDetection["intent"]): CoopiaIntentId {
+  if (intent === "pay_invoice") return "payment";
+  if (intent === "energy_problem") return "energy_outage";
+  if (intent === "internet_problem") return "internet_issue";
+  if (intent === "internet_signup") return "internet_interest";
+  if (intent === "fiber_signup") return "fiber_interest";
+  if (intent === "fiber_coverage") return "fiber_coverage";
+  if (intent === "funeral_service") return "funeral_service";
+  if (intent === "contact_operator") return "human_handoff";
+  return "unknown";
 }
 
 function telephoneHref(value: string) {
@@ -73,6 +88,8 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
         ui: { type: "fiber_coverage", data: {} },
         actions: [
           { id: "CHECK_COVERAGE", label: "Consultar cobertura" },
+          { id: "SHOW_INTERNET_PLANS", label: "Ver planes", href: "/internet#planes" },
+          { id: "REQUEST_INSTALLATION", label: "Solicitar instalación", href: "/internet#contratar" },
           { id: "OPEN_WHATSAPP", label: "Hablar con un asesor", href: whatsappHref(whatsapp) },
         ],
       });
@@ -155,7 +172,7 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
         return createResult(detection, journeyId, tool, { message: "Te mostramos los canales oficiales del servicio solidario.", actions: [{ id: "SHOW_FUNERAL_SERVICE", label: "Ver información", href: "/sepelio" }, { id: "CALL_FUNERAL_GUARD", label: "Llamar a la guardia", href: telephoneHref(guard) }], requiresHuman: true });
       }
     default:
-      return createResult(detection, journeyId, tool, { message: "Voy a orientarte con la información oficial disponible.", actions: [], requiresHuman: true });
+      return createResult(detection, journeyId, tool, { message: "¿Qué necesitás resolver? Puedo orientarte sobre facturas, energía, internet, fibra, sepelio o atención con una persona.", ui: { type: "human_handoff", data: {} }, actions: [{ id: "REQUEST_HUMAN_HANDOFF", label: "Hablar con una persona" }], requiresHuman: false });
   }
 }
 

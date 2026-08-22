@@ -38,3 +38,7 @@ El Centro de contenidos privado permite generar propuestas de mejora sólo para 
 # Fase 4E.2 — revisión y publicación curada
 
 El corpus histórico administrable contiene 44 entradas: 9 servicios, 24 artículos de ayuda y 11 FAQ. El Centro de contenidos permite revisión individual y en lote, con gates de riesgo, hechos protegidos y validación humana. La publicación es una acción humana explícita y sólo habilita contenido `published` para COOPIA. El smoke real de la FAQ “¿Qué es ADECOOP?” validó `generated → approved → applied → draft invisible → published → visible` exclusivamente en staging. La siguiente etapa autorizada es **Fase 4F — COOPIA Orquestador de Intenciones y Acciones**; producción continúa fuera de alcance.
+
+# Fase 4F.1 — COOPIA orquestador de intenciones y acciones
+
+La primera entrega consolida reglas tipadas para necesidades principales y reutiliza acciones estructuradas existentes para pago, reclamos por WhatsApp, cobertura, planes, solicitud de Internet, sepelio y atención humana. `unknown` es explícito y seguro. Pendiente para el cierre: QA de Preview y CI de esta rama, sin desplegar ni modificar producción.
