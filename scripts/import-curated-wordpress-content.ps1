@@ -65,8 +65,12 @@ function ConvertTo-SupabaseJson($Body) {
   # serialize each member independently, which PostgREST rejects as PGRST102.
   return ConvertTo-Json -InputObject $Body -Depth 20 -Compress
 }
+function Build-SupabasePath([string]$Table, [string]$Conflict) {
+  if ([string]::IsNullOrWhiteSpace($Table) -or [string]::IsNullOrWhiteSpace($Conflict)) { throw "Table and conflict field are required." }
+  return "${Table}?on_conflict=${Conflict}"
+}
 function Invoke-Supabase([string]$Path, [string]$Method = "GET", $Body = $null) {
-  $params = @{ Uri = "$StagingUrl/rest/v1/$Path"; Method = $Method; Headers = (Get-Headers); ContentType = "application/json" }
+  $params = @{ Uri = "${StagingUrl}/rest/v1/${Path}"; Method = $Method; Headers = (Get-Headers); ContentType = "application/json" }
   if ($null -ne $Body) {
     $json = ConvertTo-SupabaseJson $Body
     $params.Body = [Text.Encoding]::UTF8.GetBytes($json)
@@ -76,7 +80,7 @@ function Invoke-Supabase([string]$Path, [string]$Method = "GET", $Body = $null) 
 }
 function Get-AllRows([string]$Path) {
   $rows = @(); $offset = 0
-  do { $page = @(Invoke-Supabase "$Path&offset=$offset&limit=1000"); $rows += $page; $offset += $page.Count } while ($page.Count -eq 1000)
+  do { $page = @(Invoke-Supabase "${Path}&offset=${offset}&limit=1000"); $rows += $page; $offset += $page.Count } while ($page.Count -eq 1000)
   return $rows
 }
 function Get-ServiceName([string]$Domain) {
@@ -138,6 +142,16 @@ function Invoke-SelfTest {
   if ((-not $json9.StartsWith('[')) -or (([regex]::Matches($json9, '"id":')).Count -ne 9)) { throw "SelfTest failed: 9-row batch JSON." }
   if (($singleJson.StartsWith('[')) -or ($parsedSingle.title -ne "Información ñ") -or ($singleJson -notmatch '"optional":null')) { throw "SelfTest failed: single-row JSON." }
   if ([Text.Encoding]::UTF8.GetString([Text.Encoding]::UTF8.GetBytes($singleJson)) -ne $singleJson) { throw "SelfTest failed: UTF-8 serialization." }
+  $expectedPaths = @{
+    services = 'services?on_conflict=slug'
+    faqs = 'faqs?on_conflict=import_key'
+    public_contact_channels = 'public_contact_channels?on_conflict=import_key'
+  }
+  foreach ($table in $expectedPaths.Keys) {
+    $conflict = if ($table -eq 'services') { 'slug' } else { 'import_key' }
+    $path = Build-SupabasePath $table $conflict
+    if ($path -ne $expectedPaths[$table] -or $path -match '/|=slug$' -and $path -ne 'services?on_conflict=slug') { throw "SelfTest failed: PostgREST upsert path." }
+  }
   Write-Output "SELF_TEST=PASS"
 }
 
@@ -181,7 +195,7 @@ if (-not $Apply) { Write-Output ("DRY_RUN=" + ($summary | ConvertTo-Json -Depth 
 function Save-NewRows([string]$Table, [string]$Conflict, $Rows, $ExistingByKey, [string]$Field) {
   $newRows = @($Rows | Where-Object { -not $ExistingByKey.ContainsKey([string]$_.$Field) })
   if (-not $newRows.Count) { return @() }
-  return @(Invoke-Supabase "$Table?on_conflict=$Conflict" "POST" $newRows)
+  return @(Invoke-Supabase (Build-SupabasePath $Table $Conflict) "POST" $newRows)
 }
 $sourceRowsToSave = @($sourceRows | Where-Object { -not $sourceBySlug.ContainsKey($_.source_slug) })
 if ($sourceRowsToSave.Count -gt 0) { Invoke-Supabase "content_import_source_pages?on_conflict=source_system,source_slug" "POST" $sourceRowsToSave | Out-Null }
