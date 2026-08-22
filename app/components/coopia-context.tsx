@@ -10,13 +10,13 @@ import { useNavigationContext } from "./navigation-context";
 import { usePublicContact } from "./public-contact-context";
 import { CONTACT } from "../../lib/coopsar-data";
 import { coopiaContextMetadata, deriveCoopiaPageContext, type CoopiaPageContext } from "../../lib/coopia/page-context";
-import { resultTrackingContext, resultTrackingKey, takeShownActionEvents, type CoopiaResultTrackingContext } from "../../lib/coopia/result-tracking";
+import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, type CoopiaEventContextMode } from "../../lib/coopia/result-tracking";
 
 type CoopiaValue = {
   messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null;
   journeyId: string; sessionId: string; intent?: AssistantIntent; service?: AssistantService; isOpen: boolean;
   setInput: (value: string) => void; ask: (text: string) => Promise<void>; setOpen: (open: boolean) => void;
-  pageContext: CoopiaPageContext; track: (eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: Pick<CoopiaResultTrackingContext, "intent" | "service">) => void;
+  pageContext: CoopiaPageContext; track: (eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: CoopiaEventContextMode) => void;
   feedback: (helpful: boolean) => void; handoffUrl: string;
 };
 const Context = createContext<CoopiaValue | null>(null);
@@ -34,9 +34,10 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
   const [previousPage, setPreviousPage] = useState<string | undefined>(undefined);
   const pageContext = deriveCoopiaPageContext(pathname, previousPage);
 
-  const track = useCallback((eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: Pick<CoopiaResultTrackingContext, "intent" | "service">) => {
+  const track = useCallback((eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: CoopiaEventContextMode) => {
     if (!ids.journeyId || !ids.sessionId) return;
-    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ journeyId: ids.journeyId, sessionId: ids.sessionId, eventType, page: page(), intent: context?.intent ?? navigation.intent, service: context?.service ?? navigation.service, metadata, action, result, durationMs }) }).catch(() => undefined);
+    const eventContext = eventTrackingContext({ intent: navigation.intent, service: navigation.service }, context);
+    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ journeyId: ids.journeyId, sessionId: ids.sessionId, eventType, page: page(), intent: eventContext.intent, service: eventContext.service, metadata, action, result, durationMs }) }).catch(() => undefined);
   }, [ids, navigation.intent, navigation.service]);
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
     const next = compactMessages([...messages, { role: "user", content: clean }]);
     const started = Date.now();
     setMessages(next); setInput(""); setError(""); setLoading(true);
-    track("coopia_message_sent", { message_length: clean.length });
+    track("coopia_message_sent", { message_length: clean.length }, undefined, undefined, undefined, "none");
     try {
       const context = coopiaRequestContext({ journeyId: ids.journeyId, sessionId: ids.sessionId, page: page(), intent: navigation.intent, service: navigation.service });
       const [structuredResponse, response] = await Promise.all([fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context }) }), fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) })]);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantResult } from "../ai/results";
-import { resultTrackingContext, resultTrackingKey, takeShownActionEvents } from "./result-tracking";
+import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents } from "./result-tracking";
 
 function result(input: Pick<AssistantResult, "intent" | "service" | "orchestration" | "recommendedActions">): AssistantResult {
   return {
@@ -45,6 +45,18 @@ describe("COOPIA result tracking", () => {
     expect(context).toEqual({ intent: "internet_signup", service: "internet", orchestrationIntent: "internet_interest" });
     expect(context.intent).not.toBe("pay_invoice");
     expect(context.service).not.toBe("billing");
+  });
+
+  it("records a second pre-classification message without the prior payment context", () => {
+    const priorNavigation = resultTrackingContext(payment);
+    expect(eventTrackingContext(priorNavigation, "none")).toEqual({ intent: null, service: null });
+    expect(resultTrackingContext(energy)).toMatchObject({ intent: "energy_problem", service: "energy" });
+  });
+
+  it("keeps the next internet-interest message unclassified until the official result arrives", () => {
+    const priorNavigation = resultTrackingContext(payment);
+    expect(eventTrackingContext(priorNavigation, "none")).toEqual({ intent: null, service: null });
+    expect(resultTrackingContext(interest)).toMatchObject({ intent: "internet_signup", service: "internet" });
   });
 
   it("records every action shown once, including across a render retry", () => {

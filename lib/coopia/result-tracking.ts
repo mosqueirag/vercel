@@ -12,6 +12,15 @@ export type CoopiaResultTrackingContext = {
   orchestrationIntent: AssistantResult["orchestration"]["intent"];
 };
 
+export type CoopiaEventContext = Partial<Pick<CoopiaResultTrackingContext, "intent" | "service">>;
+export type CoopiaEventContextMode = CoopiaEventContext | "none" | undefined;
+
+/** Pre-classification events intentionally carry no inferred navigation context. */
+export function eventTrackingContext(fallback: CoopiaEventContext, mode: CoopiaEventContextMode) {
+  if (mode === "none") return { intent: null, service: null } as const;
+  return { intent: mode?.intent ?? fallback.intent, service: mode?.service ?? fallback.service };
+}
+
 export type CoopiaShownActionEvent = {
   action: AssistantResult["recommendedActions"][number]["id"];
   result: AssistantResult["orchestration"]["analyticsKey"];
