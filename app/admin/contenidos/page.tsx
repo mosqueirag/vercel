@@ -85,7 +85,9 @@ export default function EditorialContentPage() {
     };
   }, [selectedProposal]);
 
-  const proposalByCandidate = useMemo(() => new Map(proposals.map((proposal) => [proposal.entity_id, proposal])), [proposals]);
+  const activeCandidateIds = useMemo(() => new Set(candidates.filter((candidate) => candidate.status !== "published").map((candidate) => candidate.id)), [candidates]);
+  const activeProposals = useMemo(() => proposals.filter((proposal) => activeCandidateIds.has(proposal.entity_id)), [activeCandidateIds, proposals]);
+  const proposalByCandidate = useMemo(() => new Map(activeProposals.map((proposal) => [proposal.entity_id, proposal])), [activeProposals]);
   const readyCandidateIds = useMemo(
     () => new Set(candidates.filter((candidate) => isReadyToPublishEditorialCandidate(candidate, proposalByCandidate.get(candidate.id))).map((candidate) => candidate.id)),
     [candidates, proposalByCandidate],
@@ -100,15 +102,15 @@ export default function EditorialContentPage() {
     corpus: candidates.length,
     pendingReview: candidates.filter((candidate) => {
       const status = proposalByCandidate.get(candidate.id)?.status;
-      return !status || status === "generated" || status === "needs_validation";
+      return candidate.status !== "published" && (!status || status === "generated" || status === "needs_validation");
     }).length,
-    needsValidation: proposals.filter((proposal) => proposal.status === "needs_validation").length,
-    lowRisk: proposals.filter((proposal) => proposal.risk_level === "low").length,
-    approved: proposals.filter((proposal) => proposal.status === "approved").length,
-    applied: proposals.filter((proposal) => proposal.status === "applied").length,
+    needsValidation: activeProposals.filter((proposal) => proposal.status === "needs_validation").length,
+    lowRisk: activeProposals.filter((proposal) => proposal.risk_level === "low").length,
+    approved: activeProposals.filter((proposal) => proposal.status === "approved").length,
+    applied: activeProposals.filter((proposal) => proposal.status === "applied").length,
     ready: readyCandidateIds.size,
     published: candidates.filter((candidate) => candidate.status === "published").length,
-  }), [candidates, proposals, proposalByCandidate, readyCandidateIds]);
+  }), [activeProposals, candidates, proposalByCandidate, readyCandidateIds]);
 
   const closeReview = () => {
     setSelectedProposal(null);
@@ -132,7 +134,7 @@ export default function EditorialContentPage() {
     setMessage("");
     try {
       const response = await fetch("/api/admin/editorial-proposals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entityType: candidate.entityType, entityId: candidate.id }) });
-      const data = await response.json() as { error?: string; reused?: boolean };
+      const data = await response.json() as { error?: string; reused?: boolean; skipped?: boolean };
       setMessage(response.ok ? data.reused ? "La propuesta ya está actualizada; se reutilizó la existente." : "Propuesta guardada para revisión humana." : data.error || "No pudimos generar la propuesta.");
       if (response.ok) await load();
     } finally {
@@ -168,10 +170,15 @@ export default function EditorialContentPage() {
     if (!selectedProposal) return;
     setBusy(selectedProposal.id);
     const response = await fetch("/api/admin/editorial-proposals", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ proposalId: selectedProposal.id, action }) });
-    const data = await response.json() as { error?: string };
-    setMessage(response.ok ? action === "published" ? "Contenido publicado en STAGING; ahora puede ser utilizado por COOPIA en este entorno." : reviewActionMessage(action) : data.error || "No pudimos registrar la revisión.");
+    const data = await response.json() as { error?: string; reused?: boolean; unchanged?: boolean };
+    setMessage(response.ok ? action === "published" ? "Contenido publicado en STAGING; ahora puede ser utilizado por COOPIA en este entorno." : data.reused || data.unchanged ? "La propuesta ya tenía ese estado; no se duplicó la auditoría." : reviewActionMessage(action) : data.error || "No pudimos registrar la revisión.");
     setBusy(null);
     if (response.ok) {
+      if (action === "published") setSelectedCandidateIds((current) => {
+        const next = new Set(current);
+        next.delete(selectedProposal.entity_id);
+        return next;
+      });
       closeReview();
       await load();
     }

@@ -5,6 +5,8 @@ import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, propo
 import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
 import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch-selection";
 import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
+import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../../../../lib/editorial/generation-integrity";
+import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -37,11 +39,14 @@ export async function POST(request: Request) {
   if (!body) return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
   const create = async (candidate: NonNullable<Awaited<ReturnType<typeof getHistoricalEditorialCandidate>>>) => {
     if (candidate.status !== "draft") return { skipped: true as const, reason: "not_draft" };
-    const sourceHash = contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
+    const sourceHash = editorialGenerationSourceHash(candidate);
     const { data: existing, error: existingError } = await session.admin.from("content_editorial_proposals").select("*").eq("entity_type", candidate.entityType).eq("entity_id", candidate.id).eq("source_hash", sourceHash).eq("prompt_version", editorialPromptVersion).maybeSingle();
     if (existingError) throw new Error("EDITORIAL_PROPOSAL_LOOKUP_FAILED");
     if (existing) return { proposal: existing, reused: true as const };
     const proposal = await generateEditorialProposal(candidate);
+    const currentCandidate = await getHistoricalEditorialCandidate(candidate.entityType, candidate.id);
+    const persistenceGate = canPersistGeneratedProposal(sourceHash, currentCandidate);
+    if (!persistenceGate.allowed) return { skipped: true as const, reason: persistenceGate.reason };
     const validationFlags = proposalNeedsValidation(candidate.entityType, candidate.originalText, proposal, candidate.validationPending);
     const row = { entity_type: candidate.entityType, entity_id: candidate.id, source_hash: sourceHash, prompt_version: editorialPromptVersion, proposal, detected_facts: extractProtectedFacts(candidate.originalText), validation_flags: validationFlags, risk_level: proposalRiskLevel(candidate.entityType, validationFlags), status: validationFlags.length ? "needs_validation" : "generated" };
     const { data, error } = await session.admin.from("content_editorial_proposals").insert(row).select("*").single();
@@ -72,7 +77,7 @@ export async function POST(request: Request) {
     const candidate = await getHistoricalEditorialCandidate(body.entityType, body.entityId);
     if (!candidate) return Response.json({ error: "Contenido no encontrado." }, { status: 404 });
     const result = await create(candidate);
-    if ("skipped" in result) return Response.json({ error: "Sólo se pueden generar propuestas sobre borradores." }, { status: 409 });
+    if ("skipped" in result) return Response.json({ skipped: true, reason: result.reason, error: "El contenido cambió o dejó de ser un borrador durante la generación." }, { status: 409 });
     return Response.json({ proposal: result.proposal, reused: result.reused }, { status: result.reused ? 200 : 201 });
   } catch (error) {
     const code = error instanceof Error ? error.message : "EDITORIAL_AI_ERROR";
@@ -89,6 +94,7 @@ export async function PATCH(request: Request) {
   const { data: proposal, error } = await session.admin.from("content_editorial_proposals").select("*").eq("id", body.proposalId).maybeSingle();
   if (error || !proposal) return Response.json({ error: "Propuesta no encontrada." }, { status: 404 });
   const audit = async (action: string, metadata: Record<string, unknown> = {}) => session.admin.from("content_editorial_proposal_audit").insert({ proposal_id: proposal.id, action, actor_email: session.email, metadata });
+  if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
   if (body.action === "published") {
     const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
     const validationFlags = Array.isArray(proposal.validation_flags) ? proposal.validation_flags.filter((value: unknown): value is string => typeof value === "string") : [];
