@@ -36,6 +36,11 @@ export type NavigationContextValue = {
   intent?: AssistantIntent;
   service?: AssistantService;
   currentStep?: string;
+  turnCount?: number;
+  unresolvedCount?: number;
+  journeyStatus?: "active" | "resolved" | "handoff";
+  lastOutcome?: string;
+  handoffReason?: "requested" | "unrecognized" | "stagnated" | "tool_unavailable";
   previousActions: AssistantAction[];
   recommendedActions: AssistantResult["recommendedActions"];
 };

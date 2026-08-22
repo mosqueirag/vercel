@@ -23,6 +23,6 @@ La fase incorpora una vista administrativa mínima para solicitudes de Internet 
 
 **COMPLETADA en staging.** Cuatro zonas oficiales privadas se resuelven mediante PostGIS, con prioridad de domicilio exacto sobre zona y de zona sobre registros cercanos. El fallback Geoapify server-side permite geocodificar cuando Georef no entrega coordenadas, sin convertirlo en fuente de cobertura. España 450 validó zona FTTH y derivación a validación técnica. P2 pendiente no bloqueante: aplicar, sólo con autorización expresa, `20260817234002_ensure_one_active_geographic_zone_version` para evitar dos versiones activas de una misma capa.
 
-# Fase 4B — COOPIA global
+# Fase 4C — COOPIA 2.0
 
-Consolidar la capa transversal de asistencia y usar métricas agregadas de preguntas, intents, acciones, feedback negativo, handoffs y consultas no resueltas para priorizar mejoras de conocimiento. No habilitar CRM, Brevo, n8n ni automatizaciones hasta que exista una decisión operativa y de privacidad explícita.
+La capa global pública comparte una sesión temporal, contexto seguro de página y acciones estructuradas entre la home y el panel. El panel privado `/admin/coopia` convierte eventos anónimos agregados en indicadores operativos. Pendiente de validación en Preview: contrastar métricas reales con el equipo antes de usar cualquier resumen asistido por IA. No habilitar CRM, Brevo, n8n ni automatizaciones hasta que exista una decisión operativa y de privacidad explícita.
