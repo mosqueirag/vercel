@@ -29,13 +29,13 @@ function Normalize-ProvenanceText([string]$Value) {
 }
 function Get-Payload([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path)) { throw "Import blocked: input package was not found." }
-  if ([IO.Path]::GetExtension($Path).ToLowerInvariant() -ne ".zip") { return Get-Content -Raw -LiteralPath $Path | ConvertFrom-Json }
+  if ([IO.Path]::GetExtension($Path).ToLowerInvariant() -ne ".zip") { return Get-Content -Raw -Encoding utf8 -LiteralPath $Path | ConvertFrom-Json }
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $archive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $Path))
   try {
     $entry = $archive.GetEntry("curated/IMPORT_PAYLOAD_COMPLETE.json")
     if ($null -eq $entry) { throw "Import blocked: ZIP has no curated/IMPORT_PAYLOAD_COMPLETE.json." }
-    $reader = [IO.StreamReader]::new($entry.Open())
+    $reader = [IO.StreamReader]::new($entry.Open(), [Text.UTF8Encoding]::new($false, $true))
     try { return $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
   } finally { $archive.Dispose() }
 }
@@ -201,6 +201,8 @@ function Invoke-SelfTest {
   if ((-not $json9.StartsWith('[')) -or (([regex]::Matches($json9, '"id":')).Count -ne 9)) { throw "SelfTest failed: 9-row batch JSON." }
   if (($singleJson.StartsWith('[')) -or ($parsedSingle.title -ne "Información ñ") -or ($singleJson -notmatch '"optional":null')) { throw "SelfTest failed: single-row JSON." }
   if ([Text.Encoding]::UTF8.GetString([Text.Encoding]::UTF8.GetBytes($singleJson)) -ne $singleJson) { throw "SelfTest failed: UTF-8 serialization." }
+  $spanish = "á é í ó ú ñ ¿ ¡"
+  if ([Text.Encoding]::UTF8.GetString([Text.Encoding]::UTF8.GetBytes($spanish)) -ne $spanish) { throw "SelfTest failed: UTF-8 Spanish characters." }
   $expectedPaths = @{
     services = 'services?on_conflict=slug'
     faqs = 'faqs?on_conflict=import_key'
