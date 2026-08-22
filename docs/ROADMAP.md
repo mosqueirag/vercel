@@ -41,4 +41,4 @@ El corpus histórico administrable contiene 44 entradas: 9 servicios, 24 artícu
 
 # Fase 4F.1 — COOPIA orquestador de intenciones y acciones
 
-La primera entrega consolida reglas tipadas para necesidades principales y reutiliza acciones estructuradas existentes para pago, reclamos por WhatsApp, cobertura, planes, solicitud de Internet, sepelio y atención humana. `unknown` es explícito y seguro. Pendiente para el cierre: QA de Preview y CI de esta rama, sin desplegar ni modificar producción.
+La primera entrega consolida reglas tipadas para necesidades principales y reutiliza acciones estructuradas existentes para pago, reclamos por WhatsApp, cobertura, planes, solicitud de Internet, sepelio y atención humana. `unknown` es explícito y seguro. El smoke real de las nueve intenciones pasó en Preview y las tarjetas estructuradas realizan auto-scroll único y no intrusivo. PGRST303 continúa como P2 de monitoreo con fallback seguro; no autoriza cambios remotos ni producción.

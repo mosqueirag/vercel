@@ -34,3 +34,5 @@ El lote histórico de curaduría tiene 44 contenidos permitidos (9 servicios, 24
 ## Fase 4F.1 — orquestación de intenciones y acciones
 
 COOPIA conserva su sesión temporal global y añade una capa canónica de necesidades: pago, corte de energía, problema/interés de Internet, interés/cobertura de Fibra, sepelio, atención humana y `unknown`. Las reglas determinísticas resuelven los casos claros; la IA sólo redacta la orientación de una consulta ambigua usando conocimiento publicado. La respuesta estructurada reutiliza el resolver, el motor de cobertura, la bandeja comercial y los contactos publicados existentes; no crea tickets, CRM ni solicitudes sin confirmación.
+
+El smoke real validó `payment`, `energy_outage`, `internet_issue`, `internet_interest`, `fiber_interest`, `fiber_coverage`, `funeral_service`, `human_handoff` y `unknown`. Cada resultado estructurado nuevo desplaza una única vez el contenedor de conversación hasta el mensaje y el inicio de su tarjeta, sin guardar posición ni producir eventos analíticos. PGRST303 queda como P2 monitorizado: el fallback de contactos sigue operativo y los logs conservan sólo código y clasificación segura.

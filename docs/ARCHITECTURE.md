@@ -36,6 +36,8 @@ La migración `20260817203507_geographic_coverage_zones` y cuatro zonas oficiale
 
 La persistencia temporal vive sólo en `sessionStorage` y se limita al historial necesario de la pestaña; no se replica como analytics. Los eventos best-effort no contienen texto de la conversación ni PII. Los eventos de la capa global incluyen contexto de página, envío, intención, servicio, acción mostrada, resultado, error, feedback, handoff y consulta no resuelta; el fallo de telemetría nunca impide una gestión real. `/admin/coopia` lee únicamente estas métricas agregadas desde servidor con `requireNewsAdmin()`. Una futura evolución multiagente puede delegar desde el resolver por dominio, pero el usuario siempre interactúa con COOPIA.
 
+La presentación de una respuesta estructurada usa su `assistantResultKey` temporal para solicitar un único scroll suave del mensaje dentro de `.chat-log`, tras dos frames de render. Esto evita scrolls por feedback, analytics, resize, navegación pasiva o re-renders y permite que las tarjetas altas continúen con desplazamiento manual.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.
