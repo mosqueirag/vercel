@@ -1,16 +1,29 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
 import { getEditorialCandidate, getEditorialCandidates, getEditorialProposals } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
-import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
+import { contentSourceHash, editorialBatchOrder, editorialPromptVersion, extractProtectedFacts, isEditorialBatchCandidate, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
+const reviewActions = new Set(["approved", "rejected", "needs_validation", "applied"]);
+const proposalText = (proposal: unknown, key: string) => proposal && typeof proposal === "object" && typeof (proposal as Record<string, unknown>)[key] === "string" ? (proposal as Record<string, string>)[key].trim() : "";
+
+function draftUpdate(entityType: EditorialEntityType, proposal: unknown) {
+  const title = proposalText(proposal, "rewritten_title"), summary = proposalText(proposal, "rewritten_summary"), content = proposalText(proposal, "rewritten_content");
+  if (entityType === "service") return { ...(title ? { name: title } : {}), ...(content || summary ? { description: content || summary } : {}) };
+  if (entityType === "help_article") return { ...(title ? { title } : {}), ...(summary ? { summary } : {}), ...(content ? { content } : {}) };
+  if (entityType === "faq") return { ...(title ? { question: title } : {}), ...(content || summary ? { answer: content || summary } : {}) };
+  if (entityType === "internet_plan") return { ...(title ? { name: title } : {}), ...(summary ? { description: summary } : {}), ...(content ? { conditions: content } : {}) };
+  return title ? { label: title } : {};
+}
+
+const entityTable: Record<EditorialEntityType, string> = { service: "services", help_article: "help_articles", faq: "faqs", internet_plan: "internet_plans", contact_channel: "public_contact_channels" };
 
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
   const [candidates, proposals] = await Promise.all([getEditorialCandidates(), getEditorialProposals()]);
-  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending })), proposals });
+  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending })), proposals });
 }
 
 export async function POST(request: Request) {
@@ -35,7 +48,7 @@ export async function POST(request: Request) {
   try {
     if (typeof body.batchLimit === "number") {
       const limit = Math.max(1, Math.min(10, Math.floor(body.batchLimit)));
-      const candidates = (await getEditorialCandidates()).filter((candidate) => candidate.status === "draft").slice(0, limit);
+      const candidates = (await getEditorialCandidates()).filter((candidate) => candidate.status === "draft" && isEditorialBatchCandidate(candidate.entityType)).sort((a, b) => editorialBatchOrder.indexOf(a.entityType) - editorialBatchOrder.indexOf(b.entityType)).slice(0, limit);
       const results = [];
       for (const candidate of candidates) results.push(await create(candidate));
       return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length });
@@ -50,4 +63,37 @@ export async function POST(request: Request) {
     const code = error instanceof Error ? error.message : "EDITORIAL_AI_ERROR";
     return Response.json({ error: code === "EDITORIAL_AI_NOT_CONFIGURED" ? "La IA editorial no está configurada en este entorno." : "No pudimos generar una propuesta segura." }, { status: 503 });
   }
+}
+
+export async function PATCH(request: Request) {
+  const session = await requireNewsAdmin();
+  if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  const body = await request.json().catch(() => null) as { proposalId?: unknown; action?: unknown } | null;
+  if (!body || typeof body.proposalId !== "string" || typeof body.action !== "string" || !reviewActions.has(body.action)) return Response.json({ error: "Acción editorial inválida." }, { status: 400 });
+  const { data: proposal, error } = await session.admin.from("content_editorial_proposals").select("*").eq("id", body.proposalId).maybeSingle();
+  if (error || !proposal) return Response.json({ error: "Propuesta no encontrada." }, { status: 404 });
+  const audit = async (action: string, metadata: Record<string, unknown> = {}) => session.admin.from("content_editorial_proposal_audit").insert({ proposal_id: proposal.id, action, actor_email: session.email, metadata });
+  if (body.action !== "applied") {
+    const { data, error: updateError } = await session.admin.from("content_editorial_proposals").update({ status: body.action, reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).select("*").single();
+    const { error: auditError } = await audit(body.action);
+    if (updateError || auditError) return Response.json({ error: "No pudimos registrar la revisión." }, { status: 503 });
+    return Response.json({ proposal: data });
+  }
+  if (proposal.status !== "approved") return Response.json({ error: "La propuesta debe aprobarse antes de aplicarla al borrador." }, { status: 409 });
+  const candidate = await getEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
+  if (!candidate || candidate.status !== "draft") return Response.json({ error: "El contenido original ya no es un borrador aplicable." }, { status: 409 });
+  const currentHash = contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
+  if (proposalIsStale(currentHash, proposal.source_hash)) {
+    await session.admin.from("content_editorial_proposals").update({ status: "stale" }).eq("id", proposal.id);
+    await audit("stale", { reason: "source_hash_changed" });
+    return Response.json({ error: "El borrador cambió desde la generación; la propuesta quedó desactualizada." }, { status: 409 });
+  }
+  const values = draftUpdate(candidate.entityType, proposal.proposal);
+  if (!Object.keys(values).length) return Response.json({ error: "La propuesta no contiene cambios aplicables." }, { status: 409 });
+  const { error: applyError } = await session.admin.from(entityTable[candidate.entityType]).update(values).eq("id", candidate.id).eq("status", "draft");
+  if (applyError) return Response.json({ error: "No pudimos aplicar la propuesta al borrador." }, { status: 503 });
+  const { data, error: finalError } = await session.admin.from("content_editorial_proposals").update({ status: "applied", reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).select("*").single();
+  if (finalError || (await audit("applied", { target_status: "draft" })).error) return Response.json({ error: "El borrador se actualizó, pero no pudimos registrar la auditoría." }, { status: 503 });
+  return Response.json({ proposal: data, appliedToDraft: true });
 }

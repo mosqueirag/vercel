@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 export const editorialPromptVersion = "coopsar-editorial-v1";
 export type EditorialEntityType = "service" | "help_article" | "faq" | "internet_plan" | "contact_channel";
+export const editorialBatchOrder: EditorialEntityType[] = ["help_article", "faq", "service"];
 export type ProtectedFact = { type: "phone" | "email" | "url" | "address" | "hours" | "date" | "price" | "speed" | "percentage"; value: string };
 export type EditorialProposal = {
   rewritten_title?: string;
@@ -27,6 +28,14 @@ const patterns: Array<[ProtectedFact["type"], RegExp]> = [
 
 export function contentSourceHash(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+export function isEditorialBatchCandidate(entityType: EditorialEntityType) {
+  return editorialBatchOrder.includes(entityType);
+}
+
+export function proposalIsStale(currentSourceHash: string, proposalSourceHash: string) {
+  return currentSourceHash !== proposalSourceHash;
 }
 
 export function extractProtectedFacts(content: string): ProtectedFact[] {

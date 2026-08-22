@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareProtectedFacts, contentSourceHash, extractProtectedFacts, isRestrictiveEditorialType, proposalNeedsValidation } from "./proposals";
+import { compareProtectedFacts, contentSourceHash, editorialBatchOrder, extractProtectedFacts, isEditorialBatchCandidate, isRestrictiveEditorialType, proposalIsStale, proposalNeedsValidation } from "./proposals";
 
 describe("editorial proposal safeguards", () => {
   it("detects protected phones, prices and URLs", () => {
@@ -13,4 +13,16 @@ describe("editorial proposal safeguards", () => {
     expect(isRestrictiveEditorialType("contact_channel", "")).toBe(true);
   });
   it("hashes the exact source deterministically", () => expect(contentSourceHash({ title: "Contenido" })).toBe(contentSourceHash({ title: "Contenido" })));
+  it("limits the general editorial batch to low-risk content in deterministic order", () => {
+    expect(editorialBatchOrder).toEqual(["help_article", "faq", "service"]);
+    expect(isEditorialBatchCandidate("help_article")).toBe(true);
+    expect(isEditorialBatchCandidate("faq")).toBe(true);
+    expect(isEditorialBatchCandidate("service")).toBe(true);
+    expect(isEditorialBatchCandidate("internet_plan")).toBe(false);
+    expect(isEditorialBatchCandidate("contact_channel")).toBe(false);
+  });
+  it("marks a proposal stale only when the current draft source changed", () => {
+    expect(proposalIsStale("same-hash", "same-hash")).toBe(false);
+    expect(proposalIsStale("new-hash", "old-hash")).toBe(true);
+  });
 });
