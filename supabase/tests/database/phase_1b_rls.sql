@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(52);
+select plan(53);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -127,6 +127,11 @@ select lives_ok(
   $$ insert into public.content_editorial_proposal_audit (proposal_id, action, actor_email)
      select id, 'needs_validation', 'admin-test@coopsar.local' from public.content_editorial_proposals where prompt_version = 'pgtap-editorial-v1' $$,
   'service role can store a private editorial audit event'
+);
+select lives_ok(
+  $$ insert into public.content_editorial_proposal_audit (proposal_id, action, actor_email)
+     select id, 'published', 'admin-test@coopsar.local' from public.content_editorial_proposals where prompt_version = 'pgtap-editorial-v1' $$,
+  'service role can record an explicit editorial publication audit event'
 );
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,

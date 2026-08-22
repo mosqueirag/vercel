@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length, remaining: batch.remaining, totalCorpus: batch.totalCorpus, alreadyProcessed: batch.alreadyProcessed });
     }
     if (!isEntityType(body.entityType) || typeof body.entityId !== "string") return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
-    const candidate = await getEditorialCandidate(body.entityType, body.entityId);
+    const candidate = await getHistoricalEditorialCandidate(body.entityType, body.entityId);
     if (!candidate) return Response.json({ error: "Contenido no encontrado." }, { status: 404 });
     const result = await create(candidate);
     if ("skipped" in result) return Response.json({ error: "Sólo se pueden generar propuestas sobre borradores." }, { status: 409 });
@@ -85,8 +85,12 @@ export async function PATCH(request: Request) {
       await audit("publication_blocked", { reason: gate?.reason ?? "historical_candidate_required", risk: proposal.risk_level, validation_pending: candidate?.validationPending ?? true });
       return Response.json({ error: "La publicación fue bloqueada por los controles de seguridad." }, { status: 409 });
     }
-    const { error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update({ status: "published", published_at: new Date().toISOString() }).eq("id", candidate.id).eq("status", "draft");
-    if (publishError || (await audit("published", { entity_type: candidate.entityType, previous_status: "draft", new_status: "published", risk: proposal.risk_level })).error) return Response.json({ error: "No pudimos publicar el contenido en staging." }, { status: 503 });
+    const { data: published, error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update({ status: "published", published_at: new Date().toISOString() }).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
+    if (publishError || !published) {
+      await audit("publication_blocked", { reason: "target_not_draft" });
+      return Response.json({ error: "El contenido ya no es un borrador publicable." }, { status: 409 });
+    }
+    if ((await audit("published", { entity_type: candidate.entityType, previous_status: "draft", new_status: "published", risk: proposal.risk_level })).error) return Response.json({ error: "El contenido fue publicado, pero no pudimos registrar la auditoría." }, { status: 503 });
     return Response.json({ published: true });
   }
   if (body.action !== "applied") {
@@ -106,8 +110,8 @@ export async function PATCH(request: Request) {
   }
   const values = draftUpdate(candidate.entityType, proposal.proposal);
   if (!Object.keys(values).length) return Response.json({ error: "La propuesta no contiene cambios aplicables." }, { status: 409 });
-  const { error: applyError } = await session.admin.from(entityTable[candidate.entityType]).update(values).eq("id", candidate.id).eq("status", "draft");
-  if (applyError) return Response.json({ error: "No pudimos aplicar la propuesta al borrador." }, { status: 503 });
+  const { data: appliedDraft, error: applyError } = await session.admin.from(entityTable[candidate.entityType]).update(values).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
+  if (applyError || !appliedDraft) return Response.json({ error: "El contenido ya no es un borrador aplicable." }, { status: 409 });
   const { data, error: finalError } = await session.admin.from("content_editorial_proposals").update({ status: "applied", reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).select("*").single();
   if (finalError || (await audit("applied", { target_status: "draft" })).error) return Response.json({ error: "El borrador se actualizó, pero no pudimos registrar la auditoría." }, { status: 503 });
   return Response.json({ proposal: data, appliedToDraft: true });
