@@ -32,8 +32,22 @@ describe("resolveAssistantResult", () => {
       requiresHuman: false,
       tool: { name: "getPaymentInformation", kind: "read", status: "completed" },
       ui: { type: "payment" },
+      orchestration: { intent: "payment", analyticsKey: "payment", detection: "rule" },
     });
     expect(result.recommendedActions).toEqual(result.actions);
+  });
+
+  it("keeps confirmed fiber interest actionable even before a coverage result", async () => {
+    const result = await resolveAssistantResult(detectIntent("Quiero fibra"), "JRN-2026-A1B2C3D4", toolFor("Quiero fibra"));
+    expect(result.orchestration.intent).toBe("fiber_interest");
+    expect(result.actions.map((action) => action.id)).toEqual(expect.arrayContaining(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION"]));
+  });
+
+  it("does not turn an unknown question into a ticketing flow", async () => {
+    const result = await resolveAssistantResult(detectIntent("Hola, necesito ayuda"), "JRN-2026-A1B2C3D4", toolFor("Hola, necesito ayuda"));
+    expect(result.orchestration.intent).toBe("unknown");
+    expect(result.ui?.type).toBe("human_handoff");
+    expect(result.ui?.type).not.toBe("service_request_form");
   });
 
   it("routes a generic complaint without creating a service request", async () => {

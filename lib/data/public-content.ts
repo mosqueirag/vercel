@@ -10,6 +10,18 @@ export type PublicInternetPlan = {
 
 export type PublicContact = { id: string; service: string; channelType: string; label: string; value: string; purpose: string };
 
+/**
+ * Keeps contact-read telemetry useful without ever serializing a provider
+ * message, contact value, request headers, or credentials into runtime logs.
+ */
+export function publicContactQueryErrorDetails(code: string | null | undefined) {
+  return {
+    operation: "published_contact_read",
+    code: code || "unknown",
+    category: code === "PGRST303" ? "auth_claims_rejected" : "query_failed",
+  };
+}
+
 const now = () => new Date().toISOString();
 
 export async function getPublishedInternetPlans(): Promise<PublicInternetPlan[]> {
@@ -28,7 +40,7 @@ export async function getPublicContacts(service?: string): Promise<PublicContact
   let query = supabase.from("public_contact_channels").select("id,service,channel_type,label,public_value,purpose").eq("status", "published").lte("published_at", now()).order("sort_order");
   if (service) query = query.eq("service", service);
   const { data, error } = await query;
-  if (error) { console.error("Public contacts query failed", error.code); return []; }
+  if (error) { console.warn("Public contacts query failed", publicContactQueryErrorDetails(error.code)); return []; }
   return (data ?? []).map((contact) => ({ id: contact.id, service: contact.service, channelType: contact.channel_type, label: contact.label, value: contact.public_value, purpose: contact.purpose }));
 }
 

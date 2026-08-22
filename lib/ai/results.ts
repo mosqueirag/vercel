@@ -1,4 +1,5 @@
 import type { AssistantIntent, AssistantService } from "./intents";
+import type { CoopiaIntentId } from "../coopia/intents";
 
 export const assistantActions = [
   "CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "SELECT_INTERNET_PLAN", "START_FIBER_WAITLIST", "REQUEST_INSTALLATION", "SHOW_SERVICE_STATUS", "START_DIAGNOSIS",
@@ -28,6 +29,7 @@ export type AssistantResult = {
   tool: { name: string; kind: "read" | "write"; status: "ready" | "completed" | "unavailable" };
   journey: { journeyId: string; currentStep: string };
   complaintRoute?: { routingWindow: "office_hours" | "after_hours"; contactPurpose: string; contactLabel: string };
+  orchestration: { intent: CoopiaIntentId; analyticsKey: CoopiaIntentId; detection: "rule" | "unknown" };
 };
 
 export type NavigationContextValue = {

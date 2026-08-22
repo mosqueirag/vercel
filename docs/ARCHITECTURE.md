@@ -4,7 +4,7 @@ Next.js App Router entrega la UI y las rutas servidoras; Supabase staging es el 
 
 ## Flujos actuales
 
-- **COOPIA 2.0:** es una capa transversal sólo del portal público, nunca del Centro de Gestión. Un `CoopiaProvider` mantiene una sola conversación temporal por pestaña, `journeyId`, `sessionId`, intención, servicio, resultado, acciones y contexto seguro de página mientras el usuario navega. La home usa el centro amplio; las demás páginas ofrecen el panel global bajo demanda. Consulta → detección de intención → respuesta OpenAI con fallback oficial → acción estructurada → seguimiento anónimo. OpenAI no confirma cobertura, planes, precios, cortes ni requisitos.
+- **COOPIA 2.0:** es una capa transversal sólo del portal público, nunca del Centro de Gestión. Un `CoopiaProvider` mantiene una sola conversación temporal por pestaña, `journeyId`, `sessionId`, intención, servicio, resultado, acciones y contexto seguro de página mientras el usuario navega. La home usa el centro amplio; las demás páginas ofrecen el panel global bajo demanda. `lib/coopia/intents.ts` traduce primero reglas determinísticas a una necesidad canónica; después el adaptador existente selecciona herramientas server-side y devuelve acciones tipadas. La IA sólo redacta una orientación basada en conocimiento publicado para mensajes ambiguos: nunca confirma cobertura, planes, precios, cortes ni requisitos.
 - **Cobertura:** `/api/coverage-check` consulta primero `service_address_coverage` exacto desde servidor. Si no existe coincidencia exacta, intenta Georef y, sólo si Georef no entrega coordenadas válidas, Geoapify server-side. Las coordenadas validadas se resuelven únicamente contra `coverage_zones` mediante PostGIS. La prioridad final es `exact_address > geographic_zone > nearby_address > unknown`; sólo expone un resultado comercial agregado, no infraestructura ni padrón.
 - **Internet/fibra:** `/api/internet-leads` valida, exige consentimiento operativo y usa `create_internet_request_v2_with_outbox` para crear solicitud y evento outbox en una transacción. La entrega a n8n permanece desactivada sin variables configuradas.
 - **Noticias:** Google OAuth identifica al usuario, pero el acceso editorial exige además presencia en `news_admins`. Imágenes se cargan con URL firmada para administradores.
@@ -35,6 +35,10 @@ La migración `20260817203507_geographic_coverage_zones` y cuatro zonas oficiale
 ## Trazabilidad de COOPIA
 
 La persistencia temporal vive sólo en `sessionStorage` y se limita al historial necesario de la pestaña; no se replica como analytics. Los eventos best-effort no contienen texto de la conversación ni PII. Los eventos de la capa global incluyen contexto de página, envío, intención, servicio, acción mostrada, resultado, error, feedback, handoff y consulta no resuelta; el fallo de telemetría nunca impide una gestión real. `/admin/coopia` lee únicamente estas métricas agregadas desde servidor con `requireNewsAdmin()`. Una futura evolución multiagente puede delegar desde el resolver por dominio, pero el usuario siempre interactúa con COOPIA.
+
+La presentación de una respuesta estructurada usa su `assistantResultKey` temporal para solicitar un único scroll suave del mensaje dentro de `.chat-log`, tras dos frames de render. Esto evita scrolls por feedback, analytics, resize, navegación pasiva o re-renders y permite que las tarjetas altas continúen con desplazamiento manual.
+
+Fase 4F.1 quedó **CERRADA / validada en Preview** en el HEAD funcional `411403b36faa93b2557863b400296b13dad0035c`. No requirió migraciones ni cambios remotos; el siguiente alcance autorizado es Fase 4F.2, todavía sin implementación.
 
 ## Estado del release candidate de Fase 2
 

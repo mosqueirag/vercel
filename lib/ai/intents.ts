@@ -10,11 +10,15 @@ export const intentNames = [
 export type AssistantIntent = (typeof intentNames)[number];
 export type AssistantService = "billing" | "internet" | "fiber" | "energy" | "phone" | "funeral" | "general";
 
+import { routeCoopiaIntent, type CoopiaIntentId } from "../coopia/intents";
+
 export type IntentDetection = {
   intent: AssistantIntent;
   confidence: number;
   service: AssistantService;
   suggestedAction: string;
+  /** Stable need-oriented label used by the global COOPIA orchestrator. */
+  orchestrationIntent?: CoopiaIntentId;
 };
 
 type Rule = Omit<IntentDetection, "confidence"> & { patterns: RegExp[]; confidence?: number };
@@ -50,6 +54,28 @@ const rules: Rule[] = [
 
 export function detectIntent(message: string): IntentDetection {
   const normalized = message.normalize("NFC").trim();
+  // Preserve the existing explicit complaint and waitlist flows. They carry
+  // additional routing/consent semantics that are intentionally outside the
+  // first common 4F.1 intent vocabulary.
+  if (/\b(avisen|av[ií]senme|notifiquen|notifiquenme)\b.*\b(fibra|llegue)\b/i.test(normalized) || /\bfibra\b.*\b(avisen|av[ií]senme|notifiquen)\b/i.test(normalized)) {
+    return { intent: "fiber_waitlist", service: "fiber", confidence: 0.97, suggestedAction: "start_fiber_waitlist" };
+  }
+  if (/\b(reclamo|reclamar|queja)\b.*\b(sepelio|funeral)\b/i.test(normalized) || /\b(sepelio|funeral)\b.*\b(reclamo|reclamar|queja)\b/i.test(normalized)) {
+    return { intent: "resolve_complaint", service: "funeral", confidence: 0.94, suggestedAction: "route_complaint" };
+  }
+  const routed = routeCoopiaIntent(normalized);
+  const orchestrationMap: Partial<Record<CoopiaIntentId, IntentDetection>> = {
+    payment: { intent: "pay_invoice", service: "billing", confidence: routed.confidence, suggestedAction: "open_payment", orchestrationIntent: routed.id },
+    energy_outage: { intent: "energy_problem", service: "energy", confidence: routed.confidence, suggestedAction: "report_energy_problem", orchestrationIntent: routed.id },
+    internet_issue: { intent: "internet_problem", service: "internet", confidence: routed.confidence, suggestedAction: "route_complaint", orchestrationIntent: routed.id },
+    internet_interest: { intent: "internet_signup", service: "internet", confidence: routed.confidence, suggestedAction: "start_internet_signup", orchestrationIntent: routed.id },
+    fiber_interest: { intent: "fiber_signup", service: "fiber", confidence: routed.confidence, suggestedAction: "start_fiber_signup", orchestrationIntent: routed.id },
+    fiber_coverage: { intent: "fiber_coverage", service: "fiber", confidence: routed.confidence, suggestedAction: "check_fiber_coverage", orchestrationIntent: routed.id },
+    funeral_service: { intent: "funeral_service", service: "funeral", confidence: routed.confidence, suggestedAction: "show_funeral_information", orchestrationIntent: routed.id },
+    human_handoff: { intent: "contact_operator", service: "general", confidence: routed.confidence, suggestedAction: "human_handoff", orchestrationIntent: routed.id },
+  };
+  const routedDetection = orchestrationMap[routed.id];
+  if (routedDetection) return routedDetection;
   const lower = normalized.toLocaleLowerCase("es-AR");
   if ((lower.includes("internet") || lower.includes("fibra")) && (lower.includes("precio") || lower.includes("sale"))) {
     return { intent: "internet_plans", service: "internet", confidence: 0.93, suggestedAction: "show_internet_plans" };
@@ -59,5 +85,5 @@ export function detectIntent(message: string): IntentDetection {
       return { intent: rule.intent, service: rule.service, confidence: rule.confidence ?? 0.9, suggestedAction: rule.suggestedAction };
     }
   }
-  return { intent: "general_question", service: "general", confidence: 0.35, suggestedAction: "answer_from_knowledge_base" };
+  return { intent: "general_question", service: "general", confidence: 0.35, suggestedAction: "answer_from_knowledge_base", orchestrationIntent: "unknown" };
 }
