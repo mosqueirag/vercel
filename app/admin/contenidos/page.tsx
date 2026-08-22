@@ -151,6 +151,19 @@ export default function EditorialContentPage() {
       setBusy(null);
     }
   };
+  const recalculateRisk = async () => {
+    if (!window.confirm("Vas a recalcular únicamente el nivel de riesgo de las propuestas históricas. Esto no genera, aprueba, aplica ni publica contenido.")) return;
+    setBusy("risk-recalculation");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/editorial-proposals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ recalculateRisk: true }) });
+      const data = await response.json() as { error?: string; scanned?: number; changed?: number; unchanged?: number };
+      setMessage(response.ok ? `Riesgo recalculado: ${data.changed || 0} actualizado(s) · ${data.unchanged || 0} sin cambios · ${data.scanned || 0} analizado(s).` : data.error || "No pudimos recalcular el riesgo editorial.");
+      if (response.ok) await load();
+    } finally {
+      setBusy(null);
+    }
+  };
   const review = async (action: "approved" | "rejected" | "needs_validation" | "applied" | "published") => {
     if (!selectedProposal) return;
     setBusy(selectedProposal.id);
@@ -202,7 +215,7 @@ export default function EditorialContentPage() {
   return <section className="admin-page">
     <header className="admin-page-header">
       <div><span className="eyebrow">Lote histórico Fase 4D</span><h1>Curaduría editorial IA</h1><p>La IA propone. Una persona aprueba, aplica al borrador y publica explícitamente en STAGING.</p></div>
-      <div className="admin-form-actions"><label>Tamaño del lote<select value={batchLimit} disabled={busy === "batch"} onChange={(event) => setBatchLimit(Number(event.target.value) as 5 | 10)}><option value={5}>5</option><option value={10}>10</option></select></label><button className="primary" disabled={busy === "batch"} onClick={() => void generateBatch()}>{busy === "batch" ? "Procesando lote…" : `Generar lote editorial (${batchLimit})`}</button></div>
+      <div className="admin-form-actions"><label>Tamaño del lote<select value={batchLimit} disabled={busy === "batch"} onChange={(event) => setBatchLimit(Number(event.target.value) as 5 | 10)}><option value={5}>5</option><option value={10}>10</option></select></label><button className="primary" disabled={busy === "batch"} onClick={() => void generateBatch()}>{busy === "batch" ? "Procesando lote…" : `Generar lote editorial (${batchLimit})`}</button><button disabled={busy === "risk-recalculation"} onClick={() => void recalculateRisk()}>{busy === "risk-recalculation" ? "Recalculando…" : "Recalcular riesgos existentes"}</button></div>
     </header>
 
     <section className="admin-card" aria-label="Resumen editorial"><div className="admin-item"><strong>Corpus: {metrics.corpus}</strong><span>Pendientes revisión: {metrics.pendingReview}</span><span>Needs validation: {metrics.needsValidation}</span><span>Low risk: {metrics.lowRisk}</span><span>Approved: {metrics.approved}</span><span>Applied: {metrics.applied}</span><span>Ready to publish: {metrics.ready}</span><span>Published: {metrics.published}</span></div></section>

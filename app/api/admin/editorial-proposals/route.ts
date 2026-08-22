@@ -1,9 +1,10 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates } from "../../../../lib/data/editorial-content";
+import { getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
 import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
-import { canPublishEditorialProposal } from "../../../../lib/editorial/publication";
+import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
 import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch-selection";
+import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -32,9 +33,9 @@ export async function POST(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
   if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
-  const body = await request.json().catch(() => null) as { entityType?: unknown; entityId?: unknown; batchLimit?: unknown } | null;
+  const body = await request.json().catch(() => null) as { entityType?: unknown; entityId?: unknown; batchLimit?: unknown; recalculateRisk?: unknown } | null;
   if (!body) return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
-  const create = async (candidate: NonNullable<Awaited<ReturnType<typeof getEditorialCandidate>>>) => {
+  const create = async (candidate: NonNullable<Awaited<ReturnType<typeof getHistoricalEditorialCandidate>>>) => {
     if (candidate.status !== "draft") return { skipped: true as const, reason: "not_draft" };
     const sourceHash = contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
     const { data: existing, error: existingError } = await session.admin.from("content_editorial_proposals").select("*").eq("entity_type", candidate.entityType).eq("entity_id", candidate.id).eq("source_hash", sourceHash).eq("prompt_version", editorialPromptVersion).maybeSingle();
@@ -48,6 +49,17 @@ export async function POST(request: Request) {
     return { proposal: data, reused: false as const };
   };
   try {
+    if (body.recalculateRisk === true) {
+      const historicalCandidates = await getHistoricalEditorialCandidates();
+      const historicalKeys = new Set(historicalCandidates.map((candidate) => `${candidate.entityType}:${candidate.id}`));
+      const proposals = await getEditorialProposals();
+      const recalculation = editorialRiskRecalculation(proposals, historicalKeys);
+      for (const change of recalculation.changes) {
+        const { error } = await session.admin.from("content_editorial_proposals").update({ risk_level: change.riskLevel }).eq("id", change.id);
+        if (error) throw new Error("EDITORIAL_RISK_RECALCULATION_FAILED");
+      }
+      return Response.json({ scanned: recalculation.scanned, changed: recalculation.changed, unchanged: recalculation.unchanged });
+    }
     if (typeof body.batchLimit === "number") {
       const limit = Math.max(1, Math.min(10, Math.floor(body.batchLimit)));
       const [historicalCandidates, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getEditorialProposals()]);
@@ -85,7 +97,7 @@ export async function PATCH(request: Request) {
       await audit("publication_blocked", { reason: gate?.reason ?? "historical_candidate_required", risk: proposal.risk_level, validation_pending: candidate?.validationPending ?? true });
       return Response.json({ error: "La publicación fue bloqueada por los controles de seguridad." }, { status: 409 });
     }
-    const { data: published, error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update({ status: "published", published_at: new Date().toISOString() }).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
+    const { data: published, error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update(publicationUpdateValues(candidate.entityType, new Date().toISOString())).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
     if (publishError || !published) {
       await audit("publication_blocked", { reason: "target_not_draft" });
       return Response.json({ error: "El contenido ya no es un borrador publicable." }, { status: 409 });
@@ -100,7 +112,7 @@ export async function PATCH(request: Request) {
     return Response.json({ proposal: data });
   }
   if (proposal.status !== "approved") return Response.json({ error: "La propuesta debe aprobarse antes de aplicarla al borrador." }, { status: 409 });
-  const candidate = await getEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
+  const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
   if (!candidate || candidate.status !== "draft") return Response.json({ error: "El contenido original ya no es un borrador aplicable." }, { status: 409 });
   const currentHash = contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
   if (proposalIsStale(currentHash, proposal.source_hash)) {

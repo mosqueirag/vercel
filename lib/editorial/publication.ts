@@ -5,6 +5,11 @@ export type PublicationGate = {
   reason?: "not_supported_type" | "not_applied" | "not_draft" | "stale" | "risk" | "validation_flags" | "validation_pending";
 };
 
+export function publicationUpdateValues(entityType: EditorialEntityType, publishedAt: string) {
+  if (entityType === "service") return { status: "published" as const };
+  return { status: "published" as const, published_at: publishedAt };
+}
+
 export function canPublishEditorialProposal(input: {
   entityType: EditorialEntityType;
   proposalStatus: string;
