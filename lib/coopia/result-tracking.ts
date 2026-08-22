@@ -17,8 +17,17 @@ export type CoopiaEventContextMode = CoopiaEventContext | "none" | undefined;
 
 /** Pre-classification events intentionally carry no inferred navigation context. */
 export function eventTrackingContext(fallback: CoopiaEventContext, mode: CoopiaEventContextMode) {
-  if (mode === "none") return { intent: null, service: null } as const;
+  if (mode === "none") return {};
   return { intent: mode?.intent ?? fallback.intent, service: mode?.service ?? fallback.service };
+}
+
+/** Adds context only when it exists, so optional route-schema fields remain absent. */
+export function withEventTrackingContext<T extends Record<string, unknown>>(payload: T, context: CoopiaEventContext) {
+  return {
+    ...payload,
+    ...(context.intent ? { intent: context.intent } : {}),
+    ...(context.service ? { service: context.service } : {}),
+  };
 }
 
 export type CoopiaShownActionEvent = {

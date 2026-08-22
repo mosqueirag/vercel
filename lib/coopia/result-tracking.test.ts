@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantResult } from "../ai/results";
-import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents } from "./result-tracking";
+import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, withEventTrackingContext } from "./result-tracking";
 
 function result(input: Pick<AssistantResult, "intent" | "service" | "orchestration" | "recommendedActions">): AssistantResult {
   return {
@@ -49,14 +49,22 @@ describe("COOPIA result tracking", () => {
 
   it("records a second pre-classification message without the prior payment context", () => {
     const priorNavigation = resultTrackingContext(payment);
-    expect(eventTrackingContext(priorNavigation, "none")).toEqual({ intent: null, service: null });
+    const payload = withEventTrackingContext({ eventType: "coopia_message_sent", metadata: { message_length: 12 } }, eventTrackingContext(priorNavigation, "none"));
+    expect(payload).not.toHaveProperty("intent");
+    expect(payload).not.toHaveProperty("service");
+    expect(payload.metadata).toEqual({ message_length: 12 });
     expect(resultTrackingContext(energy)).toMatchObject({ intent: "energy_problem", service: "energy" });
   });
 
   it("keeps the next internet-interest message unclassified until the official result arrives", () => {
     const priorNavigation = resultTrackingContext(payment);
-    expect(eventTrackingContext(priorNavigation, "none")).toEqual({ intent: null, service: null });
+    expect(withEventTrackingContext({ eventType: "coopia_message_sent" }, eventTrackingContext(priorNavigation, "none"))).toEqual({ eventType: "coopia_message_sent" });
     expect(resultTrackingContext(interest)).toMatchObject({ intent: "internet_signup", service: "internet" });
+  });
+
+  it("keeps explicit result context and inherited navigation context available", () => {
+    expect(withEventTrackingContext({ eventType: "coopia_result" }, resultTrackingContext(energy))).toMatchObject({ intent: "energy_problem", service: "energy" });
+    expect(withEventTrackingContext({ eventType: "navigation_executed" }, { intent: "pay_invoice", service: "billing" })).toMatchObject({ intent: "pay_invoice", service: "billing" });
   });
 
   it("records every action shown once, including across a render retry", () => {

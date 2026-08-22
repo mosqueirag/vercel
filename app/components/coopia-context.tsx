@@ -10,7 +10,7 @@ import { useNavigationContext } from "./navigation-context";
 import { usePublicContact } from "./public-contact-context";
 import { CONTACT } from "../../lib/coopsar-data";
 import { coopiaContextMetadata, deriveCoopiaPageContext, type CoopiaPageContext } from "../../lib/coopia/page-context";
-import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, type CoopiaEventContextMode } from "../../lib/coopia/result-tracking";
+import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, withEventTrackingContext, type CoopiaEventContextMode } from "../../lib/coopia/result-tracking";
 
 type CoopiaValue = {
   messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null;
@@ -37,7 +37,8 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
   const track = useCallback((eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: CoopiaEventContextMode) => {
     if (!ids.journeyId || !ids.sessionId) return;
     const eventContext = eventTrackingContext({ intent: navigation.intent, service: navigation.service }, context);
-    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ journeyId: ids.journeyId, sessionId: ids.sessionId, eventType, page: page(), intent: eventContext.intent, service: eventContext.service, metadata, action, result, durationMs }) }).catch(() => undefined);
+    const payload = withEventTrackingContext({ journeyId: ids.journeyId, sessionId: ids.sessionId, eventType, page: page(), metadata, action, result, durationMs }, eventContext);
+    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }).catch(() => undefined);
   }, [ids, navigation.intent, navigation.service]);
 
   useEffect(() => {
