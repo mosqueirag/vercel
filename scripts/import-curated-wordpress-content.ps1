@@ -60,9 +60,18 @@ function Get-Headers {
   if ([string]::IsNullOrWhiteSpace($env:SUPABASE_SECRET_KEY)) { throw "SUPABASE_SECRET_KEY is required for remote dry-run or apply." }
   return @{ apikey = $env:SUPABASE_SECRET_KEY; "User-Agent" = $UserAgent; Prefer = "resolution=merge-duplicates,return=representation" }
 }
+function ConvertTo-SupabaseJson($Body) {
+  # -InputObject preserves an array as one JSON document. Piping an array can
+  # serialize each member independently, which PostgREST rejects as PGRST102.
+  return ConvertTo-Json -InputObject $Body -Depth 20 -Compress
+}
 function Invoke-Supabase([string]$Path, [string]$Method = "GET", $Body = $null) {
   $params = @{ Uri = "$StagingUrl/rest/v1/$Path"; Method = $Method; Headers = (Get-Headers); ContentType = "application/json" }
-  if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 20 -Compress) }
+  if ($null -ne $Body) {
+    $json = ConvertTo-SupabaseJson $Body
+    $params.Body = [Text.Encoding]::UTF8.GetBytes($json)
+    $params.ContentType = "application/json; charset=utf-8"
+  }
   return Invoke-RestMethod @params
 }
 function Get-AllRows([string]$Path) {
@@ -117,6 +126,18 @@ function Invoke-SelfTest {
   if ($headers.ContainsKey("Authorization") -or $headers["User-Agent"] -notmatch '^COOPSAR-') { throw "SelfTest failed: server headers." }
   if ((ConvertTo-Slug "Que puedo revisar si no tengo Wi-Fi") -ne "que-puedo-revisar-si-no-tengo-wi-fi") { throw "SelfTest failed: provenance FAQ slug." }
   if ((Get-ProvenanceKey "contact_channel" ([pscustomobject]@{ domain="energia"; channel="guard_phone" }) 4) -ne "contact-05-energia-guard-phone") { throw "SelfTest failed: provenance contact key." }
+  $batch63 = @(1..63 | ForEach-Object { [ordered]@{ id=$_; label="Página española ñ $_"; optional=$null } })
+  $batch9 = @(1..9 | ForEach-Object { [ordered]@{ id=$_ } })
+  $json63 = ConvertTo-SupabaseJson $batch63
+  $json9 = ConvertTo-SupabaseJson $batch9
+  $singleJson = ConvertTo-SupabaseJson ([ordered]@{ title="Información ñ"; optional=$null })
+  $null = $json63 | ConvertFrom-Json
+  $null = $json9 | ConvertFrom-Json
+  $parsedSingle = $singleJson | ConvertFrom-Json
+  if ((-not $json63.StartsWith('[')) -or (([regex]::Matches($json63, '"id":')).Count -ne 63) -or ($json63 -notmatch '"optional":null')) { throw "SelfTest failed: 63-row batch JSON." }
+  if ((-not $json9.StartsWith('[')) -or (([regex]::Matches($json9, '"id":')).Count -ne 9)) { throw "SelfTest failed: 9-row batch JSON." }
+  if (($singleJson.StartsWith('[')) -or ($parsedSingle.title -ne "Información ñ") -or ($singleJson -notmatch '"optional":null')) { throw "SelfTest failed: single-row JSON." }
+  if ([Text.Encoding]::UTF8.GetString([Text.Encoding]::UTF8.GetBytes($singleJson)) -ne $singleJson) { throw "SelfTest failed: UTF-8 serialization." }
   Write-Output "SELF_TEST=PASS"
 }
 
@@ -162,7 +183,8 @@ function Save-NewRows([string]$Table, [string]$Conflict, $Rows, $ExistingByKey, 
   if (-not $newRows.Count) { return @() }
   return @(Invoke-Supabase "$Table?on_conflict=$Conflict" "POST" $newRows)
 }
-Invoke-Supabase "content_import_source_pages?on_conflict=source_system,source_slug" "POST" @($sourceRows | Where-Object { -not $sourceBySlug.ContainsKey($_.source_slug) }) | Out-Null
+$sourceRowsToSave = @($sourceRows | Where-Object { -not $sourceBySlug.ContainsKey($_.source_slug) })
+if ($sourceRowsToSave.Count -gt 0) { Invoke-Supabase "content_import_source_pages?on_conflict=source_system,source_slug" "POST" $sourceRowsToSave | Out-Null }
 $savedServices = Save-NewRows 'services' 'slug' $serviceCandidate $serviceBySlug 'slug'
 foreach ($row in $savedServices) { $serviceBySlug[$row.slug] = $row }
 $serviceIds=@{}; foreach($slug in $serviceBySlug.Keys) { $serviceIds[$slug]=$serviceBySlug[$slug].id }
