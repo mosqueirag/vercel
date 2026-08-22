@@ -26,3 +26,7 @@ COOPIA es una capa transversal de las páginas públicas. La home mantiene el ce
 ## Fase 4D — contenido histórico curado de WordPress
 
 El sitio WordPress anterior es exclusivamente una **fuente histórica de migración**: nunca se consulta en runtime ni reemplaza los datos oficiales administrables. El importador controlado `scripts/import-curated-wordpress-content.ps1` acepta solamente el paquete privado curado, exige staging y crea contenido en `draft` con `published_at = null`. La evidencia de las páginas fuente y sus relaciones de procedencia se conserva en tablas privadas, inaccesibles a `anon` y `authenticated`; los componentes públicos y COOPIA leen únicamente la proyección publicada mediante una capa server-side tipada.
+
+## Fase 4E.2 — curaduría y publicación humana
+
+El lote histórico de curaduría tiene 44 contenidos permitidos (9 servicios, 24 artículos de ayuda y 11 FAQ). La IA sólo genera propuestas privadas; la revisión masiva se limita al corpus editorial, conserva los gates de riesgo y excluye planes y contactos. Un administrador debe aprobar, aplicar al borrador y publicar explícitamente en staging. COOPIA no recibe borradores. El smoke de “¿Qué es ADECOOP?” confirmó la transición completa sin modificar producción.

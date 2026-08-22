@@ -67,6 +67,7 @@ export function proposalNeedsValidation(entityType: EditorialEntityType, origina
 }
 
 export function proposalRiskLevel(entityType: EditorialEntityType, flags: string[]) {
-  if (isRestrictiveEditorialType(entityType, "") || flags.some((flag) => flag.startsWith("protected_fact_"))) return "high";
+  if (flags.includes("restricted_editorial_content") || isRestrictiveEditorialType(entityType, "")) return "restricted";
+  if (flags.some((flag) => flag.startsWith("protected_fact_"))) return "high";
   return flags.length ? "medium" : "low";
 }

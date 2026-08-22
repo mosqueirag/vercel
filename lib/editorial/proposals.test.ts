@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareProtectedFacts, contentSourceHash, editorialBatchOrder, extractProtectedFacts, isEditorialBatchCandidate, isRestrictiveEditorialType, proposalIsStale, proposalNeedsValidation } from "./proposals";
+import { compareProtectedFacts, contentSourceHash, editorialBatchOrder, extractProtectedFacts, isEditorialBatchCandidate, isRestrictiveEditorialType, proposalIsStale, proposalNeedsValidation, proposalRiskLevel } from "./proposals";
 
 describe("editorial proposal safeguards", () => {
   it("detects protected phones, prices and URLs", () => {
@@ -11,6 +11,12 @@ describe("editorial proposal safeguards", () => {
   it("keeps validation queue and legal content restrictive", () => {
     expect(proposalNeedsValidation("help_article", "Reglamento vigente", { suggested_ctas: [], suggested_coopia_intents: [], editorial_notes: "" }, true)).toEqual(expect.arrayContaining(["historical_validation_queue", "restricted_editorial_content"]));
     expect(isRestrictiveEditorialType("contact_channel", "")).toBe(true);
+  });
+  it("classifies restricted content before protected facts and ordinary validation", () => {
+    expect(proposalRiskLevel("help_article", ["restricted_editorial_content"])).toBe("restricted");
+    expect(proposalRiskLevel("faq", ["protected_fact_added:phone"])).toBe("high");
+    expect(proposalRiskLevel("faq", ["historical_validation_queue"])).toBe("medium");
+    expect(proposalRiskLevel("faq", [])).toBe("low");
   });
   it("hashes the exact source deterministically", () => expect(contentSourceHash({ title: "Contenido" })).toBe(contentSourceHash({ title: "Contenido" })));
   it("limits the general editorial batch to low-risk content in deterministic order", () => {
