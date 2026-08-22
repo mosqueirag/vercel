@@ -58,7 +58,7 @@ function Assert-Payload($Payload) {
 }
 function Get-Headers {
   if ([string]::IsNullOrWhiteSpace($env:SUPABASE_SECRET_KEY)) { throw "SUPABASE_SECRET_KEY is required for remote dry-run or apply." }
-  return @{ apikey = $env:SUPABASE_SECRET_KEY; "User-Agent" = $UserAgent; Prefer = "resolution=merge-duplicates,return=representation" }
+  return @{ apikey = $env:SUPABASE_SECRET_KEY; Prefer = "resolution=merge-duplicates,return=representation" }
 }
 function ConvertTo-SupabaseJson($Body) {
   # -InputObject preserves an array as one JSON document. Piping an array can
@@ -69,18 +69,26 @@ function Build-SupabasePath([string]$Table, [string]$Conflict) {
   if ([string]::IsNullOrWhiteSpace($Table) -or [string]::IsNullOrWhiteSpace($Conflict)) { throw "Table and conflict field are required." }
   return "${Table}?on_conflict=${Conflict}"
 }
-function Invoke-Supabase([string]$Path, [string]$Method = "GET", $Body = $null) {
-  $params = @{ Uri = "${StagingUrl}/rest/v1/${Path}"; Method = $Method; Headers = (Get-Headers); ContentType = "application/json" }
+function New-SupabaseRequestParameters([string]$Path, [string]$Method = "GET", $Body = $null) {
+  $params = @{ Uri = "${StagingUrl}/rest/v1/${Path}"; Method = $Method; Headers = (Get-Headers); UserAgent = $UserAgent; ContentType = "application/json" }
   if ($null -ne $Body) {
     $json = ConvertTo-SupabaseJson $Body
     $params.Body = [Text.Encoding]::UTF8.GetBytes($json)
     $params.ContentType = "application/json; charset=utf-8"
   }
+  return $params
+}
+function Invoke-Supabase([string]$Path, [string]$Method = "GET", $Body = $null) {
+  $params = New-SupabaseRequestParameters $Path $Method $Body
   return Invoke-RestMethod @params
+}
+function ConvertTo-RowArray($Response) {
+  if ($null -eq $Response) { return @() }
+  return @($Response)
 }
 function Get-AllRows([string]$Path) {
   $rows = @(); $offset = 0
-  do { $page = @(Invoke-Supabase "${Path}&offset=${offset}&limit=1000"); $rows += $page; $offset += $page.Count } while ($page.Count -eq 1000)
+  do { $page = @(ConvertTo-RowArray (Invoke-Supabase "${Path}&offset=${offset}&limit=1000")); $rows += $page; $offset += $page.Count } while ($page.Count -eq 1000)
   return $rows
 }
 function Get-ServiceName([string]$Domain) {
@@ -126,8 +134,12 @@ function Get-ImportCounts($Rows, $ExistingByKey, [string]$Field) {
 function Invoke-SelfTest {
   if ((New-ImportKey "faq" "pregunta") -notmatch '^wordpress:faq:[a-f0-9]{64}$') { throw "SelfTest failed: import key." }
   if ((Get-ServiceName "internet-telefonia") -ne "phone") { throw "SelfTest failed: contact domain mapping." }
-  $headers = @{ apikey = "sb_secret_test"; "User-Agent" = $UserAgent }
-  if ($headers.ContainsKey("Authorization") -or $headers["User-Agent"] -notmatch '^COOPSAR-') { throw "SelfTest failed: server headers." }
+  $savedSecret = $env:SUPABASE_SECRET_KEY
+  try {
+    $env:SUPABASE_SECRET_KEY = "sb_secret_test"
+    $request = New-SupabaseRequestParameters 'services?select=id' 'GET'
+    if ($request.Headers.ContainsKey("Authorization") -or $request.Headers.ContainsKey("User-Agent") -or $request.UserAgent -ne $UserAgent) { throw "SelfTest failed: native server User-Agent." }
+  } finally { $env:SUPABASE_SECRET_KEY = $savedSecret }
   if ((ConvertTo-Slug "Que puedo revisar si no tengo Wi-Fi") -ne "que-puedo-revisar-si-no-tengo-wi-fi") { throw "SelfTest failed: provenance FAQ slug." }
   if ((Get-ProvenanceKey "contact_channel" ([pscustomobject]@{ domain="energia"; channel="guard_phone" }) 4) -ne "contact-05-energia-guard-phone") { throw "SelfTest failed: provenance contact key." }
   $batch63 = @(1..63 | ForEach-Object { [ordered]@{ id=$_; label="Página española ñ $_"; optional=$null } })
@@ -152,6 +164,9 @@ function Invoke-SelfTest {
     $path = Build-SupabasePath $table $conflict
     if ($path -ne $expectedPaths[$table] -or $path -match '/|=slug$' -and $path -ne 'services?on_conflict=slug') { throw "SelfTest failed: PostgREST upsert path." }
   }
+  if (@(ConvertTo-RowArray @()).Count -ne 0) { throw "SelfTest failed: empty REST list." }
+  if (@(ConvertTo-RowArray @([pscustomobject]@{ id=1 })).Count -ne 1) { throw "SelfTest failed: one-row REST list." }
+  if (@(ConvertTo-RowArray @(1..63 | ForEach-Object { [pscustomobject]@{ id=$_ } })).Count -ne 63) { throw "SelfTest failed: 63-row REST list." }
   Write-Output "SELF_TEST=PASS"
 }
 
@@ -171,6 +186,14 @@ $faqByKey = Get-ExistingByField $existing.faqs 'import_key'
 $contactByKey = Get-ExistingByField $existing.contacts 'import_key'
 $sourceBySlug = Get-ExistingByField $existing.sources 'source_slug'
 $validationByKey = Get-ExistingByField $existing.validation_queue 'validation_key'
+if ($Apply) {
+  $preApply = [ordered]@{
+    source_pages = @($existing.sources).Count
+    services = @($existing.services).Count
+    provenance = @($existing.provenance).Count
+  }
+  Write-Output ("PRE_APPLY_REMOTE_CHECK=" + ($preApply | ConvertTo-Json -Compress))
+}
 $serviceCandidate = @($payload.services | ForEach-Object { [ordered]@{ slug=$_.slug; name=$_.name; description=$_.description; status='draft'; sort_order=[int]$_.sort_order } })
 $articleCandidate = @($payload.help_articles | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; title=$_.title; category=$_.category; summary=$_.summary; content=$_.content; status='draft'; published_at=$null } })
 $planCandidate = @($payload.internet_plans_draft | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; name=$_.name; audience=$_.audience; speed_down_mbps=$_.speed_down_mbps; speed_up_mbps=$_.speed_up_mbps; technology=$_.technology; price_amount=$_.price_amount; currency=$_.currency; benefits=@($_.benefits); installation_notes=$_.installation_notes; status='draft'; sort_order=[int]$_.sort_order; published_at=$null } })
