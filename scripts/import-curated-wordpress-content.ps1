@@ -21,6 +21,12 @@ function ConvertTo-Slug([string]$Value) {
   $withoutMarks = -join @($normalized.ToCharArray() | Where-Object { [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark })
   return (($withoutMarks.ToLowerInvariant() -replace '[^a-z0-9]+', '-') -replace '(^-|-$)', '')
 }
+function Normalize-ProvenanceText([string]$Value) {
+  # Historical source keys treat a hyphen joining two word characters as part
+  # of the same token. Keep this rule scoped to provenance: public slugs keep
+  # their existing behavior.
+  return $Value -replace '(?<=[\p{L}\p{N}])[-\u2010\u2011\u2012\u2013\u2014\u2015](?=[\p{L}\p{N}])', ''
+}
 function Get-Payload([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path)) { throw "Import blocked: input package was not found." }
   if ([IO.Path]::GetExtension($Path).ToLowerInvariant() -ne ".zip") { return Get-Content -Raw -LiteralPath $Path | ConvertFrom-Json }
@@ -102,10 +108,44 @@ function Get-ProvenanceRows($Payload, [string]$Type, [string]$Key, [string]$Enti
 }
 function Get-ProvenanceKey([string]$Type, $Item, [int]$Index = 0) {
   switch ($Type) {
-    "faq" { return "faq-" + (ConvertTo-Slug $Item.question) }
+    "faq" { return "faq-" + (ConvertTo-Slug (Normalize-ProvenanceText $Item.question)) }
     "contact_channel" { return "contact-{0:d2}-{1}-{2}" -f ($Index + 1), $Item.domain, ($Item.channel -replace '_', '-') }
     "coopia_knowledge" { return $Item.intent }
     default { return $Item.slug }
+  }
+}
+function Get-ExpectedProvenanceEntities($ServiceCandidate, $ArticleCandidate, $FaqCandidate, $PlanCandidate, $ContactCandidate, $KnowledgeManifest) {
+  $entities = @()
+  foreach ($item in @($ServiceCandidate)) { $entities += [ordered]@{ entity_type='service'; entity_key=$item.slug } }
+  foreach ($item in @($ArticleCandidate)) { $entities += [ordered]@{ entity_type='help_article'; entity_key=$item.slug } }
+  foreach ($item in @($FaqCandidate)) { $entities += [ordered]@{ entity_type='faq'; entity_key=$item.provenance_key } }
+  foreach ($item in @($PlanCandidate)) { $entities += [ordered]@{ entity_type='internet_plan'; entity_key=$item.slug } }
+  foreach ($item in @($ContactCandidate)) { $entities += [ordered]@{ entity_type='contact_channel'; entity_key=$item.provenance_key } }
+  foreach ($item in @($KnowledgeManifest)) { $entities += [ordered]@{ entity_type='coopia_knowledge'; entity_key=(Get-ProvenanceKey 'coopia_knowledge' $item) } }
+  return @($entities)
+}
+function Assert-ProvenanceCoverage($Payload, $ExpectedEntities) {
+  $expected = @{}
+  foreach ($entity in @($ExpectedEntities)) {
+    $key = "$($entity.entity_type)|$($entity.entity_key)"
+    if ($expected.ContainsKey($key)) { throw "Import blocked: duplicate generated provenance entity key." }
+    $expected[$key] = $true
+  }
+  if ($expected.Count -ne 72) { throw "Import blocked: expected 72 generated provenance entities." }
+
+  $provided = @{}
+  foreach ($entry in @($Payload.content_provenance)) {
+    $key = "$($entry.entity_type)|$($entry.entity_key)"
+    if ([string]::IsNullOrWhiteSpace($entry.entity_type) -or [string]::IsNullOrWhiteSpace($entry.entity_key)) { throw "Import blocked: provenance contains an incomplete entity key." }
+    if ($provided.ContainsKey($key)) { throw "Import blocked: duplicate provenance entity key in payload." }
+    $provided[$key] = $true
+  }
+  if ($provided.Count -ne 72) { throw "Import blocked: expected 72 distinct provenance entities in payload." }
+
+  $missing = @($expected.Keys | Where-Object { -not $provided.ContainsKey($_) })
+  $unexpected = @($provided.Keys | Where-Object { -not $expected.ContainsKey($_) })
+  if ($missing.Count -gt 0 -or $unexpected.Count -gt 0) {
+    throw "Import blocked: provenance coverage mismatch (missing=$($missing.Count), unexpected=$($unexpected.Count))."
   }
 }
 function Get-ExistingByField($Rows, [string]$Field) {
@@ -140,7 +180,14 @@ function Invoke-SelfTest {
     $request = New-SupabaseRequestParameters 'services?select=id' 'GET'
     if ($request.Headers.ContainsKey("Authorization") -or $request.Headers.ContainsKey("User-Agent") -or $request.UserAgent -ne $UserAgent) { throw "SelfTest failed: native server User-Agent." }
   } finally { $env:SUPABASE_SECRET_KEY = $savedSecret }
-  if ((ConvertTo-Slug "Que puedo revisar si no tengo Wi-Fi") -ne "que-puedo-revisar-si-no-tengo-wi-fi") { throw "SelfTest failed: provenance FAQ slug." }
+  if ((ConvertTo-Slug "Que puedo revisar si no tengo Wi-Fi") -ne "que-puedo-revisar-si-no-tengo-wi-fi") { throw "SelfTest failed: public slug stability." }
+  if ((Normalize-ProvenanceText "Wi-Fi") -ne "WiFi") { throw "SelfTest failed: ASCII provenance hyphen canonicalization." }
+  $nonBreakingHyphen = [char]0x2011
+  if ((Normalize-ProvenanceText ("Wi" + $nonBreakingHyphen + "Fi")) -ne "WiFi") { throw "SelfTest failed: Unicode provenance hyphen canonicalization." }
+  $faqQuestion = [string]::Concat([char]0x00BF, "Qu", [char]0x00E9, " puedo revisar si no tengo Wi", $nonBreakingHyphen, "Fi?")
+  if ((Get-ProvenanceKey 'faq' ([pscustomobject]@{ question=$faqQuestion })) -ne 'faq-que-puedo-revisar-si-no-tengo-wifi') { throw "SelfTest failed: canonical FAQ provenance key." }
+  $accentedQuestion = [string]::Concat([char]0x00BF, "Qu", [char]0x00E9, " informaci", [char]0x00F3, "n hay para ni", [char]0x00F1, "os y ni", [char]0x00F1, "as?")
+  if ((Get-ProvenanceKey 'faq' ([pscustomobject]@{ question=$accentedQuestion })) -ne 'faq-que-informacion-hay-para-ninos-y-ninas') { throw "SelfTest failed: accented provenance key." }
   if ((Get-ProvenanceKey "contact_channel" ([pscustomobject]@{ domain="energia"; channel="guard_phone" }) 4) -ne "contact-05-energia-guard-phone") { throw "SelfTest failed: provenance contact key." }
   $batch63 = @(1..63 | ForEach-Object { [ordered]@{ id=$_; label="Página española ñ $_"; optional=$null } })
   $batch9 = @(1..9 | ForEach-Object { [ordered]@{ id=$_ } })
@@ -176,6 +223,15 @@ if ([string]::IsNullOrWhiteSpace($InputPath)) { throw "InputPath is required and
 if ($env:NEXT_PUBLIC_SUPABASE_URL -ne $StagingUrl) { throw "Import blocked: NEXT_PUBLIC_SUPABASE_URL must equal the authorized staging URL." }
 $payload = Get-Payload $InputPath; Assert-Payload $payload
 
+$serviceCandidate = @($payload.services | ForEach-Object { [ordered]@{ slug=$_.slug; name=$_.name; description=$_.description; status='draft'; sort_order=[int]$_.sort_order } })
+$articleCandidate = @($payload.help_articles | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; title=$_.title; category=$_.category; summary=$_.summary; content=$_.content; status='draft'; published_at=$null } })
+$planCandidate = @($payload.internet_plans_draft | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; name=$_.name; audience=$_.audience; speed_down_mbps=$_.speed_down_mbps; speed_up_mbps=$_.speed_up_mbps; technology=$_.technology; price_amount=$_.price_amount; currency=$_.currency; benefits=@($_.benefits); installation_notes=$_.installation_notes; status='draft'; sort_order=[int]$_.sort_order; published_at=$null } })
+$faqCandidate = @($payload.faqs | ForEach-Object { $provenanceKey=Get-ProvenanceKey 'faq' $_; [ordered]@{ provenance_key=$provenanceKey; import_key=(New-ImportKey 'faq' $provenanceKey); service_slug=$_.service_slug; question=$_.question; answer=$_.answer; category=$_.category; status='draft'; sort_order=[int]$_.sort_order; published_at=$null } })
+$contactCandidate = @($payload.contact_channels_draft | ForEach-Object -Begin { $position=0 } -Process { $provenanceKey=Get-ProvenanceKey 'contact_channel' $_ $position; $position++; [ordered]@{ provenance_key=$provenanceKey; import_key=(New-ImportKey 'contact_channel' $provenanceKey); service=(Get-ServiceName $_.domain); channel_type=$_.channel; label='Canal histórico pendiente de validación'; value=$_.value; public_value=$_.value; purpose=('historical-' + (Get-Sha256 $provenanceKey).Substring(0,16)); status='draft'; sort_order=0; published_at=$null } })
+$validationCandidate = @($payload.validation_queue | ForEach-Object { [ordered]@{ validation_key=(New-ImportKey 'validation' "$($_.priority)|$($_.item)"); priority=$_.priority; item=$_.item; reason=$_.reason; source_slugs=@($_.source_slugs); status='open' } })
+$expectedProvenanceEntities = Get-ExpectedProvenanceEntities $serviceCandidate $articleCandidate $faqCandidate $planCandidate $contactCandidate $payload.coopia_knowledge_manifest
+Assert-ProvenanceCoverage $payload $expectedProvenanceEntities
+
 $sourceRows = @($payload.source_pages_cleaned | ForEach-Object { [ordered]@{ source_system="wordpress"; source_slug=$_.slug; source_url=$_.source_url; source_title=$_.title; source_post_date=$_.source_post_date; source_modified_at=$_.source_modified_at; wordpress_status=$_.wordpress_status; migration_decision=$_.migration_decision; decision_reason=$_.decision_reason; raw_content_sha256=$_.raw_content_sha256 } })
 $existing = @{ services=@(Get-AllRows "services?select=id,slug,status"); articles=@(Get-AllRows "help_articles?select=id,slug,status"); plans=@(Get-AllRows "internet_plans?select=id,slug,status"); contacts=@(Get-AllRows "public_contact_channels?select=id,import_key,status"); faqs=@(Get-AllRows "faqs?select=id,import_key,status"); sources=@(Get-AllRows "content_import_source_pages?select=source_slug"); provenance=@(Get-AllRows "content_import_provenance?select=entity_type,entity_key,source_slug"); validation_queue=@(Get-AllRows "content_import_validation_queue?select=validation_key") }
 $summary = [ordered]@{ new=0; updated=0; unchanged=0; skipped=0; conflicts=0; services=@($payload.services).Count; help_articles=@($payload.help_articles).Count; faqs=@($payload.faqs).Count; internet_plans=@($payload.internet_plans_draft).Count; contacts=@($payload.contact_channels_draft).Count; validation_queue=@($payload.validation_queue).Count; source_pages=@($payload.source_pages_cleaned).Count; provenance_entities=@($payload.content_provenance).Count; provenance_relations=156; coverage_zones=0; mode=if($Apply){"apply"}else{"dry-run"} }
@@ -194,12 +250,6 @@ if ($Apply) {
   }
   Write-Output ("PRE_APPLY_REMOTE_CHECK=" + ($preApply | ConvertTo-Json -Compress))
 }
-$serviceCandidate = @($payload.services | ForEach-Object { [ordered]@{ slug=$_.slug; name=$_.name; description=$_.description; status='draft'; sort_order=[int]$_.sort_order } })
-$articleCandidate = @($payload.help_articles | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; title=$_.title; category=$_.category; summary=$_.summary; content=$_.content; status='draft'; published_at=$null } })
-$planCandidate = @($payload.internet_plans_draft | ForEach-Object { [ordered]@{ slug=$_.slug; service_slug=$_.service_slug; name=$_.name; audience=$_.audience; speed_down_mbps=$_.speed_down_mbps; speed_up_mbps=$_.speed_up_mbps; technology=$_.technology; price_amount=$_.price_amount; currency=$_.currency; benefits=@($_.benefits); installation_notes=$_.installation_notes; status='draft'; sort_order=[int]$_.sort_order; published_at=$null } })
-$faqCandidate = @($payload.faqs | ForEach-Object { $provenanceKey=Get-ProvenanceKey 'faq' $_; [ordered]@{ provenance_key=$provenanceKey; import_key=(New-ImportKey 'faq' $provenanceKey); service_slug=$_.service_slug; question=$_.question; answer=$_.answer; category=$_.category; status='draft'; sort_order=[int]$_.sort_order; published_at=$null } })
-$contactCandidate = @($payload.contact_channels_draft | ForEach-Object -Begin { $position=0 } -Process { $provenanceKey=Get-ProvenanceKey 'contact_channel' $_ $position; $position++; [ordered]@{ provenance_key=$provenanceKey; import_key=(New-ImportKey 'contact_channel' $provenanceKey); service=(Get-ServiceName $_.domain); channel_type=$_.channel; label='Canal histórico pendiente de validación'; value=$_.value; public_value=$_.value; purpose=('historical-' + (Get-Sha256 $provenanceKey).Substring(0,16)); status='draft'; sort_order=0; published_at=$null } })
-$validationCandidate = @($payload.validation_queue | ForEach-Object { [ordered]@{ validation_key=(New-ImportKey 'validation' "$($_.priority)|$($_.item)"); priority=$_.priority; item=$_.item; reason=$_.reason; source_slugs=@($_.source_slugs); status='open' } })
 Add-ImportSummary $summary $serviceCandidate $serviceBySlug 'slug'; Add-ImportSummary $summary $articleCandidate $articleBySlug 'slug'; Add-ImportSummary $summary $planCandidate $planBySlug 'slug'; Add-ImportSummary $summary $faqCandidate $faqByKey 'import_key'; Add-ImportSummary $summary $contactCandidate $contactByKey 'import_key'; Add-ImportSummary $summary $validationCandidate $validationByKey 'validation_key'
 foreach ($row in $sourceRows) { if ($sourceBySlug.ContainsKey($row.source_slug)) { $summary.unchanged++ } else { $summary.new++ } }
 $sourceCounts = Get-ImportCounts $sourceRows $sourceBySlug 'source_slug'
