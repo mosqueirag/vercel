@@ -1,8 +1,9 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
 import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
-import { contentSourceHash, editorialBatchOrder, editorialPromptVersion, extractProtectedFacts, isEditorialBatchCandidate, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
+import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 import { canPublishEditorialProposal } from "../../../../lib/editorial/publication";
+import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch-selection";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -49,10 +50,11 @@ export async function POST(request: Request) {
   try {
     if (typeof body.batchLimit === "number") {
       const limit = Math.max(1, Math.min(10, Math.floor(body.batchLimit)));
-      const candidates = (await getHistoricalEditorialCandidates()).filter((candidate) => candidate.status === "draft" && isEditorialBatchCandidate(candidate.entityType)).sort((a, b) => editorialBatchOrder.indexOf(a.entityType) - editorialBatchOrder.indexOf(b.entityType)).slice(0, limit);
+      const [historicalCandidates, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getEditorialProposals()]);
+      const batch = selectProgressiveEditorialBatch(historicalCandidates, proposals, limit);
       const results = [];
-      for (const candidate of candidates) results.push(await create(candidate));
-      return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length });
+      for (const candidate of batch.selected) results.push(await create(candidate));
+      return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length, remaining: batch.remaining, totalCorpus: batch.totalCorpus, alreadyProcessed: batch.alreadyProcessed });
     }
     if (!isEntityType(body.entityType) || typeof body.entityId !== "string") return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
     const candidate = await getEditorialCandidate(body.entityType, body.entityId);
