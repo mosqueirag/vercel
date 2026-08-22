@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase";
+import { formatCuratedKnowledge, getPublishedCuratedKnowledge } from "./curated-content";
 
 export type PublicInternetPlan = {
   id: string; slug: string; name: string; description: string | null; audience: string;
@@ -54,8 +55,8 @@ export async function searchPublishedKnowledge(query: string) {
 }
 
 export async function getAssistantKnowledge() {
-  const [plans, contacts, knowledge] = await Promise.all([getPublishedInternetPlans(), getPublicContacts(), searchPublishedKnowledge("COOPSAR")]);
+  const [plans, contacts, curated] = await Promise.all([getPublishedInternetPlans(), getPublicContacts(), getPublishedCuratedKnowledge()]);
   const planLines = plans.map((plan) => `Plan publicado: ${plan.name}. Tecnología: ${plan.technology ?? "no publicada"}. Velocidad: ${plan.speed_down_mbps ?? "no publicada"}. Precio: ${plan.price_amount === null ? "no publicado" : `${plan.currency ?? ""} ${plan.price_amount}`}.`).join("\n");
   const contactLines = contacts.map((contact) => `${contact.label}: ${contact.value}.`).join("\n");
-  return ["Usá solo los datos publicados a continuación. Si no hay información, indicá que no está publicada y ofrecé reintentar.", contactLines, planLines, knowledge.join("\n")].filter(Boolean).join("\n");
+  return ["Usá solo los datos publicados a continuación. Si no hay información, indicá que no está publicada y ofrecé reintentar.", contactLines, planLines, formatCuratedKnowledge(curated)].filter(Boolean).join("\n");
 }

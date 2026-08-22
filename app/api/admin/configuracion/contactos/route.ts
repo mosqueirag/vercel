@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isSameOrigin, requireNewsAdmin } from "../../../../../lib/admin-auth";
 
-const schema = z.object({ id: z.string().uuid().optional(), service: z.enum(["general", "internet", "energy", "funeral", "billing", "phone"]), channelType: z.enum(["phone", "whatsapp", "url", "address", "hours"]), label: z.string().trim().min(2).max(120), value: z.string().trim().min(2).max(500), publicValue: z.string().trim().min(2).max(500), purpose: z.string().trim().min(2).max(80), status: z.enum(["draft", "published", "archived"]), sortOrder: z.number().int().nonnegative().default(0) });
+const schema = z.object({ id: z.string().uuid().optional(), service: z.enum(["general", "internet", "energy", "funeral", "billing", "phone"]), channelType: z.enum(["phone", "guard_phone", "whatsapp", "email", "url", "address", "hours"]), label: z.string().trim().min(2).max(120), value: z.string().trim().min(2).max(500), publicValue: z.string().trim().min(2).max(500), purpose: z.string().trim().min(2).max(80), status: z.enum(["draft", "published", "archived"]), sortOrder: z.number().int().nonnegative().default(0) });
 const columns = "id,service,channel_type,label,value,public_value,purpose,status,sort_order,published_at,updated_at,updated_by_email";
 const values = (data: z.infer<typeof schema>, email: string) => ({ service: data.service, channel_type: data.channelType, label: data.label, value: data.value, public_value: data.publicValue, purpose: data.purpose, status: data.status, sort_order: data.sortOrder, published_at: data.status === "published" ? new Date().toISOString() : null, updated_by_email: email });
 

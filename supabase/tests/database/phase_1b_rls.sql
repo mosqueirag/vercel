@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(33);
+select plan(46);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -52,6 +52,9 @@ select throws_ok(
   'permission denied for table public_contact_channels',
   'anon cannot read public contacts or internal audit columns directly'
 );
+select throws_ok($$ select count(*) from public.content_import_source_pages $$, '42501', 'permission denied for table content_import_source_pages', 'anon cannot read source-page evidence');
+select throws_ok($$ select count(*) from public.content_import_provenance $$, '42501', 'permission denied for table content_import_provenance', 'anon cannot read private import provenance');
+select throws_ok($$ select count(*) from public.content_import_validation_queue $$, '42501', 'permission denied for table content_import_validation_queue', 'anon cannot read import validation backlog');
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',
@@ -95,11 +98,49 @@ select lives_ok(
   'same address supports distinct technology rows'
 );
 select lives_ok($$ select count(*) from public.service_address_coverage $$, 'service role can read private address coverage');
+select lives_ok(
+  $$ insert into public.content_import_source_pages (source_slug, source_url, source_title, migration_decision, raw_content_sha256)
+     values ('pgtap-source', 'https://example.invalid/pgtap-source', 'Fuente pgTAP', 'archive', repeat('a', 64)) $$,
+  'service role can store private source-page evidence'
+);
+select lives_ok(
+  $$ insert into public.content_import_provenance (entity_type, entity_key, source_slug, source_url, migration_decision, raw_content_sha256)
+     values ('coopia_knowledge', 'pgtap-knowledge', 'pgtap-source', 'https://example.invalid/pgtap-source', 'archive', repeat('a', 64)) $$,
+  'service role can store private import provenance'
+);
+select lives_ok(
+  $$ insert into public.content_import_validation_queue (validation_key, priority, item, reason, source_slugs)
+     values ('wordpress:validation:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'P1', 'Cola pgTAP', 'Validar antes de publicar', '[]'::jsonb) $$,
+  'service role can store the private validation backlog'
+);
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
   '23514',
   null,
   'published plan requires a confirmed audience'
+);
+select lives_ok(
+  $$ insert into public.faqs (question, answer, category, status, import_key)
+     values ('FAQ upsert import key pgTAP', 'Respuesta inicial', 'Test', 'draft', 'pgtap:faq:import-key')
+     on conflict (import_key) do update set answer = excluded.answer $$,
+  'faqs accepts PostgREST-style ON CONFLICT(import_key) upserts'
+);
+select is(
+  (select count(*)::integer from public.faqs where import_key = 'pgtap:faq:import-key'),
+  1,
+  'FAQ import-key upsert stores exactly one row'
+);
+select lives_ok(
+  $$ insert into public.public_contact_channels
+       (service, channel_type, label, value, public_value, purpose, status, import_key)
+     values ('internet', 'phone', 'Contacto upsert import key pgTAP', '0000000000', 'Canal de prueba', 'pgtap-import-key', 'draft', 'pgtap:contact:import-key')
+     on conflict (import_key) do update set label = excluded.label $$,
+  'public_contact_channels accepts PostgREST-style ON CONFLICT(import_key) upserts'
+);
+select is(
+  (select count(*)::integer from public.public_contact_channels where import_key = 'pgtap:contact:import-key'),
+  1,
+  'contact import-key upsert stores exactly one row'
 );
 select is((select count(*)::integer from public.public_contact_channels where label like 'Contacto % test'), 2, 'server role can read public and draft contacts through the DAL backend');
 select lives_ok(
@@ -119,6 +160,9 @@ select throws_ok(
   'permission denied for table public_contact_channels',
   'authenticated users cannot read public contacts or updated_by_email directly'
 );
+select throws_ok($$ select count(*) from public.content_import_source_pages $$, '42501', 'permission denied for table content_import_source_pages', 'authenticated cannot read source-page evidence');
+select throws_ok($$ select count(*) from public.content_import_provenance $$, '42501', 'permission denied for table content_import_provenance', 'authenticated cannot read private import provenance');
+select throws_ok($$ select count(*) from public.content_import_validation_queue $$, '42501', 'permission denied for table content_import_validation_queue', 'authenticated cannot read import validation backlog');
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');

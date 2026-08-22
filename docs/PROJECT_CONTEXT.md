@@ -22,3 +22,7 @@ COOPIA no mantiene tickets ni almacena reclamos. Detecta el servicio, resuelve d
 ## Fase 4B — COOPIA global
 
 COOPIA es una capa transversal de las páginas públicas. La home mantiene el centro de atención protagonista y el resto del portal ofrece un panel compacto bajo demanda, ambos sobre una única sesión temporal. La conversación, intención y acciones sobreviven a la navegación de la pestaña; no se muestra el asistente dentro de `/admin`. La analítica es mínima y best-effort, sin texto completo del chat ni datos personales.
+
+## Fase 4D — contenido histórico curado de WordPress
+
+El sitio WordPress anterior es exclusivamente una **fuente histórica de migración**: nunca se consulta en runtime ni reemplaza los datos oficiales administrables. El importador controlado `scripts/import-curated-wordpress-content.ps1` acepta solamente el paquete privado curado, exige staging y crea contenido en `draft` con `published_at = null`. La evidencia de las páginas fuente y sus relaciones de procedencia se conserva en tablas privadas, inaccesibles a `anon` y `authenticated`; los componentes públicos y COOPIA leen únicamente la proyección publicada mediante una capa server-side tipada.

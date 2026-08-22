@@ -13,6 +13,10 @@ No es fuente de verdad para cobertura, precios, planes, cortes, requisitos o dat
 
 Mientras no exista un registro oficial publicado, COOPIA debe responder que la confirmación está pendiente; no debe inferir ni completar datos.
 
+## Contenido histórico curado
+
+El WordPress anterior y su XML son evidencia de migración histórica, nunca una fuente de verdad consultada en runtime. El paquete curado se importa a tablas tipadas como borrador; `lib/data/curated-content.ts` consulta explícitamente sólo registros publicados. El manifiesto de conocimiento sirve para mapear intenciones a contenido tipado, pero los datos vivos —planes, contactos, alertas y cobertura— continúan en sus fuentes administrables y publicadas.
+
 ## Continuidad pública
 
 COOPIA acompaña la navegación pública durante una única sesión temporal. El contexto técnico de cada consulta incluye página, `journeyId`, `sessionId` y, cuando ya existe, intención y servicio. Esto aporta continuidad sin enviar contenido completo de las páginas al modelo. Las respuestas no resueltas y el feedback se registran solamente como métricas estructuradas, sin conservar el texto completo de la conversación.
