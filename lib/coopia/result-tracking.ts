@@ -37,6 +37,11 @@ export type CoopiaShownActionEvent = {
   context: CoopiaResultTrackingContext;
 };
 
+/** Only actions with a destination can be rendered as an executable ActionLink. */
+export function visibleAssistantActions(actions: AssistantResult["recommendedActions"]) {
+  return actions.filter((action) => Boolean(action.href));
+}
+
 export function resultTrackingContext(result: AssistantResult): CoopiaResultTrackingContext {
   return { intent: result.intent, service: result.service, orchestrationIntent: result.orchestration.intent };
 }
@@ -46,9 +51,11 @@ export function resultTrackingKey(result: AssistantResult, sequence: number) {
 }
 
 /** Returns every visible action once for this response. Keys carry no user text or PII. */
-export function takeShownActionEvents(input: { journeyId: string; resultKey: string; result: AssistantResult; seen: Set<string> }) {
+export function takeShownActionEvents(input: { journeyId: string; resultKey: string; result: AssistantResult; visibleActionIds: AssistantResult["recommendedActions"][number]["id"][]; seen: Set<string> }) {
   const context = resultTrackingContext(input.result);
+  const visibleActionIds = new Set(input.visibleActionIds);
   return input.result.recommendedActions.reduce<CoopiaShownActionEvent[]>((events, action) => {
+    if (!visibleActionIds.has(action.id)) return events;
     const fingerprint = `${input.journeyId}:${input.resultKey}:${action.id}`;
     if (input.seen.has(fingerprint)) return events;
     input.seen.add(fingerprint);

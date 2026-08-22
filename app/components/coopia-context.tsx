@@ -13,10 +13,11 @@ import { coopiaContextMetadata, deriveCoopiaPageContext, type CoopiaPageContext 
 import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, withEventTrackingContext, type CoopiaEventContextMode } from "../../lib/coopia/result-tracking";
 
 type CoopiaValue = {
-  messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null;
+  messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null; assistantResultKey: string;
   journeyId: string; sessionId: string; intent?: AssistantIntent; service?: AssistantService; isOpen: boolean;
   setInput: (value: string) => void; ask: (text: string) => Promise<void>; setOpen: (open: boolean) => void;
   pageContext: CoopiaPageContext; track: (eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: CoopiaEventContextMode) => void;
+  recordShownActions: (result: AssistantResult, resultKey: string, visibleActionIds: AssistantResult["recommendedActions"][number]["id"][]) => void;
   feedback: (helpful: boolean) => void; handoffUrl: string;
 };
 const Context = createContext<CoopiaValue | null>(null);
@@ -27,7 +28,7 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
   const navigation = useNavigationContext();
   const pathname = usePathname();
   const officialWhatsApp = usePublicContact("general", "general_contact")?.value;
-  const [messages, setMessages] = useState<CoopiaMessage[]>([]), [input, setInput] = useState(""), [loading, setLoading] = useState(false), [error, setError] = useState(""), [limited, setLimited] = useState(false), [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null), [isOpen, setOpenState] = useState(false), [ids, setIds] = useState({ journeyId: "", sessionId: "" });
+  const [messages, setMessages] = useState<CoopiaMessage[]>([]), [input, setInput] = useState(""), [loading, setLoading] = useState(false), [error, setError] = useState(""), [limited, setLimited] = useState(false), [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null), [assistantResultKey, setAssistantResultKey] = useState(""), [isOpen, setOpenState] = useState(false), [ids, setIds] = useState({ journeyId: "", sessionId: "" });
   const recordedPages = useRef<string[]>([]);
   const shownActionFingerprints = useRef(new Set<string>());
   const resultSequence = useRef(0);
@@ -40,6 +41,13 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
     const payload = withEventTrackingContext({ journeyId: ids.journeyId, sessionId: ids.sessionId, eventType, page: page(), metadata, action, result, durationMs }, eventContext);
     void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }).catch(() => undefined);
   }, [ids, navigation.intent, navigation.service]);
+
+  const recordShownActions = useCallback((result: AssistantResult, resultKey: string, visibleActionIds: AssistantResult["recommendedActions"][number]["id"][]) => {
+    if (!ids.journeyId || !resultKey || visibleActionIds.length === 0) return;
+    for (const event of takeShownActionEvents({ journeyId: ids.journeyId, resultKey, result, visibleActionIds, seen: shownActionFingerprints.current })) {
+      track("coopia_action_shown", event.metadata, event.action, event.result, undefined, event.context);
+    }
+  }, [ids.journeyId, track]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -77,11 +85,9 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
       const [structuredResponse, response] = await Promise.all([fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context }) }), fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) })]);
       if (structuredResponse.ok) {
         const result = await structuredResponse.json() as AssistantResult;
-        setAssistantResult(result); navigation.applyResult(result, ids.sessionId);
+        setAssistantResult(result); setAssistantResultKey(resultTrackingKey(result, ++resultSequence.current)); navigation.applyResult(result, ids.sessionId);
         const currentResultContext = resultTrackingContext(result);
-        const currentResultKey = resultTrackingKey(result, ++resultSequence.current);
         const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "handoff" : result.nextStep.includes("coverage") ? "action_completed" : "information_provided";
-        for (const event of takeShownActionEvents({ journeyId: ids.journeyId, resultKey: currentResultKey, result, seen: shownActionFingerprints.current })) track("coopia_action_shown", event.metadata, event.action, event.result, undefined, event.context);
         track("coopia_result", { outcome, orchestration_intent: result.orchestration.intent }, undefined, result.orchestration.analyticsKey, Date.now() - started, currentResultContext);
         if (outcome === "unresolved" || outcome === "handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent, undefined, currentResultContext);
       }
@@ -94,7 +100,7 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
   }, [ids, limited, loading, messages, navigation, track]);
   const feedback = useCallback((helpful: boolean) => track("coopia_feedback", coopiaEventMetadata({ helpful, uiType: assistantResult?.ui?.type })), [assistantResult?.ui?.type, track]);
   const handoffUrl = officialWhatsAppHandoffUrl(officialWhatsApp || CONTACT.whatsapp, handoffSummary({ intent: navigation.intent, service: navigation.service, lastStep: assistantResult?.nextStep })) || "#";
-  const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, limited, assistantResult, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, pageContext, setInput, ask, setOpen, track, feedback, handoffUrl }), [ask, assistantResult, error, feedback, handoffUrl, ids, input, isOpen, limited, loading, messages, navigation.intent, navigation.service, pageContext, setOpen, track]);
+  const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, limited, assistantResult, assistantResultKey, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, pageContext, setInput, ask, setOpen, track, recordShownActions, feedback, handoffUrl }), [ask, assistantResult, assistantResultKey, error, feedback, handoffUrl, ids, input, isOpen, limited, loading, messages, navigation.intent, navigation.service, pageContext, recordShownActions, setOpen, track]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useCoopia() { const value = useContext(Context); if (!value) throw new Error("CoopiaProvider is required"); return value; }
