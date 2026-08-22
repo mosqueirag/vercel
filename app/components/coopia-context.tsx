@@ -10,6 +10,7 @@ import { useNavigationContext } from "./navigation-context";
 import { usePublicContact } from "./public-contact-context";
 import { CONTACT } from "../../lib/coopsar-data";
 import { coopiaContextMetadata, deriveCoopiaPageContext, type CoopiaPageContext } from "../../lib/coopia/page-context";
+import { shouldUseStructuredResolution } from "../../lib/coopia/conversation-state";
 
 type CoopiaValue = {
   messages: CoopiaMessage[]; input: string; loading: boolean; error: string; limited: boolean; assistantResult: AssistantResult | null;
@@ -62,29 +63,32 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
 
   const setOpen = useCallback((open: boolean) => { setOpenState(open); track(open ? "coopia_global_opened" : "coopia_global_closed"); }, [track]);
   const ask = useCallback(async (text: string) => {
-    const clean = text.trim(); if (!clean || loading || limited || !ids.journeyId) return;
+    const clean = text.trim(); if (!clean || loading || !ids.journeyId) return;
     const next = compactMessages([...messages, { role: "user", content: clean }]);
     const started = Date.now();
     setMessages(next); setInput(""); setError(""); setLoading(true);
     track("coopia_message_sent", { message_length: clean.length });
     try {
       const context = coopiaRequestContext({ journeyId: ids.journeyId, sessionId: ids.sessionId, page: page(), intent: navigation.intent, service: navigation.service });
-      const [structuredResponse, response] = await Promise.all([fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context }) }), fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) })]);
-      if (structuredResponse.ok) {
-        const result = await structuredResponse.json() as AssistantResult;
-        setAssistantResult(result); navigation.applyResult(result, ids.sessionId);
-        const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "handoff" : result.nextStep.includes("coverage") ? "action_completed" : "information_provided";
-        if (result.recommendedActions.length || result.ui) track("coopia_action_shown", { ui_type: result.ui?.type || "actions" }, result.recommendedActions[0]?.id, result.intent);
-        track("coopia_result", { outcome }, undefined, result.intent, Date.now() - started);
-        if (outcome === "unresolved" || outcome === "handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent);
-      }
+      const structuredResponse = await fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context, conversation: { turnCount: navigation.turnCount ?? 0, unresolvedCount: navigation.unresolvedCount ?? 0, journeyStatus: navigation.journeyStatus ?? "active", currentStep: navigation.currentStep, lastOutcome: navigation.lastOutcome, intent: navigation.intent, service: navigation.service } }) });
+      if (!structuredResponse.ok) throw new Error("No pudimos orientar esta consulta.");
+      const result = await structuredResponse.json() as AssistantResult;
+      setAssistantResult(result); navigation.applyResult(result, ids.sessionId);
+      const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "handoff" : result.nextStep.includes("coverage") || result.nextStep === "open_payment" ? "action_ready" : "information_provided";
+      if (result.recommendedActions.length || result.ui) track("coopia_action_shown", { ui_type: result.ui?.type || "actions" }, result.recommendedActions[0]?.id, result.intent);
+      track("coopia_result", { outcome }, undefined, result.intent, Date.now() - started);
+      track("coopia_turn_completed", { turn_count: (navigation.turnCount ?? 0) + 1, current_step: result.nextStep, outcome, handoff_reason: result.requiresHuman ? "human_handoff" : null }, undefined, result.intent);
+      if (outcome === "unresolved" || outcome === "handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent);
+      if (shouldUseStructuredResolution(result)) return;
+
+      const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) });
       if (!response.ok) { const data = await response.json().catch(() => ({})) as { error?: string }; if (data.error === "session_limit") setLimited(true); else throw new Error(data.error || "No pudimos responder."); return; }
       setMessages((current) => [...current, { role: "assistant", content: "" }]);
       const reader = response.body?.getReader(); if (!reader) throw new Error("Respuesta vacía"); const decoder = new TextDecoder();
       while (true) { const { done, value } = await reader.read(); if (done) break; const chunk = decoder.decode(value, { stream: true }); setMessages((current) => current.map((item, index) => index === current.length - 1 ? { ...item, content: item.content + chunk } : item)); }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos responder."); track("coopia_error", { outcome: "error" }); track("coopia_unresolved", coopiaEventMetadata({ fallbackType: "backend_error" })); }
     finally { setLoading(false); }
-  }, [ids, limited, loading, messages, navigation, track]);
+  }, [ids, loading, messages, navigation, track]);
   const feedback = useCallback((helpful: boolean) => track("coopia_feedback", coopiaEventMetadata({ helpful, uiType: assistantResult?.ui?.type })), [assistantResult?.ui?.type, track]);
   const handoffUrl = officialWhatsAppHandoffUrl(officialWhatsApp || CONTACT.whatsapp, handoffSummary({ intent: navigation.intent, service: navigation.service, lastStep: assistantResult?.nextStep })) || "#";
   const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, limited, assistantResult, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, pageContext, setInput, ask, setOpen, track, feedback, handoffUrl }), [ask, assistantResult, error, feedback, handoffUrl, ids, input, isOpen, limited, loading, messages, navigation.intent, navigation.service, pageContext, setOpen, track]);

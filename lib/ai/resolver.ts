@@ -78,7 +78,7 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
       });
       }
     case "internet_plans":
-      return createResult(detection, journeyId, tool, { message: "Te mostraré únicamente los planes publicados. Si falta un precio o velocidad, te lo indicaremos como pendiente.", ui: { type: "internet_plans", data: {} }, actions: [{ id: "SHOW_INTERNET_PLANS", label: "Ver planes" }, { id: "CHECK_COVERAGE", label: "Consultar cobertura" }] });
+      return createResult(detection, journeyId, tool, { message: detection.suggestedAction === "select_internet_plan" ? "Para elegir una alternativa primero confirmemos qué servicio llega a tu domicilio." : "La disponibilidad y las alternativas dependen de tu domicilio.", ui: { type: "internet_plans", data: {} }, actions: [{ id: "CHECK_COVERAGE", label: "Consultar cobertura" }] });
     case "fiber_waitlist":
       return createResult(detection, journeyId, tool, { message: "Podés dejar una solicitud para que el equipo evalúe y te avise cuando exista información oficial para tu zona.", ui: { type: "fiber_coverage", data: { waitlist: true } }, actions: [{ id: "START_FIBER_WAITLIST", label: "Quiero que me avisen" }], requiresHuman: true });
     case "internet_problem":
@@ -111,12 +111,10 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
       {
         const virtualOffice = String(tool.data?.virtualOffice || await officialContactValue("billing", "virtual_office", CONTACT.virtualOffice));
       return createResult(detection, journeyId, tool, {
-        message: "Podés pagar o consultar tu factura directamente desde la Oficina Virtual.",
+        message: "Podés hacerlo online desde la Oficina Virtual.",
         ui: { type: "payment", data: { virtualOffice } },
         actions: [
-          { id: "OPEN_VIRTUAL_OFFICE", label: "Ingresar a Oficina Virtual", href: virtualOffice },
-          { id: "SHOW_PAYMENT_METHODS", label: "Ver medios de pago", href: "/medios-de-pago" },
-          { id: "DOWNLOAD_INVOICE", label: "Descargar factura", href: virtualOffice },
+          { id: "OPEN_VIRTUAL_OFFICE", label: "Pagar factura", href: virtualOffice },
         ],
       });
       }

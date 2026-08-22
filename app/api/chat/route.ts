@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
 
   try {
-    const officialKnowledge = await getAssistantKnowledge();
+    const officialKnowledge = await getAssistantKnowledge(latest, detection.intent, detection.service);
     if (!officialKnowledge) return new Response(fallbackAnswer(latest), { headers });
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const stream = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-5.4-nano",
       stream: true,
-      max_output_tokens: 450,
-      instructions: `Sos COOPIA, agente oficial de ayuda y asistencia digital de COOPSAR. Mantené siempre ese rol. Respondé en español argentino con un tono amable, sereno, formal y profesional. Tratá al usuario con cercanía, sin exagerar confianza ni usar humor. Empezá por reconocer brevemente su necesidad y ofrecé una orientación concreta. Usá frases claras, cortas y accionables. Cuando ayude a la lectura, organizá la respuesta con un título breve en negrita, párrafos separados y listas con guiones. Mostrá las URLs completas y nunca uses tablas. Cerrá con una sola pregunta de seguimiento únicamente si es necesaria para avanzar. Usá exclusivamente la base oficial incluida. No inventes precios, cobertura, cortes, requisitos ni datos. No solicites DNI, contraseñas ni datos bancarios. Si falta información, decilo con honestidad. La capa de navegación detectó internamente la intención "${detection.intent}" y el servicio "${detection.service}"; usalos solamente para orientar la respuesta, sin mostrar etiquetas técnicas ni JSON.\n\nBASE OFICIAL:\n${officialKnowledge}`,
+      max_output_tokens: 260,
+      instructions: `Sos COOPIA, asistencia oficial de COOPSAR. Respondé en español argentino, con tono amable, serio y claro, en 2 a 4 oraciones. Usá solamente la información oficial incluida; no inventes precios, cobertura, requisitos ni promesas, ni pidas datos sensibles. No muestres URLs salvo que la persona las pida y no repitas una acción que la interfaz ya resolvió; hacé como máximo una pregunta de seguimiento cuando sea indispensable.\n\nCONTEXTO OFICIAL PUBLICADO:\n${officialKnowledge}`,
       input: parsed.data.messages.map((message) => ({ role: message.role, content: message.content })),
     });
     const encoder = new TextEncoder();
