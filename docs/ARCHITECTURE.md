@@ -38,6 +38,8 @@ La persistencia temporal vive sólo en `sessionStorage` y se limita al historial
 
 La presentación de una respuesta estructurada usa su `assistantResultKey` temporal para solicitar un único scroll suave del mensaje dentro de `.chat-log`, tras dos frames de render. Esto evita scrolls por feedback, analytics, resize, navegación pasiva o re-renders y permite que las tarjetas altas continúen con desplazamiento manual.
 
+Fase 4F.1 quedó **CERRADA / validada en Preview** en el HEAD funcional `411403b36faa93b2557863b400296b13dad0035c`. No requirió migraciones ni cambios remotos; el siguiente alcance autorizado es Fase 4F.2, todavía sin implementación.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.
