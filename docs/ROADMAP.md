@@ -30,3 +30,7 @@ La capa global pública comparte una sesión temporal, contexto seguro de págin
 # Fase 4D — curación histórica de contenido
 
 Preparar la importación idempotente de servicios, artículos, FAQ, planes históricos y candidatos de contacto para **staging**. Todo el lote debe permanecer en `draft` y requerir aprobación humana. La cobertura no se importa desde WordPress. Los canales contradictorios se conservan como candidatos privados hasta validación; no se elige ni publica uno automáticamente.
+
+# Fase 4E.1 — Curaduría editorial IA
+
+El Centro de contenidos privado permite generar propuestas de mejora sólo para borradores, con provenance, detección de hechos protegidos y estados de revisión. COOPIA continúa leyendo exclusivamente contenido `published`; cualquier aplicación o publicación futura exige revisión humana explícita.

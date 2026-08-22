@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(46);
+select plan(49);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -55,6 +55,7 @@ select throws_ok(
 select throws_ok($$ select count(*) from public.content_import_source_pages $$, '42501', 'permission denied for table content_import_source_pages', 'anon cannot read source-page evidence');
 select throws_ok($$ select count(*) from public.content_import_provenance $$, '42501', 'permission denied for table content_import_provenance', 'anon cannot read private import provenance');
 select throws_ok($$ select count(*) from public.content_import_validation_queue $$, '42501', 'permission denied for table content_import_validation_queue', 'anon cannot read import validation backlog');
+select throws_ok($$ select count(*) from public.content_editorial_proposals $$, '42501', 'permission denied for table content_editorial_proposals', 'anon cannot read private editorial proposals');
 select throws_ok(
   $$ select count(*) from public.internet_requests $$,
   '42501',
@@ -113,6 +114,11 @@ select lives_ok(
      values ('wordpress:validation:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'P1', 'Cola pgTAP', 'Validar antes de publicar', '[]'::jsonb) $$,
   'service role can store the private validation backlog'
 );
+select lives_ok(
+  $$ insert into public.content_editorial_proposals (entity_type, entity_id, source_hash, prompt_version, proposal)
+     values ('faq', '10000000-0000-0000-0000-000000000001', repeat('b', 64), 'pgtap-editorial-v1', '{"editorial_notes":"Propuesta de prueba","suggested_ctas":[],"suggested_coopia_intents":[]}'::jsonb) $$,
+  'service role can store a private editorial proposal'
+);
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
   '23514',
@@ -163,6 +169,7 @@ select throws_ok(
 select throws_ok($$ select count(*) from public.content_import_source_pages $$, '42501', 'permission denied for table content_import_source_pages', 'authenticated cannot read source-page evidence');
 select throws_ok($$ select count(*) from public.content_import_provenance $$, '42501', 'permission denied for table content_import_provenance', 'authenticated cannot read private import provenance');
 select throws_ok($$ select count(*) from public.content_import_validation_queue $$, '42501', 'permission denied for table content_import_validation_queue', 'authenticated cannot read import validation backlog');
+select throws_ok($$ select count(*) from public.content_editorial_proposals $$, '42501', 'permission denied for table content_editorial_proposals', 'authenticated cannot read private editorial proposals');
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');
