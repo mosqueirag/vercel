@@ -26,3 +26,7 @@ La fase incorpora una vista administrativa mínima para solicitudes de Internet 
 # Fase 4C — COOPIA 2.0
 
 La capa global pública comparte una sesión temporal, contexto seguro de página y acciones estructuradas entre la home y el panel. El panel privado `/admin/coopia` convierte eventos anónimos agregados en indicadores operativos. Pendiente de validación en Preview: contrastar métricas reales con el equipo antes de usar cualquier resumen asistido por IA. No habilitar CRM, Brevo, n8n ni automatizaciones hasta que exista una decisión operativa y de privacidad explícita.
+
+# Fase 4D — curación histórica de contenido
+
+Preparar la importación idempotente de servicios, artículos, FAQ, planes históricos y candidatos de contacto para **staging**. Todo el lote debe permanecer en `draft` y requerir aprobación humana. La cobertura no se importa desde WordPress. Los canales contradictorios se conservan como candidatos privados hasta validación; no se elige ni publica uno automáticamente.
