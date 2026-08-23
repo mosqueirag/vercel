@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantResult } from "../ai/results";
-import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, visibleActionIdsForResult, visibleAssistantActions, withEventTrackingContext } from "./result-tracking";
+import { coverageActionIdsForStep, eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, visibleActionIdsForResult, visibleAssistantActions, withEventTrackingContext } from "./result-tracking";
 
 function result(input: Pick<AssistantResult, "intent" | "service" | "orchestration" | "recommendedActions" | "ui">): AssistantResult {
   return {
@@ -138,6 +138,30 @@ describe("COOPIA result tracking", () => {
 
   it("recognizes the coverage form control even though it has no href", () => {
     expect(visibleActionIdsForResult(interest)).toEqual(["CHECK_COVERAGE"]);
+  });
+
+  it("keeps coverage and plans as separate visible action states", () => {
+    expect(coverageActionIdsForStep(interest, "address")).toEqual(["CHECK_COVERAGE"]);
+    expect(coverageActionIdsForStep(interest, "plans")).toEqual(["SHOW_INTERNET_PLANS"]);
+    expect(coverageActionIdsForStep(interest, "address")).not.toContain("SHOW_INTERNET_PLANS");
+    expect(coverageActionIdsForStep(interest, "address")).not.toContain("REQUEST_INSTALLATION");
+  });
+
+  it("does not mark plans as viewed when the coverage form becomes visible", () => {
+    const coverageActionIds = coverageActionIdsForStep(interest, "address");
+    const events = takeShownActionEvents({ journeyId: "journey-test", resultKey: resultTrackingKey(interest, 8), result: interest, visibleActionIds: coverageActionIds, seen: new Set() });
+    expect(events.map((event) => event.action)).toEqual(["CHECK_COVERAGE"]);
+    expect(events.map((event) => event.action)).not.toContain("SHOW_INTERNET_PLANS");
+  });
+
+  it("does not treat a no-coverage result as an installation action", () => {
+    const unavailable = result({
+      intent: "internet_signup", service: "internet", orchestration: { intent: "internet_interest", analyticsKey: "internet_interest", detection: "rule" },
+      ui: { type: "fiber_coverage", data: {} },
+      recommendedActions: [{ id: "CHECK_COVERAGE", label: "Cobertura" }, { id: "START_FIBER_WAITLIST", label: "Avisarme", href: "#contratar" }],
+    });
+    expect(coverageActionIdsForStep(unavailable, "waitlist")).toEqual(["START_FIBER_WAITLIST"]);
+    expect(coverageActionIdsForStep(unavailable, "waitlist")).not.toContain("REQUEST_INSTALLATION");
   });
 
   it("uses only the visible WhatsApp CTA for human handoff", () => {
