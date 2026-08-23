@@ -40,6 +40,10 @@ La presentación de una respuesta estructurada usa su `assistantResultKey` tempo
 
 Fase 4F.1 quedó **CERRADA / validada en Preview** en el HEAD funcional `411403b36faa93b2557863b400296b13dad0035c`. No requirió migraciones ni cambios remotos; el siguiente alcance autorizado es Fase 4F.2, todavía sin implementación.
 
+## Fase 4F.2 — interacción continua de COOPIA
+
+COOPIA no equivale a un LLM: el modelo generativo es una capacidad opcional dentro de la asistencia. Cada turno conserva protección técnica por IP y sesión; las necesidades operativas claras siguen el resolver determinístico y las herramientas server-side sin consumir presupuesto LLM. Sólo una consulta ambigua solicita el modelo. Si ese presupuesto o proveedor no está disponible, COOPIA conserva el input, las acciones rápidas, formularios, cobertura, navegación y handoff humano mediante una respuesta funcional de degradación.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.

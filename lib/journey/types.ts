@@ -15,6 +15,7 @@ export const journeyEventTypes = [
   "navigation_executed", "contextual_component_rendered", "action_clicked", "form_started", "form_completed",
   "coopia_global_opened", "coopia_global_closed", "coopia_question", "coopia_action_clicked", "coopia_feedback", "coopia_unresolved", "coopia_handoff",
   "coopia_page_context", "coopia_message_sent", "coopia_intent_detected", "coopia_service_detected", "coopia_action_shown", "coopia_result", "coopia_error",
+  "coopia_turn", "coopia_deterministic_response", "coopia_llm_requested", "coopia_llm_response", "coopia_llm_unavailable", "coopia_rate_limited",
 ] as const;
 
 export type JourneyEventType = (typeof journeyEventTypes)[number];

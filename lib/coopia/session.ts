@@ -40,7 +40,8 @@ export function officialWhatsAppHandoffUrl(contactValue: string | null | undefin
 
 export type StoredCoopiaSession = {
   messages: CoopiaMessage[];
-  limited: boolean;
+  /** LLM budget state only. COOPIA tools and the input remain available. */
+  aiLimited: boolean;
   journeyId: string;
   sessionId: string;
   intent?: AssistantIntent;
@@ -50,8 +51,8 @@ export type StoredCoopiaSession = {
 export function parseCoopiaSession(value: string | null): StoredCoopiaSession | null {
   if (!value) return null;
   try {
-    const parsed = JSON.parse(value) as Partial<StoredCoopiaSession>;
+    const parsed = JSON.parse(value) as Partial<StoredCoopiaSession> & { limited?: unknown };
     if (typeof parsed.journeyId !== "string" || typeof parsed.sessionId !== "string") return null;
-    return { messages: compactMessages(Array.isArray(parsed.messages) ? parsed.messages : []), limited: Boolean(parsed.limited), journeyId: parsed.journeyId, sessionId: parsed.sessionId, intent: parsed.intent, service: parsed.service };
+    return { messages: compactMessages(Array.isArray(parsed.messages) ? parsed.messages : []), aiLimited: Boolean(parsed.aiLimited ?? parsed.limited), journeyId: parsed.journeyId, sessionId: parsed.sessionId, intent: parsed.intent, service: parsed.service };
   } catch { return null; }
 }

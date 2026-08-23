@@ -4,7 +4,8 @@ import { serverSupabaseHeaders } from "../supabase";
 
 export function configuredAiSessionLimit(value = process.env.AI_SESSION_LIMIT) {
   const parsed = Number.parseInt(value || "", 10);
-  return Number.isFinite(parsed) && parsed > 0 && parsed <= 20 ? parsed : 2;
+  // This is an LLM budget, not a limit on COOPIA or its deterministic tools.
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : 4;
 }
 
 function digest(scope: string, value: string) {

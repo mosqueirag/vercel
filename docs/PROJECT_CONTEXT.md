@@ -38,3 +38,7 @@ COOPIA conserva su sesión temporal global y añade una capa canónica de necesi
 El smoke real validó `payment`, `energy_outage`, `internet_issue`, `internet_interest`, `fiber_interest`, `fiber_coverage`, `funeral_service`, `human_handoff` y `unknown`. Cada resultado estructurado nuevo desplaza una única vez el contenedor de conversación hasta el mensaje y el inicio de su tarjeta, sin guardar posición ni producir eventos analíticos. PGRST303 queda como P2 monitorizado: el fallback de contactos sigue operativo y los logs conservan sólo código y clasificación segura.
 
 El HEAD funcional validado es `411403b36faa93b2557863b400296b13dad0035c`; la validación final de Preview y CI registró 232 pruebas. La siguiente fase autorizada es **4F.2**, sin implementación iniciada. Producción permanece fuera de alcance.
+
+## Fase 4F.2 — interacción continua
+
+COOPIA mantiene asistencia operativa aun cuando la capacidad generativa esté limitada: las gestiones claras usan resolución determinística y herramientas server-side; sólo las consultas ambiguas consumen presupuesto LLM. El límite técnico contra abuso sigue activo y el navegador nunca recibe secretos ni queda bloqueado por el agotamiento de IA.

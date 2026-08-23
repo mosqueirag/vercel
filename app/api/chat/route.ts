@@ -7,7 +7,7 @@ import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { configuredAiSessionLimit, consumeRateLimit } from "../../../lib/security/rate-limit";
 import { coopiaContextMetadata, deriveCoopiaPageContext } from "../../../lib/coopia/page-context";
-import { deterministicCoopiaResponse } from "../../../lib/coopia/deterministic-response";
+import { llmUnavailableResponse, planCoopiaChatTurn } from "../../../lib/coopia/chat-turn";
 
 export const runtime = "nodejs";
 
@@ -33,18 +33,24 @@ function fallbackAnswer(message: string) {
 export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "La consulta no tiene un formato válido." }, { status: 400 });
-  const globalRate = await consumeRateLimit(request, "chat-ip", 12, 600);
-  if (!globalRate.allowed) return Response.json({ error: globalRate.available ? "Demasiadas solicitudes. Intentá nuevamente en unos minutos." : "El servicio de protección no está disponible." }, { status: globalRate.available ? 429 : 503 });
-  const limit = configuredAiSessionLimit();
-  const sessionRate = await consumeRateLimit(request, "chat-session", limit, 3600, parsed.data.sessionId);
-  if (!sessionRate.allowed) return Response.json({ error: sessionRate.available ? "session_limit" : "El servicio de protección no está disponible.", limit }, { status: sessionRate.available ? 429 : 503 });
-
   const latest = parsed.data.messages.at(-1)?.content || "";
   const detection = detectIntent(latest);
   const journey = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: parsed.data.page, intent: detection.intent, service: detection.service };
   const pageContext = coopiaContextMetadata(deriveCoopiaPageContext(parsed.data.page));
+  // Technical protection covers every request. It is intentionally separate
+  // from the lower per-session budget used only for generative model calls.
+  const [ipRate, sessionRate] = await Promise.all([
+    consumeRateLimit(request, "chat-ip", 12, 600),
+    consumeRateLimit(request, "chat-session-technical", 40, 600, parsed.data.sessionId),
+  ]);
+  if (!ipRate.allowed || !sessionRate.allowed) {
+    void recordJourneyEvent({ ...journey, eventType: "coopia_rate_limited", agent: "coopia", metadata: { scope: !ipRate.allowed ? "ip" : "session" } });
+    const available = ipRate.available && sessionRate.available;
+    return Response.json({ error: available ? "Demasiadas solicitudes. Intentá nuevamente en unos minutos." : "El servicio de protección no está disponible." }, { status: available ? 429 : 503 });
+  }
   await Promise.all([
     recordJourneyEvent({ ...journey, eventType: "assistant_question_sent", agent: "coopia", metadata: { message_length: latest.length } }),
+    recordJourneyEvent({ ...journey, eventType: "coopia_turn", agent: "coopia", metadata: { message_length: latest.length, ...pageContext } }),
     recordJourneyEvent({ ...journey, eventType: "coopia_intent_detected", agent: "coopia", action: detection.suggestedAction, result: detection.orchestrationIntent || detection.intent, metadata: { confidence: detection.confidence, orchestration_intent: detection.orchestrationIntent || "unknown", ...pageContext } }),
     recordJourneyEvent({ ...journey, eventType: "coopia_service_detected", agent: "coopia", result: detection.service, metadata: pageContext }),
   ]);
@@ -54,14 +60,29 @@ export async function POST(request: NextRequest) {
 
   // Clear operational needs are answered through the deterministic router and
   // structured server-side actions. The model is reserved for ambiguous text.
-  const deterministic = deterministicCoopiaResponse(detection);
-  if (deterministic) return new Response(deterministic, { headers });
+  const turn = planCoopiaChatTurn(detection);
+  if (turn.mode === "deterministic") {
+    headers.set("X-COOPSAR-AI-Mode", "deterministic");
+    void recordJourneyEvent({ ...journey, eventType: "coopia_deterministic_response", agent: "coopia", result: detection.orchestrationIntent || detection.intent, metadata: pageContext });
+    return new Response(turn.response, { headers });
+  }
 
-  if (!process.env.OPENAI_API_KEY) return new Response(fallbackAnswer(latest), { headers });
+  const llmRate = await consumeRateLimit(request, "chat-llm-session", configuredAiSessionLimit(), 3600, parsed.data.sessionId);
+  if (!llmRate.allowed || !process.env.OPENAI_API_KEY) {
+    headers.set("X-COOPSAR-AI-Mode", "llm_unavailable");
+    void recordJourneyEvent({ ...journey, eventType: "coopia_llm_unavailable", agent: "coopia", result: !llmRate.allowed && llmRate.available ? "budget_exhausted" : "unavailable", metadata: pageContext });
+    return new Response(llmUnavailableResponse(), { headers });
+  }
+
+  void recordJourneyEvent({ ...journey, eventType: "coopia_llm_requested", agent: "coopia", metadata: pageContext });
 
   try {
     const officialKnowledge = await getAssistantKnowledge();
-    if (!officialKnowledge) return new Response(fallbackAnswer(latest), { headers });
+    if (!officialKnowledge) {
+      headers.set("X-COOPSAR-AI-Mode", "llm_unavailable");
+      void recordJourneyEvent({ ...journey, eventType: "coopia_llm_unavailable", agent: "coopia", result: "official_knowledge_unavailable", metadata: pageContext });
+      return new Response(fallbackAnswer(latest), { headers });
+    }
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const stream = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-5.4-nano",
@@ -74,12 +95,16 @@ export async function POST(request: NextRequest) {
     const body = new ReadableStream({
       async start(controller) {
         for await (const event of stream) if (event.type === "response.output_text.delta") controller.enqueue(encoder.encode(event.delta));
+        void recordJourneyEvent({ ...journey, eventType: "coopia_llm_response", agent: "coopia", result: detection.orchestrationIntent || detection.intent, metadata: pageContext });
         controller.close();
       },
     });
+    headers.set("X-COOPSAR-AI-Mode", "llm");
     return new Response(body, { headers });
   } catch {
     console.error("COOPIA response failed");
-    return Response.json({ error: "No pudimos responder ahora. Podés reintentar o continuar por WhatsApp." }, { status: 503 });
+    headers.set("X-COOPSAR-AI-Mode", "llm_unavailable");
+    void recordJourneyEvent({ ...journey, eventType: "coopia_llm_unavailable", agent: "coopia", result: "provider_error", metadata: pageContext });
+    return new Response(llmUnavailableResponse(), { headers });
   }
 }
