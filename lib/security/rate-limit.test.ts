@@ -2,11 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { configuredAiSessionLimit, consumeRateLimit } from "./rate-limit";
 
 describe("COOPIA session limit", () => {
-  it("uses two interactions when the setting is absent", () => expect(configuredAiSessionLimit(undefined)).toBe(2));
-  it("allows the first and second interactions by default", () => { expect(1 <= configuredAiSessionLimit(undefined)).toBe(true); expect(2 <= configuredAiSessionLimit(undefined)).toBe(true); });
-  it("blocks from the third interaction by default", () => expect(3 > configuredAiSessionLimit(undefined)).toBe(true));
-  it("supports custom configuration", () => expect(configuredAiSessionLimit("4")).toBe(4));
-  it("uses the safe default for invalid configuration", () => expect(configuredAiSessionLimit("invalid")).toBe(2));
+  it("uses a four-turn LLM budget when the setting is absent", () => expect(configuredAiSessionLimit(undefined)).toBe(4));
+  it("keeps the LLM budget configurable independently of technical request limits", () => expect(configuredAiSessionLimit("4")).toBe(4));
+  it("uses the safe default for invalid configuration", () => expect(configuredAiSessionLimit("invalid")).toBe(4));
 });
 
 describe("distributed rate limiting", () => {
@@ -24,6 +22,20 @@ describe("distributed rate limiting", () => {
       expect(headers.get("apikey")).toBe("sb_secret_test_key");
       expect(headers.has("Authorization")).toBe(false);
       expect(headers.get("User-Agent")).toBe("COOPSAR-Server-Supabase/1.0");
+    } finally {
+      fetchMock.mockRestore();
+      process.env.NEXT_PUBLIC_SUPABASE_URL = previous.url;
+      process.env.SUPABASE_SECRET_KEY = previous.key;
+    }
+  });
+
+  it("keeps technical abuse protection enforced when the RPC denies a request", async () => {
+    const previous = { url: process.env.NEXT_PUBLIC_SUPABASE_URL, key: process.env.SUPABASE_SECRET_KEY };
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SECRET_KEY = "sb_secret_test_key";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("false", { status: 200 }));
+    try {
+      await expect(consumeRateLimit(new Request("https://coopsar.test") as never, "chat-ip", 12, 600, "test-ip")).resolves.toEqual({ allowed: false, available: true });
     } finally {
       fetchMock.mockRestore();
       process.env.NEXT_PUBLIC_SUPABASE_URL = previous.url;

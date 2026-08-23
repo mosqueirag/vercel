@@ -42,3 +42,7 @@ El corpus histórico administrable contiene 44 entradas: 9 servicios, 24 artícu
 # Fase 4F.1 — COOPIA orquestador de intenciones y acciones — CERRADA
 
 **CERRADA / validada en Preview** en el HEAD funcional `411403b36faa93b2557863b400296b13dad0035c`, con CI final de 232 pruebas. La primera entrega consolida reglas tipadas para necesidades principales y reutiliza acciones estructuradas existentes para pago, reclamos por WhatsApp, cobertura, planes, solicitud de Internet, sepelio y atención humana. `unknown` es explícito y seguro. El smoke real de las nueve intenciones pasó en Preview y las tarjetas estructuradas realizan auto-scroll único y no intrusivo. PGRST303 continúa como P2 de monitoreo con fallback seguro; no autoriza cambios remotos ni producción. La próxima etapa autorizada es **Fase 4F.2**, aún no iniciada.
+
+# Fase 4F.2 — COOPIA continuous interaction
+
+Separar límite técnico de requests y presupuesto de LLM. Las respuestas determinísticas, herramientas, formularios y navegación deben continuar operativas cuando no haya capacidad generativa; las consultas ambiguas degradan a acciones oficiales y handoff humano, sin bloquear el input ni debilitar la protección contra abuso.
