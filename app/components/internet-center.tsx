@@ -42,18 +42,21 @@ export function InternetCenter() {
       if (!handoff) return;
       event.preventDefault();
       showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
-      document.querySelector("#contratar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     };
     window.addEventListener(showInternetPlansEvent, onShowPlans);
     return () => window.removeEventListener(showInternetPlansEvent, onShowPlans);
   }, [showCoverage]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
       const handoff = consumeInternetJourneyHandoff(sessionStorage);
       if (handoff) showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
-    }, 0);
-    return () => window.clearTimeout(timer);
+    });
+    return () => { active = false; };
   }, [showCoverage]);
 
   useEffect(() => {

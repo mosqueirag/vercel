@@ -65,6 +65,8 @@ describe("Internet coverage journey handoff", () => {
     session.setItem(internetJourneyHandoffKey, "not-json");
     expect(consumeInternetJourneyHandoff(session, now)).toBeNull();
     expect(session.getItem(internetJourneyHandoffKey)).toBeNull();
+    session.setItem(internetJourneyHandoffKey, JSON.stringify({ ...createInternetJourneyHandoff({ street: "España", number: "451", coverage: coverage(), createdAt: now }), version: 2 }));
+    expect(consumeInternetJourneyHandoff(session, now)).toBeNull();
   });
 
   it("does not accept a destination inconsistent with the official result", () => {
