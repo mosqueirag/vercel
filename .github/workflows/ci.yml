@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, platform-coopsar-ai, data-internet-fibra, phase-3a-complaint-routing, phase-3b-commercial-inbox, phase-3c-geographic-coverage, phase-4a-admin-center, phase-4b-coopia-global, phase-4c-coopia-intelligence-ux, phase-4d-curated-knowledge, phase-4e-ai-editorial-curation, phase-4e2-curated-publishing]
+    branches: [main, platform-coopsar-ai, data-internet-fibra, phase-3a-complaint-routing, phase-3b-commercial-inbox, phase-3c-geographic-coverage, phase-4a-admin-center, phase-4b-coopia-global, phase-4c-coopia-intelligence-ux, phase-4d-curated-knowledge, phase-4e-ai-editorial-curation, phase-4e2-curated-publishing, phase-4f1-coopia-intent-orchestrator]
   push:
     branches: [main]
 
