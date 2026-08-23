@@ -53,8 +53,7 @@ export function visibleActionIdsForResult(result: AssistantResult): AssistantRes
   const linkActions = coopiaStepActions(visibleAssistantActions(result.actions)).map((action) => action.id);
 
   if (result.ui?.type === "fiber_coverage" || result.ui?.type === "internet_plans") {
-    const coverageActionIds: AssistantResult["recommendedActions"][number]["id"][] = ["CHECK_COVERAGE", ...linkActions];
-    return coverageActionIds.filter((id) => has(id));
+    return has("CHECK_COVERAGE") ? ["CHECK_COVERAGE"] : [];
   }
   if (result.ui?.type === "human_handoff") return has("OPEN_WHATSAPP") ? ["OPEN_WHATSAPP"] : [];
   if (result.ui?.type === "service_request_form") return result.actions.slice(0, 1).map((action) => action.id);
