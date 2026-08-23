@@ -1,5 +1,6 @@
 import type { AssistantIntent, AssistantService } from "../ai/intents";
 import type { AssistantResult } from "../ai/results";
+import { coopiaStepActions } from "./interaction-flow";
 
 /**
  * Analytics emitted for a resolved answer must use the resolved result, rather
@@ -49,7 +50,7 @@ export function visibleAssistantActions(actions: AssistantResult["recommendedAct
 export function visibleActionIdsForResult(result: AssistantResult): AssistantResult["recommendedActions"][number]["id"][] {
   const declared = new Set(result.actions.map((action) => action.id));
   const has = (id: AssistantResult["recommendedActions"][number]["id"]) => declared.has(id);
-  const linkActions = visibleAssistantActions(result.actions).map((action) => action.id);
+  const linkActions = coopiaStepActions(visibleAssistantActions(result.actions)).map((action) => action.id);
 
   if (result.ui?.type === "fiber_coverage" || result.ui?.type === "internet_plans") {
     const coverageActionIds: AssistantResult["recommendedActions"][number]["id"][] = ["CHECK_COVERAGE", ...linkActions];

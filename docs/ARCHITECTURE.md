@@ -44,6 +44,10 @@ Fase 4F.1 quedó **CERRADA / validada en Preview** en el HEAD funcional `411403b
 
 COOPIA no equivale a un LLM: el modelo generativo es una capacidad opcional dentro de la asistencia. Cada turno conserva protección técnica por IP y sesión; las necesidades operativas claras siguen el resolver determinístico y las herramientas server-side sin consumir presupuesto LLM. Sólo una consulta ambigua solicita el modelo. Si ese presupuesto o proveedor no está disponible, COOPIA conserva el input, las acciones rápidas, formularios, cobertura, navegación y handoff humano mediante una respuesta funcional de degradación.
 
+## Fase 4F.3 — superficie guiada por intención
+
+`CoopiaConversation` conserva una única sesión temporal y usa el resolver existente como fuente canónica. La UI sólo presenta necesidades humanas, un paso estructurado activo, acciones visibles limitadas y un historial plegable. La clasificación, cobertura y enlaces continúan siendo decididos server-side; la presentación no crea una segunda detección ni persiste el texto de la conversación en analytics.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.

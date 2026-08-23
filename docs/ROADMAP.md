@@ -46,3 +46,7 @@ El corpus histórico administrable contiene 44 entradas: 9 servicios, 24 artícu
 # Fase 4F.2 — COOPIA continuous interaction
 
 Separar límite técnico de requests y presupuesto de LLM. Las respuestas determinísticas, herramientas, formularios y navegación deben continuar operativas cuando no haya capacidad generativa; las consultas ambiguas degradan a acciones oficiales y handoff humano, sin bloquear el input ni debilitar la protección contra abuso.
+
+# Fase 4F.3 — COOPIA interactive UX
+
+COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada por intención: una necesidad, un paso actual y una acción principal a la vez. La conversación queda disponible como contexto secundario, mientras cobertura, pagos, reclamos y atención humana reutilizan el mismo resolver y las mismas acciones tipadas. No se agregan integraciones externas ni se altera la fuente de verdad server-side.

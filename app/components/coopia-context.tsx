@@ -19,6 +19,7 @@ type CoopiaValue = {
   pageContext: CoopiaPageContext; track: (eventType: string, metadata?: Record<string, string | number | boolean | null>, action?: string, result?: string, durationMs?: number, context?: CoopiaEventContextMode) => void;
   recordShownActions: (result: AssistantResult, resultKey: string, visibleActionIds: AssistantResult["recommendedActions"][number]["id"][]) => void;
   feedback: (helpful: boolean) => void; handoffUrl: string;
+  clearActiveStep: () => void;
 };
 const Context = createContext<CoopiaValue | null>(null);
 
@@ -100,8 +101,9 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
     finally { setLoading(false); }
   }, [ids, loading, messages, navigation, track]);
   const feedback = useCallback((helpful: boolean) => track("coopia_feedback", coopiaEventMetadata({ helpful, uiType: assistantResult?.ui?.type })), [assistantResult?.ui?.type, track]);
+  const clearActiveStep = useCallback(() => { setAssistantResult(null); setAssistantResultKey(""); }, []);
   const handoffUrl = officialWhatsAppHandoffUrl(officialWhatsApp || CONTACT.whatsapp, handoffSummary({ intent: navigation.intent, service: navigation.service, lastStep: assistantResult?.nextStep })) || "#";
-  const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, aiLimited, assistantResult, assistantResultKey, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, pageContext, setInput, ask, setOpen, track, recordShownActions, feedback, handoffUrl }), [aiLimited, ask, assistantResult, assistantResultKey, error, feedback, handoffUrl, ids, input, isOpen, loading, messages, navigation.intent, navigation.service, pageContext, recordShownActions, setOpen, track]);
+  const value = useMemo<CoopiaValue>(() => ({ messages, input, loading, error, aiLimited, assistantResult, assistantResultKey, journeyId: ids.journeyId, sessionId: ids.sessionId, intent: navigation.intent, service: navigation.service, isOpen, pageContext, setInput, ask, setOpen, track, recordShownActions, feedback, handoffUrl, clearActiveStep }), [aiLimited, ask, assistantResult, assistantResultKey, clearActiveStep, error, feedback, handoffUrl, ids, input, isOpen, loading, messages, navigation.intent, navigation.service, pageContext, recordShownActions, setOpen, track]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useCoopia() { const value = useContext(Context); if (!value) throw new Error("CoopiaProvider is required"); return value; }

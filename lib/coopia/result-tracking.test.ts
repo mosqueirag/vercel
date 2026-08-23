@@ -108,7 +108,7 @@ describe("COOPIA result tracking", () => {
     const actionIds = visibleActionIdsForResult(interest);
     const first = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: actionIds, seen });
     const retry = takeShownActionEvents({ journeyId: "journey-test", resultKey: key, result: interest, visibleActionIds: actionIds, seen });
-    expect(first.map((event) => event.action)).toEqual(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION", "OPEN_WHATSAPP"]);
+    expect(first.map((event) => event.action)).toEqual(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION"]);
     expect(first.every((event) => event.context.intent === "internet_signup" && event.context.service === "internet" && event.metadata.orchestration_intent === "internet_interest")).toBe(true);
     expect(retry).toEqual([]);
   });
@@ -137,7 +137,7 @@ describe("COOPIA result tracking", () => {
   });
 
   it("recognizes the coverage form control even though it has no href", () => {
-    expect(visibleActionIdsForResult(interest)).toEqual(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION", "OPEN_WHATSAPP"]);
+    expect(visibleActionIdsForResult(interest)).toEqual(["CHECK_COVERAGE", "REQUEST_INSTALLATION", "SHOW_INTERNET_PLANS"]);
   });
 
   it("uses only the visible WhatsApp CTA for human handoff", () => {
@@ -147,7 +147,7 @@ describe("COOPIA result tracking", () => {
   });
 
   it("keeps all three visible payment controls traceable", () => {
-    expect(visibleActionIdsForResult(paymentResult)).toEqual(["OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS", "DOWNLOAD_INVOICE"]);
+    expect(visibleActionIdsForResult(paymentResult)).toEqual(["OPEN_VIRTUAL_OFFICE", "SHOW_PAYMENT_METHODS"]);
   });
 
   it("mirrors the specialized internet, energy, and complaint controls", () => {
