@@ -33,6 +33,13 @@ export function coopiaJourneyLabel(result?: AssistantResult | null) {
   return `${service} › ${step}`;
 }
 
+/** A short, human context for the active guided step. Keep it separate from the
+ * detailed journey label so the UI does not repeat internal step names. */
+export function coopiaActiveContext(result?: AssistantResult | null) {
+  if (!result) return "";
+  return ({ billing: "Facturas y pagos", energy: "Energía", internet: "Internet", fiber: "Internet y fibra", phone: "Telefonía", funeral: "Sepelio", general: "COOPSAR" } as const)[result.service];
+}
+
 export function coopiaLoadingCopy(input: string) {
   const text = input.toLowerCase();
   if (text.includes("cobertura") || text.includes("internet") || text.includes("fibra")) return "Preparando el siguiente paso…";
