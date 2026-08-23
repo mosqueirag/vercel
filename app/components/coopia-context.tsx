@@ -11,6 +11,7 @@ import { usePublicContact } from "./public-contact-context";
 import { CONTACT } from "../../lib/coopsar-data";
 import { coopiaContextMetadata, deriveCoopiaPageContext, type CoopiaPageContext } from "../../lib/coopia/page-context";
 import { eventTrackingContext, resultTrackingContext, resultTrackingKey, takeShownActionEvents, withEventTrackingContext, type CoopiaEventContextMode } from "../../lib/coopia/result-tracking";
+import { hasUsableStructuredResult, shouldRequestConversationalReply } from "../../lib/coopia/ask-flow";
 
 type CoopiaValue = {
   messages: CoopiaMessage[]; input: string; loading: boolean; error: string; aiLimited: boolean; assistantResult: AssistantResult | null; assistantResultKey: string;
@@ -83,16 +84,28 @@ export function CoopiaProvider({ children }: { children: ReactNode }) {
     track("coopia_message_sent", { message_length: clean.length }, undefined, undefined, undefined, "none");
     try {
       const context = coopiaRequestContext({ journeyId: ids.journeyId, sessionId: ids.sessionId, page: page(), intent: navigation.intent, service: navigation.service });
-      const [structuredResponse, response] = await Promise.all([fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context }) }), fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) })]);
-      if (structuredResponse.ok) {
-        const result = await structuredResponse.json() as AssistantResult;
+      let structuredResult: AssistantResult | undefined;
+      try {
+        const structuredResponse = await fetch("/api/assistant/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: clean, ...context }) });
+        if (structuredResponse.ok) structuredResult = await structuredResponse.json() as AssistantResult;
+      } catch { /* Open questions can still use the conversational endpoint. */ }
+      if (structuredResult && hasUsableStructuredResult(structuredResult)) {
+        const result = structuredResult;
         setAssistantResult(result); setAssistantResultKey(resultTrackingKey(result, ++resultSequence.current)); navigation.applyResult(result, ids.sessionId);
         const currentResultContext = resultTrackingContext(result);
         const outcome = result.tool.status === "unavailable" ? "unresolved" : result.requiresHuman ? "handoff" : result.nextStep.includes("coverage") ? "action_completed" : "information_provided";
         track("coopia_result", { outcome, orchestration_intent: result.orchestration.intent }, undefined, result.orchestration.analyticsKey, Date.now() - started, currentResultContext);
         if (outcome === "unresolved" || outcome === "handoff") track("coopia_unresolved", coopiaEventMetadata({ fallbackType: result.tool.status === "unavailable" ? "tool_unavailable" : result.requiresHuman ? "human_handoff" : "official_information_unavailable", lastStep: result.nextStep }), undefined, result.intent, undefined, currentResultContext);
+        if (!shouldRequestConversationalReply(result)) return;
       }
-      if (!response.ok) { const data = await response.json().catch(() => ({})) as { error?: string }; throw new Error(data.error || "No pudimos responder."); }
+      let response: Response;
+      try { response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: next, ...context }) }); }
+      catch (cause) { if (structuredResult && hasUsableStructuredResult(structuredResult)) { setAiLimited(true); return; } throw cause; }
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({})) as { error?: string };
+        if (structuredResult && hasUsableStructuredResult(structuredResult)) { setAiLimited(true); return; }
+        throw new Error(data.error || "No pudimos responder.");
+      }
       if (response.headers.get("X-COOPSAR-AI-Mode") === "llm_unavailable") setAiLimited(true);
       setMessages((current) => [...current, { role: "assistant", content: "" }]);
       const reader = response.body?.getReader(); if (!reader) throw new Error("Respuesta vacía"); const decoder = new TextDecoder();
