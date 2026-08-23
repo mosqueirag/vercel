@@ -55,7 +55,7 @@ export function coverageActionIdsForStep(result: AssistantResult, step: Coverage
   const actionForStep = step === "address" ? "CHECK_COVERAGE"
     : step === "plans" ? "SHOW_INTERNET_PLANS"
       : step === "waitlist" ? "START_FIBER_WAITLIST"
-        : "REQUEST_INSTALLATION";
+        : "REQUEST_COVERAGE_VALIDATION";
   return declared.has(actionForStep) ? [actionForStep] : [];
 }
 

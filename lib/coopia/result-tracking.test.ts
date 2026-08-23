@@ -29,8 +29,8 @@ const interest = result({
   ui: { type: "fiber_coverage", data: {} },
   recommendedActions: [
     { id: "CHECK_COVERAGE", label: "Cobertura" },
-    { id: "SHOW_INTERNET_PLANS", label: "Planes", href: "/internet#planes" },
-    { id: "REQUEST_INSTALLATION", label: "Instalación", href: "/internet#contratar" },
+    { id: "SHOW_INTERNET_PLANS", label: "Planes", href: "/#contratar" },
+    { id: "REQUEST_COVERAGE_VALIDATION", label: "Validación", href: "/#contratar" },
     { id: "OPEN_WHATSAPP", label: "WhatsApp", href: "https://wa.me/5491111111111" },
   ],
 });
@@ -144,7 +144,7 @@ describe("COOPIA result tracking", () => {
     expect(coverageActionIdsForStep(interest, "address")).toEqual(["CHECK_COVERAGE"]);
     expect(coverageActionIdsForStep(interest, "plans")).toEqual(["SHOW_INTERNET_PLANS"]);
     expect(coverageActionIdsForStep(interest, "address")).not.toContain("SHOW_INTERNET_PLANS");
-    expect(coverageActionIdsForStep(interest, "address")).not.toContain("REQUEST_INSTALLATION");
+    expect(coverageActionIdsForStep(interest, "address")).not.toContain("REQUEST_COVERAGE_VALIDATION");
   });
 
   it("does not mark plans as viewed when the coverage form becomes visible", () => {
@@ -161,7 +161,7 @@ describe("COOPIA result tracking", () => {
       recommendedActions: [{ id: "CHECK_COVERAGE", label: "Cobertura" }, { id: "START_FIBER_WAITLIST", label: "Avisarme", href: "#contratar" }],
     });
     expect(coverageActionIdsForStep(unavailable, "waitlist")).toEqual(["START_FIBER_WAITLIST"]);
-    expect(coverageActionIdsForStep(unavailable, "waitlist")).not.toContain("REQUEST_INSTALLATION");
+    expect(coverageActionIdsForStep(unavailable, "waitlist")).not.toContain("REQUEST_COVERAGE_VALIDATION");
   });
 
   it("uses only the visible WhatsApp CTA for human handoff", () => {

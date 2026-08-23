@@ -10,7 +10,7 @@ import { coveragePresentation } from "../../lib/coverage-presentation";
 import { coopiaActionEventTypes } from "../../lib/coopia/action-events";
 import { coverageActionIdsForStep, visibleActionIdsForResult, visibleAssistantActions } from "../../lib/coopia/result-tracking";
 import { coopiaStepActions } from "../../lib/coopia/interaction-flow";
-import { showInternetPlansEvent, type PublicCoverageResult } from "../../lib/internet/coverage-handoff";
+import { createInternetJourneyHandoff, internetJourneyCanonicalHref, saveInternetJourneyHandoff, showInternetPlansEvent, type PublicCoverageResult } from "../../lib/internet/coverage-handoff";
 
 type Coverage = PublicCoverageResult;
 
@@ -19,7 +19,7 @@ function ActionLink({ action, complaintRoute, resultContext, primary = false }: 
 
 function FiberCoverageCard({ result, resultKey }: { result: AssistantResult; resultKey: string }) {
   const nav = useNavigationContext();
-  const { recordShownActions } = useCoopia();
+  const { recordShownActions, setOpen } = useCoopia();
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -52,8 +52,8 @@ function FiberCoverageCard({ result, resultKey }: { result: AssistantResult; res
 
   const hasCompatiblePlans = Boolean(coverage?.plans.length);
   const action = hasCompatiblePlans ? "Ver planes" : coverage?.nextAction === "fiber_waitlist" ? "Solicitar aviso de cobertura" : coverage?.nextAction === "coverage_validation" ? "Solicitar validación técnica" : "Continuar con la solicitud";
-  const target = "#contratar";
-  const actionId = hasCompatiblePlans ? "SHOW_INTERNET_PLANS" : coverage?.nextAction === "fiber_waitlist" ? "START_FIBER_WAITLIST" : "REQUEST_INSTALLATION";
+  const target = internetJourneyCanonicalHref;
+  const actionId = hasCompatiblePlans ? "SHOW_INTERNET_PLANS" : coverage?.nextAction === "fiber_waitlist" ? "START_FIBER_WAITLIST" : "REQUEST_COVERAGE_VALIDATION";
   const presentation = coveragePresentation(coverage);
   return <section className="assistant-card coverage-card">
     <header><h3>¿Dónde querés instalar Internet?</h3></header>
@@ -66,11 +66,19 @@ function FiberCoverageCard({ result, resultKey }: { result: AssistantResult; res
       <h4>{presentation.title}</h4>
       <p>{coverage.message}</p>
       <div className="assistant-card-actions">
-        <a className="assistant-action assistant-action-primary" href={target} onClick={() => {
+        <a className="assistant-action assistant-action-primary" href={target} onClick={(event) => {
+          if (!coverage) return;
+          const handoff = createInternetJourneyHandoff({ street, number, coverage });
+          const samePageHandoff = new CustomEvent(showInternetPlansEvent, { detail: { handoff }, cancelable: true });
           nav.recordAction(actionId);
-          if (hasCompatiblePlans) window.dispatchEvent(new CustomEvent(showInternetPlansEvent, { detail: { street, number, coverage } }));
+          const handledOnThisPage = !window.dispatchEvent(samePageHandoff);
+          if (handledOnThisPage) {
+            event.preventDefault();
+          } else {
+            saveInternetJourneyHandoff(sessionStorage, handoff);
+            setOpen(false);
+          }
           track(nav.journeyId, nav.sessionId, coverage.nextAction === "fiber_waitlist" ? "fiber_waitlist_started" : "navigation_executed", actionId, undefined, undefined, result);
-          document.querySelector(target)?.scrollIntoView({ behavior: "smooth" });
         }}>{action} <span>→</span></a>
         <button type="button" className="assistant-action" onClick={() => setCoverage(null)}>Modificar domicilio</button>
       </div>

@@ -88,8 +88,8 @@ export async function resolveAssistantResult(detection: IntentDetection, journey
         ui: { type: "fiber_coverage", data: {} },
         actions: [
           { id: "CHECK_COVERAGE", label: "Consultar cobertura" },
-          { id: "SHOW_INTERNET_PLANS", label: "Ver planes", href: "/internet#planes" },
-          { id: "REQUEST_INSTALLATION", label: "Solicitar instalación", href: "/internet#contratar" },
+          { id: "SHOW_INTERNET_PLANS", label: "Ver planes", href: "/#contratar" },
+          { id: "REQUEST_COVERAGE_VALIDATION", label: "Solicitar validación técnica", href: "/#contratar" },
           { id: "OPEN_WHATSAPP", label: "Hablar con un asesor", href: whatsappHref(whatsapp) },
         ],
       });

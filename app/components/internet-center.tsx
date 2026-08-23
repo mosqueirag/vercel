@@ -5,7 +5,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { requestTypeFromCoverage } from "../../lib/coverage-request-type";
 import { coveragePresentation } from "../../lib/coverage-presentation";
-import { showInternetPlansEvent, type PublicCoverageResult, type ShowInternetPlansDetail } from "../../lib/internet/coverage-handoff";
+import { consumeInternetJourneyHandoff, showInternetPlansEvent, type InternetJourneyHandoff, type PublicCoverageResult, type ShowInternetPlansDetail } from "../../lib/internet/coverage-handoff";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; zone: string; street: string; streetNumber: string };
 type Plan = PublicCoverageResult["plans"][number];
@@ -27,22 +27,33 @@ export function InternetCenter() {
   const journey = useCallback(() => { const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId(); const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId(); sessionStorage.setItem("coopsar-journey-id", journeyId); sessionStorage.setItem("coopsar-session-id", sessionId); return { journeyId, sessionId }; }, []);
   const track = useCallback((eventType: string, result?: string) => { const ids = journey(); void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...ids, eventType, result, page: "/#contratar", service: "fiber" }) }); }, [journey]);
   function requestType() { return requestTypeFromCoverage(coverage); }
-  const showCoverage = useCallback((data: CoverageResult, street: string, streetNumber: string) => {
+  const showCoverage = useCallback((data: CoverageResult, street: string, streetNumber: string, destination: InternetJourneyHandoff["destination"] = "plans") => {
     setAnswers((current) => ({ ...current, street, streetNumber }));
     setCoverage(data);
     setSelected(data.plans[0] ?? null);
     setResult(null);
-    setStep(2);
+    setStep(destination === "plans" ? 2 : 3);
   }, []);
 
   useEffect(() => {
     const onShowPlans = (event: Event) => {
       const detail = (event as CustomEvent<ShowInternetPlansDetail>).detail;
-      if (!detail?.coverage?.plans?.length) return;
-      showCoverage(detail.coverage, detail.street, detail.number);
+      const handoff = detail?.handoff;
+      if (!handoff) return;
+      event.preventDefault();
+      showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
+      document.querySelector("#contratar")?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
     window.addEventListener(showInternetPlansEvent, onShowPlans);
     return () => window.removeEventListener(showInternetPlansEvent, onShowPlans);
+  }, [showCoverage]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const handoff = consumeInternetJourneyHandoff(sessionStorage);
+      if (handoff) showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [showCoverage]);
 
   useEffect(() => {
@@ -61,7 +72,7 @@ export function InternetCenter() {
       const response = await fetch("/api/coverage-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ street: answers.street, number: answers.streetNumber, ...journey() }) });
       const data = await response.json() as CoverageResult & { error?: string };
       if (!response.ok) throw new Error(data.error || "No pudimos consultar la cobertura.");
-      showCoverage(data, answers.street, answers.streetNumber);
+      showCoverage(data, answers.street, answers.streetNumber, "plans");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos consultar la cobertura."); }
     finally { setCheckingCoverage(false); }
   }

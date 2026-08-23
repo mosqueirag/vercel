@@ -41,7 +41,7 @@ export function coopiaLoadingCopy(input: string) {
   return "Consultando información oficial…";
 }
 
-const actionPriority: AssistantRecommendedAction["id"][] = ["CHECK_COVERAGE", "OPEN_VIRTUAL_OFFICE", "OPEN_COMPLAINT_WHATSAPP", "REQUEST_INSTALLATION", "SELECT_INTERNET_PLAN", "SHOW_INTERNET_PLANS", "SHOW_FUNERAL_SERVICE", "CALL_FUNERAL_GUARD", "OPEN_WHATSAPP"];
+const actionPriority: AssistantRecommendedAction["id"][] = ["CHECK_COVERAGE", "OPEN_VIRTUAL_OFFICE", "OPEN_COMPLAINT_WHATSAPP", "REQUEST_COVERAGE_VALIDATION", "REQUEST_INSTALLATION", "SELECT_INTERNET_PLAN", "SHOW_INTERNET_PLANS", "SHOW_FUNERAL_SERVICE", "CALL_FUNERAL_GUARD", "OPEN_WHATSAPP"];
 
 /** Limits a guided step to one clear primary CTA and, at most, one secondary action. */
 export function coopiaStepActions(actions: AssistantRecommendedAction[]) {
