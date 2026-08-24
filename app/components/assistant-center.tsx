@@ -16,7 +16,6 @@ export function AssistantCenter() {
           <Link href="#tramites" className="ai-home-primary">Ver servicios <span>→</span></Link>
           {virtualOffice ? <a href={virtualOffice} className="ai-home-secondary" target="_blank" rel="noreferrer">Oficina Virtual <span>↗</span></a> : null}
         </div>
-        <p className="ai-home-note">También podés escribirnos con tus propias palabras: COOPIA te guía al próximo paso.</p>
       </div>
       <div className="ai-console"><CoopiaConversation home /></div>
     </div>
