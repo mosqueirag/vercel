@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { CoopiaConversation } from "./coopia-conversation";
-import { CONTACT } from "../../lib/coopsar-data";
+import { usePublicContact } from "./public-contact-context";
 
 export function AssistantCenter() {
+  const virtualOffice = usePublicContact("billing", "virtual_office")?.value;
   return <section className="ai-center ai-center-home" id="asistente" aria-label="Asistencia inteligente de COOPSAR">
     <div className="ai-home-shell">
       <div className="ai-home-intro">
@@ -13,7 +14,7 @@ export function AssistantCenter() {
         <p>Resolvé trámites, consultá servicios y encontrá la atención que necesitás desde un mismo lugar.</p>
         <div className="ai-home-actions">
           <Link href="#tramites" className="ai-home-primary">Ver servicios <span>→</span></Link>
-          <a href={CONTACT.virtualOffice} className="ai-home-secondary" target="_blank" rel="noreferrer">Oficina Virtual <span>↗</span></a>
+          {virtualOffice ? <a href={virtualOffice} className="ai-home-secondary" target="_blank" rel="noreferrer">Oficina Virtual <span>↗</span></a> : null}
         </div>
         <p className="ai-home-note">También podés escribirnos con tus propias palabras: COOPIA te guía al próximo paso.</p>
       </div>
