@@ -60,8 +60,21 @@ export function detectIntent(message: string): IntentDetection {
   if (/\b(avisen|av[ií]senme|notifiquen|notifiquenme)\b.*\b(fibra|llegue)\b/i.test(normalized) || /\bfibra\b.*\b(avisen|av[ií]senme|notifiquen)\b/i.test(normalized)) {
     return { intent: "fiber_waitlist", service: "fiber", confidence: 0.97, suggestedAction: "start_fiber_waitlist" };
   }
-  if (/\b(reclamo|reclamar|queja)\b.*\b(sepelio|funeral)\b/i.test(normalized) || /\b(sepelio|funeral)\b.*\b(reclamo|reclamar|queja)\b/i.test(normalized)) {
-    return { intent: "resolve_complaint", service: "funeral", confidence: 0.94, suggestedAction: "route_complaint" };
+  // A stated complaint must take precedence over commercial phrasing such as
+  // "quiero Internet". The common router intentionally optimizes that phrase
+  // for acquisition, while complaints require the dedicated human-routing flow.
+  const explicitComplaint = rules.find(
+    (rule) =>
+      rule.intent === "resolve_complaint" &&
+      rule.patterns.some((pattern) => pattern.test(normalized)),
+  );
+  if (explicitComplaint) {
+    return {
+      intent: explicitComplaint.intent,
+      service: explicitComplaint.service,
+      confidence: explicitComplaint.confidence ?? 0.94,
+      suggestedAction: explicitComplaint.suggestedAction,
+    };
   }
   const routed = routeCoopiaIntent(normalized);
   const orchestrationMap: Partial<Record<CoopiaIntentId, IntentDetection>> = {

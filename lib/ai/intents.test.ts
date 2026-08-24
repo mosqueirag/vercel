@@ -16,9 +16,17 @@ describe("detectIntent", () => {
     ["No funciona mi fibra", "internet_problem"],
     ["No funciona el teléfono", "resolve_complaint"],
     ["Necesito hacer un reclamo de sepelio", "resolve_complaint"],
+    ["Quiero hacer un reclamo de Internet", "resolve_complaint"],
     ["Quiero hacer un reclamo", "resolve_complaint"],
     ["Quiero pagar una factura", "pay_invoice"],
     ["Necesito cambiar la titularidad", "ownership_change"],
   ])("classifies %s", (message, intent) => expect(detectIntent(message).intent).toBe(intent));
+  it("routes an explicit Internet complaint before the commercial Internet intent", () => {
+    expect(detectIntent("Quiero hacer un reclamo de Internet")).toMatchObject({
+      intent: "resolve_complaint",
+      service: "internet",
+      suggestedAction: "route_complaint",
+    });
+  });
   it("uses a safe fallback", () => expect(detectIntent("Hola")).toMatchObject({ intent: "general_question", service: "general" }));
 });
