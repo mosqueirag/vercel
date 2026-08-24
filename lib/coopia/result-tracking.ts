@@ -1,5 +1,6 @@
 import type { AssistantIntent, AssistantService } from "../ai/intents";
 import type { AssistantResult } from "../ai/results";
+import { coopiaStepActions } from "./interaction-flow";
 
 /**
  * Analytics emitted for a resolved answer must use the resolved result, rather
@@ -42,6 +43,22 @@ export function visibleAssistantActions(actions: AssistantResult["recommendedAct
   return actions.filter((action) => Boolean(action.href));
 }
 
+export type CoverageInteractionStep = "address" | "plans" | "waitlist" | "validation";
+
+/**
+ * Coverage is a guided flow, not a list of every possible next action. This
+ * keeps action-shown analytics aligned with the one control visible at each
+ * step of the flow.
+ */
+export function coverageActionIdsForStep(result: AssistantResult, step: CoverageInteractionStep): AssistantResult["recommendedActions"][number]["id"][] {
+  const declared = new Set(result.actions.map((action) => action.id));
+  const actionForStep = step === "address" ? "CHECK_COVERAGE"
+    : step === "plans" ? "SHOW_INTERNET_PLANS"
+      : step === "waitlist" ? "START_FIBER_WAITLIST"
+        : "REQUEST_COVERAGE_VALIDATION";
+  return declared.has(actionForStep) ? [actionForStep] : [];
+}
+
 /**
  * Single source of truth for action-shown analytics. This mirrors the controls
  * rendered by AssistantUIRenderer; analytics must never infer visibility first.
@@ -49,11 +66,10 @@ export function visibleAssistantActions(actions: AssistantResult["recommendedAct
 export function visibleActionIdsForResult(result: AssistantResult): AssistantResult["recommendedActions"][number]["id"][] {
   const declared = new Set(result.actions.map((action) => action.id));
   const has = (id: AssistantResult["recommendedActions"][number]["id"]) => declared.has(id);
-  const linkActions = visibleAssistantActions(result.actions).map((action) => action.id);
+  const linkActions = coopiaStepActions(visibleAssistantActions(result.actions)).map((action) => action.id);
 
   if (result.ui?.type === "fiber_coverage" || result.ui?.type === "internet_plans") {
-    const coverageActionIds: AssistantResult["recommendedActions"][number]["id"][] = ["CHECK_COVERAGE", ...linkActions];
-    return coverageActionIds.filter((id) => has(id));
+    return coverageActionIdsForStep(result, "address");
   }
   if (result.ui?.type === "human_handoff") return has("OPEN_WHATSAPP") ? ["OPEN_WHATSAPP"] : [];
   if (result.ui?.type === "service_request_form") return result.actions.slice(0, 1).map((action) => action.id);

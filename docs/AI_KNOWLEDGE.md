@@ -20,3 +20,7 @@ El WordPress anterior y su XML son evidencia de migración histórica, nunca una
 ## Continuidad pública
 
 COOPIA acompaña la navegación pública durante una única sesión temporal. El contexto técnico de cada consulta incluye página, `journeyId`, `sessionId` y, cuando ya existe, intención y servicio. Esto aporta continuidad sin enviar contenido completo de las páginas al modelo. Las respuestas no resueltas y el feedback se registran solamente como métricas estructuradas, sin conservar el texto completo de la conversación.
+
+## Fase 4F.3 — interfaz de resolución
+
+COOPIA es una interfaz guiada por intención: una necesidad, un paso y una acción principal a la vez. La presentación no replica detección ni decide cobertura; las fuentes tipadas server-side continúan resolviendo datos vivos y COOPIA sólo usa contenido publicado.

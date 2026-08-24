@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { requestTypeFromCoverage } from "../../lib/coverage-request-type";
 import { coveragePresentation } from "../../lib/coverage-presentation";
+import { consumeInternetJourneyHandoff, showInternetPlansEvent, type InternetJourneyHandoff, type PublicCoverageResult, type ShowInternetPlansDetail } from "../../lib/internet/coverage-handoff";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; zone: string; street: string; streetNumber: string };
-type Plan = { id: string; name: string; slug: string; technology: string | null; speed_down_mbps: number | null; speed_up_mbps: number | null; price_amount: number | null; currency: string | null };
-type CoverageResult = { coverageStatus: "available" | "nearby" | "planned" | "unavailable" | "unknown"; coverageSource: "exact_address" | "geographic_zone" | "nearby_address" | "unknown"; technology: string | null; technologies: string[]; commercialAvailability: boolean; plans: Plan[]; nextAction: "installation" | "coverage_validation" | "fiber_waitlist"; message: string; zoneMatch: boolean };
+type Plan = PublicCoverageResult["plans"][number];
+type CoverageResult = PublicCoverageResult;
 
 export function InternetCenter() {
   const [answers, setAnswers] = useState<Answers>({ type: "hogar", zone: "", street: "", streetNumber: "" });
@@ -19,12 +20,52 @@ export function InternetCenter() {
   const [checkingCoverage, setCheckingCoverage] = useState(false);
   const [error, setError] = useState("");
   const [whatsapp, setWhatsapp] = useState<string | null>(null);
+  const displayedPlanCoverage = useRef<string | null>(null);
 
   useEffect(() => { const controller = new AbortController(); void fetch("/api/public/contacts?service=internet", { signal: controller.signal }).then((response) => response.json()).then((data) => { const contact = (data.contacts || []).find((item: { channelType: string; purpose: string }) => item.channelType === "whatsapp" && item.purpose === "commercial"); if (contact?.value) setWhatsapp(String(contact.value)); }).catch(() => undefined); return () => controller.abort(); }, []);
 
-  function journey() { const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId(); const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId(); sessionStorage.setItem("coopsar-journey-id", journeyId); sessionStorage.setItem("coopsar-session-id", sessionId); return { journeyId, sessionId }; }
-  function track(eventType: string, result?: string) { const ids = journey(); void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...ids, eventType, result, page: "/#contratar", service: "fiber" }) }); }
+  const journey = useCallback(() => { const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId(); const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId(); sessionStorage.setItem("coopsar-journey-id", journeyId); sessionStorage.setItem("coopsar-session-id", sessionId); return { journeyId, sessionId }; }, []);
+  const track = useCallback((eventType: string, result?: string) => { const ids = journey(); void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...ids, eventType, result, page: "/#contratar", service: "fiber" }) }); }, [journey]);
   function requestType() { return requestTypeFromCoverage(coverage); }
+  const showCoverage = useCallback((data: CoverageResult, street: string, streetNumber: string, destination: InternetJourneyHandoff["destination"] = "plans") => {
+    setAnswers((current) => ({ ...current, street, streetNumber }));
+    setCoverage(data);
+    setSelected(data.plans[0] ?? null);
+    setResult(null);
+    setStep(destination === "plans" ? 2 : 3);
+  }, []);
+
+  useEffect(() => {
+    const onShowPlans = (event: Event) => {
+      const detail = (event as CustomEvent<ShowInternetPlansDetail>).detail;
+      const handoff = detail?.handoff;
+      if (!handoff) return;
+      event.preventDefault();
+      showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    };
+    window.addEventListener(showInternetPlansEvent, onShowPlans);
+    return () => window.removeEventListener(showInternetPlansEvent, onShowPlans);
+  }, [showCoverage]);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const handoff = consumeInternetJourneyHandoff(sessionStorage);
+      if (handoff) showCoverage(handoff.coverage, handoff.street, handoff.number, handoff.destination);
+    });
+    return () => { active = false; };
+  }, [showCoverage]);
+
+  useEffect(() => {
+    if (step !== 2 || !coverage?.plans.length) return;
+    const key = `${coverage.coverageSource}:${coverage.coverageStatus}:${coverage.plans.map((plan) => plan.id).join(",")}`;
+    if (displayedPlanCoverage.current === key) return;
+    displayedPlanCoverage.current = key;
+    track("internet_plans_viewed", coverage.coverageStatus);
+  }, [coverage, step, track]);
 
   async function checkCoverage() {
     setError("");
@@ -34,7 +75,7 @@ export function InternetCenter() {
       const response = await fetch("/api/coverage-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ street: answers.street, number: answers.streetNumber, ...journey() }) });
       const data = await response.json() as CoverageResult & { error?: string };
       if (!response.ok) throw new Error(data.error || "No pudimos consultar la cobertura.");
-      setCoverage(data); setSelected(data.plans[0] ?? null); if (data.plans.length) track("internet_plans_viewed", data.coverageStatus); setStep(2);
+      showCoverage(data, answers.street, answers.streetNumber, "plans");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos consultar la cobertura."); }
     finally { setCheckingCoverage(false); }
   }

@@ -42,3 +42,7 @@ El HEAD funcional validado es `411403b36faa93b2557863b400296b13dad0035c`; la val
 ## Fase 4F.2 — interacción continua
 
 COOPIA mantiene asistencia operativa aun cuando la capacidad generativa esté limitada: las gestiones claras usan resolución determinística y herramientas server-side; sólo las consultas ambiguas consumen presupuesto LLM. El límite técnico contra abuso sigue activo y el navegador nunca recibe secretos ni queda bloqueado por el agotamiento de IA.
+
+## Fase 4F.3 — interacción guiada
+
+La capa global prioriza necesidades expresadas por personas, un paso estructurado activo y una única acción principal. La conversación queda plegable como contexto secundario; se conserva temporalmente durante la pestaña y el usuario puede cambiar de necesidad o acceder a atención humana en cualquier momento.

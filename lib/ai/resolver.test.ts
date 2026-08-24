@@ -40,7 +40,7 @@ describe("resolveAssistantResult", () => {
   it("keeps confirmed fiber interest actionable even before a coverage result", async () => {
     const result = await resolveAssistantResult(detectIntent("Quiero fibra"), "JRN-2026-A1B2C3D4", toolFor("Quiero fibra"));
     expect(result.orchestration.intent).toBe("fiber_interest");
-    expect(result.actions.map((action) => action.id)).toEqual(expect.arrayContaining(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_INSTALLATION"]));
+    expect(result.actions.map((action) => action.id)).toEqual(expect.arrayContaining(["CHECK_COVERAGE", "SHOW_INTERNET_PLANS", "REQUEST_COVERAGE_VALIDATION"]));
   });
 
   it("does not turn an unknown question into a ticketing flow", async () => {
