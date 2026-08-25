@@ -47,6 +47,10 @@ COOPIA mantiene asistencia operativa aun cuando la capacidad generativa esté li
 
 La capa global prioriza necesidades expresadas por personas, un paso estructurado activo y una única acción principal. La conversación queda plegable como contexto secundario; se conserva temporalmente durante la pestaña y el usuario puede cambiar de necesidad o acceder a atención humana en cualquier momento.
 
+## Fase 4G.2 — Internet público unificado
+
+`/internet` es la única superficie pública de conectividad y reutiliza el motor tipado de cobertura, planes y solicitudes. `/fibra-optica` conserva compatibilidad mediante redirect permanente. FTTH y fibra siguen siendo tecnología y semántica operativa interna; los eventos técnicos no se eliminan. La página no muestra datos comerciales no publicados y, sin planes compatibles publicados, ofrece validación técnica o contacto comercial sin inventar una oferta.
+
 ## Fase 4G.1 — arquitectura pública de contenido
 
 La arquitectura pública consolida el material histórico curado sin reproducir el WordPress previo. **Internet** es la única categoría pública de conectividad con URL canónica `/internet`; Fibra Óptica es una tecnología dentro de su journey y `/fibra-optica` queda planificada como redirect futuro, sin retirar conceptos backend de FTTH/fibra. El inventario, decisiones de fuente y evolución de `site_pages` están en `docs/PUBLIC_CONTENT_ARCHITECTURE.md`. No se publicó contenido ni se modificó producción.

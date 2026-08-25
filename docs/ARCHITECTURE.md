@@ -52,6 +52,10 @@ COOPIA no equivale a un LLM: el modelo generativo es una capacidad opcional dent
 
 La IA de información pública usa superficies reducidas, no una réplica de las 63 páginas WordPress históricas. `/internet` es canónica para contratación, cobertura, FTTH y otras tecnologías; los conceptos de fibra quedan en backend y la futura compatibilidad de `/fibra-optica` será un redirect permanente. `site_pages` aporta un hero y cards editables para los slugs de sistema y `/[slug]` resuelve primero una versión publicada, conservando `lib/service-pages.ts` como fallback con contactos dinámicos. La evolución de bloques tipados se documenta antes de modificar esquema en `docs/PUBLIC_CONTENT_ARCHITECTURE.md`.
 
+## Fase 4G.2 — funnel de Internet
+
+La ruta explícita `/internet` usa `getPublishedSitePage("internet")` solamente para contenido editorial de hero; el funnel sigue en componentes tipados. `InternetCenter` se reutiliza entre Home y página dedicada, `coverage-handoff` conserva resultados temporales para COOPIA y `/api/coverage-check` mantiene toda decisión de cobertura server-side. Los eventos comerciales generales se clasifican como servicio `internet`; los eventos técnicos continúan registrando su tecnología de fibra/FTTH. Ningún domicilio ni dato de contacto entra en URL o analytics.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.

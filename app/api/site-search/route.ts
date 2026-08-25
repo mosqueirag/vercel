@@ -6,7 +6,6 @@ const pages = [
   ["Energía eléctrica", "Servicio eléctrico, guardia y recomendaciones", "/energia", "Servicios"],
   ["Simulador de consumo", "Calculá el consumo eléctrico estimado de tu hogar", "/simulador-energia", "Herramientas"],
   ["Internet", "Planes, contratación y consulta por domicilio", "/internet", "Servicios"],
-  ["Fibra óptica", "Información y disponibilidad de fibra óptica", "/fibra-optica", "Servicios"],
   ["Telefonía", "Información del servicio de telefonía", "/telefonia", "Servicios"],
   ["Servicio Solidario", "Información sobre el servicio de sepelio", "/sepelio", "Servicios"],
   ["Trámites", "Conexiones, titularidad, reconexiones y actualización de datos", "/tramites", "Gestiones"],

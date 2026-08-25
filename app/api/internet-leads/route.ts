@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
   if (!rate.allowed) return Response.json({ error: rate.available ? "Realizaste demasiados envíos. Esperá unos minutos." : "El servicio de protección no está disponible." }, { status: rate.available ? 429 : 503 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Revisá los campos obligatorios." }, { status: 400 });
-  const context = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: "/#contratar", service: "fiber" as const };
+  // This is a commercial Internet journey. Technical coverage events keep their
+  // own FTTH/fiber semantics in the coverage resolver.
+  const context = { journeyId: parsed.data.journeyId, sessionId: parsed.data.sessionId, page: "/internet", service: "internet" as const };
   await recordJourneyEvent({ ...context, eventType: parsed.data.requestType === "fiber_waitlist" ? "fiber_waitlist_started" : "lead_started", result: "confirmed" });
   const bucket = Math.floor(Date.now() / 300_000);
   const fingerprint = secureFingerprint("internet-lead", `${(parsed.data.email ?? "").toLowerCase()}|${parsed.data.phone.replace(/\D/g, "")}|${bucket}`);
