@@ -46,3 +46,7 @@ COOPIA mantiene asistencia operativa aun cuando la capacidad generativa esté li
 ## Fase 4F.3 — interacción guiada
 
 La capa global prioriza necesidades expresadas por personas, un paso estructurado activo y una única acción principal. La conversación queda plegable como contexto secundario; se conserva temporalmente durante la pestaña y el usuario puede cambiar de necesidad o acceder a atención humana en cualquier momento.
+
+## Fase 4G.1 — arquitectura pública de contenido
+
+La arquitectura pública consolida el material histórico curado sin reproducir el WordPress previo. **Internet** es la única categoría pública de conectividad con URL canónica `/internet`; Fibra Óptica es una tecnología dentro de su journey y `/fibra-optica` queda planificada como redirect futuro, sin retirar conceptos backend de FTTH/fibra. El inventario, decisiones de fuente y evolución de `site_pages` están en `docs/PUBLIC_CONTENT_ARCHITECTURE.md`. No se publicó contenido ni se modificó producción.
