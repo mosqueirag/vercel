@@ -58,3 +58,6 @@ COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada p
 # Fase 4G.1 — arquitectura y consolidación de contenido público
 
 **COMPLETADA como auditoría y decisión de arquitectura.** El siguiente trabajo es 4G.2: unificar la experiencia pública de Internet en `/internet`, evolucionar `site_pages` de forma aditiva si los bloques tipados resultan necesarios y recién entonces implementar el redirect permanente de `/fibra-optica`. La prioridad previa sigue siendo resolver las validaciones humanas de contenido sensible; no se publican borradores automáticamente.
+# Fase 4G.2.2 — experiencia comercial de Internet
+
+En curso: consolidar el funnel público `visita → cobertura → tecnología → plan/alternativa → solicitud/contacto`, manteniendo cobertura y oferta como decisiones separadas. Próximo P2: recomendador administrable por perfil de uso; no se debe implementar una recomendación de Mbps sin reglas comerciales verificadas.

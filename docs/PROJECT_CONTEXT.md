@@ -54,3 +54,7 @@ La capa global prioriza necesidades expresadas por personas, un paso estructurad
 ## Fase 4G.1 — arquitectura pública de contenido
 
 La arquitectura pública consolida el material histórico curado sin reproducir el WordPress previo. **Internet** es la única categoría pública de conectividad con URL canónica `/internet`; Fibra Óptica es una tecnología dentro de su journey y `/fibra-optica` queda planificada como redirect futuro, sin retirar conceptos backend de FTTH/fibra. El inventario, decisiones de fuente y evolución de `site_pages` están en `docs/PUBLIC_CONTENT_ARCHITECTURE.md`. No se publicó contenido ni se modificó producción.
+
+## Fase 4G.2.2 — experiencia comercial de Internet
+
+La superficie `/internet` integra un hero comercial y módulos de decisión alrededor del motor existente: cobertura primero, tecnología disponible, planes oficiales si están publicados, alternativa de validación/contacto si no lo están, waitlist desde el flujo existente y soporte con COOPIA global. La investigación es una guía de diseño, nunca una fuente runtime, y se conserva en `docs/RESEARCH_INTERNET_COMMERCIAL_EXPERIENCE.md`.

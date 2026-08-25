@@ -110,3 +110,6 @@ Los planes sólo se muestran si el resolver devuelve planes compatibles `publish
 ## No objetivos de 4G.1
 
 No se publican drafts, no se alteran tablas ni RLS, no se crea un CMS paralelo, no se ejecutan redirects, no se rediseña `/internet` y no se modifica producción.
+# Fase 4G.2.2 — experiencia comercial de Internet
+
+`/internet` añade una capa comercial alrededor de los contratos públicos existentes, sin crear una segunda fuente de datos. El hero dirige al módulo `#contratar`; la cobertura, las tecnologías, los planes compatibles y la waitlist conservan sus resolvers y flujos tipados. Las FAQ y los planes mostrados se obtienen server-side y exclusivamente con `status='published'`. La investigación de producto y sus decisiones están en `docs/RESEARCH_INTERNET_COMMERCIAL_EXPERIENCE.md`.
