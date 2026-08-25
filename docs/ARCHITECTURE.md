@@ -63,3 +63,6 @@ La ruta explícita `/internet` usa `getPublishedSitePage("internet")` solamente 
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.
+# Administración de planes Internet
+
+`/admin/internet/planes` usa Google OAuth + `requireNewsAdmin()` y una route handler server-side. El sitio público usa `lib/data/public-content.ts`; cobertura consume la misma proyección publicada y filtra compatibilidad por tecnología. El registro administrativo propuesto `internet_plan_admin_audit` es server-only.

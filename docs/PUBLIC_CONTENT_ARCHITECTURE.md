@@ -113,3 +113,6 @@ No se publican drafts, no se alteran tablas ni RLS, no se crea un CMS paralelo, 
 # Fase 4G.2.2 — experiencia comercial de Internet
 
 `/internet` añade una capa comercial alrededor de los contratos públicos existentes, sin crear una segunda fuente de datos. El hero dirige al módulo `#contratar`; la cobertura, las tecnologías, los planes compatibles y la waitlist conservan sus resolvers y flujos tipados. Las FAQ y los planes mostrados se obtienen server-side y exclusivamente con `status='published'`. La investigación de producto y sus decisiones están en `docs/RESEARCH_INTERNET_COMMERCIAL_EXPERIENCE.md`.
+# Oferta comercial de Internet
+
+`getPublishedInternetPlans()` es la capa server-side que alimenta `/internet`, el resolver de cobertura y COOPIA. Filtra `status=published` y `published_at<=now`; los componentes cliente nunca consultan `internet_plans` directamente. El editor del Centro de Gestión conserva borradores privados hasta una publicación explícita.

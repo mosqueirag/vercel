@@ -61,3 +61,6 @@ COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada p
 # Fase 4G.2.2 — experiencia comercial de Internet
 
 En curso: consolidar el funnel público `visita → cobertura → tecnología → plan/alternativa → solicitud/contacto`, manteniendo cobertura y oferta como decisiones separadas. Próximo P2: recomendador administrable por perfil de uso; no se debe implementar una recomendación de Mbps sin reglas comerciales verificadas.
+# 4G.2.3 — Oferta comercial administrable de Internet
+
+Se incorporó el flujo Centro de Gestión → borrador → validación humana → publicación explícita → lectura pública tipada. Pendiente: auditoría humana de los 11 borradores de Staging y aplicación autorizada de la migración de auditoría. Próximo paso propuesto: 4G.2.4, recomendador, únicamente después de validar la oferta.
