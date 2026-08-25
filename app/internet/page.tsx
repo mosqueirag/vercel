@@ -5,6 +5,7 @@ import { getPublishedSitePage } from "../../lib/data/site-pages";
 import { internetCanonicalPath } from "../../lib/internet/public-experience";
 import { servicePages } from "../../lib/service-pages";
 import { Contact, Footer, Header } from "../ui";
+import { InternetCoopiaAction } from "../components/internet-coopia-action";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -22,8 +23,8 @@ export default async function InternetPage() {
   return <main>
     <Header />
     <section className="internet-page-hero">
-      <div><span className="eyebrow">Internet COOPSAR</span><h1>{title}</h1><p>{intro}</p><div className="internet-page-actions"><Link className="primary" href="#contratar">Consultar cobertura</Link><Link href="/#asistente">Ya soy cliente / necesito soporte</Link></div></div>
-      <aside><span>¿Necesitás ayuda?</span><p>COOPIA puede orientarte sobre Internet, cobertura o soporte.</p><Link href="/#asistente">Abrir COOPIA →</Link></aside>
+      <div><span className="eyebrow">Internet COOPSAR</span><h1>{title}</h1><p>{intro}</p><div className="internet-page-actions"><Link className="primary" href="#contratar">Consultar cobertura</Link><InternetCoopiaAction>Ya soy cliente / necesito soporte</InternetCoopiaAction></div></div>
+      <aside><span>¿Necesitás ayuda?</span><p>COOPIA puede orientarte sobre Internet, cobertura o soporte.</p><InternetCoopiaAction className="internet-coopia-link">Abrir COOPIA →</InternetCoopiaAction></aside>
     </section>
     <InternetCenter variant="page" />
     <Contact />
