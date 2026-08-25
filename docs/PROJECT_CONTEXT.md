@@ -58,3 +58,6 @@ La arquitectura pública consolida el material histórico curado sin reproducir 
 ## Fase 4G.2.2 — experiencia comercial de Internet
 
 La superficie `/internet` integra un hero comercial y módulos de decisión alrededor del motor existente: cobertura primero, tecnología disponible, planes oficiales si están publicados, alternativa de validación/contacto si no lo están, waitlist desde el flujo existente y soporte con COOPIA global. La investigación es una guía de diseño, nunca una fuente runtime, y se conserva en `docs/RESEARCH_INTERNET_COMMERCIAL_EXPERIENCE.md`.
+# Oferta Internet
+
+La oferta de Internet usa `internet_plans`; los precios, velocidades y beneficios públicos vienen exclusivamente de planes publicados. La cobertura técnica continúa decidiendo disponibilidad de domicilio y no se infiere desde la existencia de un plan. Publicar exige una tecnología comercial normalizada (`FTTH` o `WIRELESS`); `ADSL` legado y fixtures quedan fuera hasta validación comercial humana.

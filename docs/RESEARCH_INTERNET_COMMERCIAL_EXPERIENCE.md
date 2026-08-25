@@ -44,3 +44,8 @@ El recorrido técnico ya resolvía cobertura, tecnología, validación, solicitu
 - Recomendaciones numéricas de Mbps.
 - Promociones, routers, Wi‑Fi 6, simetría o plazos de instalación sin fuente publicada.
 - Nuevos chats, tickets, tablas de leads o formularios de waitlist paralelos.
+# Operación administrable (4G.2.3)
+
+La oferta pública se gobierna desde `/admin/internet/planes`, reutilizando el Centro de Gestión. Se amplió el editor existente con beneficios ordenables, campos comerciales y una vista previa privada. Guardar siempre conserva el estado `draft`; publicar es una acción explícita y validada. La implementación no introduce precios o velocidades hardcodeados.
+
+La auditoría de los borradores de Staging debe realizarse contra el proyecto vinculado antes de una validación humana. Esta rama no modifica Staging: el entorno de trabajo no dispone de la CLI vinculada, por lo que deja la matriz lista para completar con el panel administrativo autorizado.

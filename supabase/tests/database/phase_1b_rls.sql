@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(53);
+select plan(56);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -44,6 +44,7 @@ select is((select count(*)::integer from public.news_articles where slug like '%
 select is((select count(*)::integer from public.help_articles where slug like '%-test'), 1, 'anon reads only published help articles');
 select is((select count(*)::integer from public.faqs where category = 'Test'), 1, 'anon reads only published FAQs');
 select is((select count(*)::integer from public.internet_plans where slug like '%-test'), 1, 'anon reads only published plans');
+select throws_ok($$ select count(*) from public.internet_plan_admin_audit $$, '42501', 'permission denied for table internet_plan_admin_audit', 'anon cannot read Internet plan administrative audit');
 select is((select audience from public.internet_plans where slug = 'plan-incompleto-test'), null, 'draft plan may have no confirmed audience');
 select throws_ok($$ select count(*) from public.coverage_zones $$, '42501', 'permission denied for table coverage_zones', 'anon cannot read private geographic coverage zones');
 select throws_ok(
@@ -133,6 +134,11 @@ select lives_ok(
      select id, 'published', 'admin-test@coopsar.local' from public.content_editorial_proposals where prompt_version = 'pgtap-editorial-v1' $$,
   'service role can record an explicit editorial publication audit event'
 );
+select lives_ok(
+  $$ insert into public.internet_plan_admin_audit (plan_id, action, actor_email)
+     select id, 'created', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-publico-test' $$,
+  'service role can record an Internet plan administrative audit event'
+);
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
   '23514',
@@ -184,6 +190,7 @@ select throws_ok($$ select count(*) from public.content_import_source_pages $$, 
 select throws_ok($$ select count(*) from public.content_import_provenance $$, '42501', 'permission denied for table content_import_provenance', 'authenticated cannot read private import provenance');
 select throws_ok($$ select count(*) from public.content_import_validation_queue $$, '42501', 'permission denied for table content_import_validation_queue', 'authenticated cannot read import validation backlog');
 select throws_ok($$ select count(*) from public.content_editorial_proposals $$, '42501', 'permission denied for table content_editorial_proposals', 'authenticated cannot read private editorial proposals');
+select throws_ok($$ select count(*) from public.internet_plan_admin_audit $$, '42501', 'permission denied for table internet_plan_admin_audit', 'authenticated cannot read Internet plan administrative audit');
 select throws_ok($$ select count(*) from public.user_journeys $$, '42501', 'permission denied for table user_journeys', 'authenticated cannot read journeys');
 select throws_ok($$ select count(*) from public.journey_events $$, '42501', 'permission denied for table journey_events', 'authenticated cannot read journey events');
 select throws_ok($$ select count(*) from public.service_requests $$, '42501', 'permission denied for table service_requests', 'authenticated cannot read service requests');
