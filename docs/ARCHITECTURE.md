@@ -56,6 +56,10 @@ La IA de información pública usa superficies reducidas, no una réplica de las
 
 La ruta explícita `/internet` usa `getPublishedSitePage("internet")` solamente para contenido editorial de hero; el funnel sigue en componentes tipados. `InternetCenter` se reutiliza entre Home y página dedicada, `coverage-handoff` conserva resultados temporales para COOPIA y `/api/coverage-check` mantiene toda decisión de cobertura server-side. Los eventos comerciales generales se clasifican como servicio `internet`; los eventos técnicos continúan registrando su tecnología de fibra/FTTH. Ningún domicilio ni dato de contacto entra en URL o analytics.
 
+## Fase 4G.2.2 — capa comercial sin duplicación
+
+`InternetCommercialSections` es una composición server-rendered de `/internet`: recibe `getPublishedInternetPlans()` y `getPublishedInternetFaqs()` desde `lib/data/public-content.ts`, y no consulta desde componentes cliente. Sólo renderiza campos realmente publicados de cada plan; si no hay planes publicados, mantiene el CTA de cobertura/validación. `InternetCoopiaAction` continúa abriendo el único `CoopiaProvider` global, preservando sesión, journey y contexto de página.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.

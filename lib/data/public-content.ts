@@ -9,6 +9,7 @@ export type PublicInternetPlan = {
 };
 
 export type PublicContact = { id: string; service: string; channelType: string; label: string; value: string; purpose: string };
+export type PublicFaq = { question: string; answer: string; category: string };
 
 /**
  * Keeps contact-read telemetry useful without ever serializing a provider
@@ -71,4 +72,22 @@ export async function getAssistantKnowledge() {
   const planLines = plans.map((plan) => `Plan publicado: ${plan.name}. Tecnología: ${plan.technology ?? "no publicada"}. Velocidad: ${plan.speed_down_mbps ?? "no publicada"}. Precio: ${plan.price_amount === null ? "no publicado" : `${plan.currency ?? ""} ${plan.price_amount}`}.`).join("\n");
   const contactLines = contacts.map((contact) => `${contact.label}: ${contact.value}.`).join("\n");
   return ["Usá solo los datos publicados a continuación. Si no hay información, indicá que no está publicada y ofrecé reintentar.", contactLines, planLines, formatCuratedKnowledge(curated)].filter(Boolean).join("\n");
+}
+
+/** Keeps the Internet surface limited to published, relevant answers. */
+export function isInternetRelatedFaq(faq: PublicFaq) {
+  return /\b(internet|fibra|ftth|inal[aá]mbric|wifi|wi-fi|conectividad|cobertura)\b/i.test(`${faq.category} ${faq.question} ${faq.answer}`);
+}
+
+export async function getPublishedInternetFaqs(): Promise<PublicFaq[]> {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("faqs")
+    .select("question,answer,category")
+    .eq("status", "published")
+    .lte("published_at", now())
+    .order("sort_order")
+    .limit(40);
+  if (error) { console.error("Published Internet FAQ query failed", error.code); return []; }
+  return (data ?? []).filter(isInternetRelatedFaq).slice(0, 6);
 }
