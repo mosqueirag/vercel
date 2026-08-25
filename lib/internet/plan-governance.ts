@@ -1,3 +1,5 @@
+import { canonicalTechnology } from "../coverage-resolver";
+
 export type InternetPlanStatus = "draft" | "published" | "archived";
 
 export type InternetPlanCommercialFields = {
@@ -8,12 +10,22 @@ export type InternetPlanCommercialFields = {
   currency: string | null;
 };
 
+/**
+ * Commercial publication uses the same technology normalizer as coverage.
+ * ADSL remains a legacy technical label until a human confirms it is part of
+ * the current public offer; only FTTH and WIRELESS are currently publishable.
+ */
+export function canonicalCommercialTechnology(value: string | null | undefined) {
+  const technology = canonicalTechnology(value);
+  return technology === "FTTH" || technology === "WIRELESS" ? technology : null;
+}
+
 /** Keeps publication rules server-side and independent from the admin form. */
 export function publicationIssues(plan: InternetPlanCommercialFields) {
   const issues: string[] = [];
   if (!plan.name.trim()) issues.push("name");
   if (!plan.audience) issues.push("audience");
-  if (!plan.technology?.trim()) issues.push("technology");
+  if (!canonicalCommercialTechnology(plan.technology)) issues.push("technology");
   if ((plan.priceAmount === null) !== (plan.currency === null)) issues.push("price_currency");
   return issues;
 }

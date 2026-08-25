@@ -59,7 +59,7 @@ export async function PATCH(request: Request) {
   }
   if (action === "publish") {
     if (status !== "draft") return Response.json({ error: "Solo un borrador puede publicarse explícitamente." }, { status: 409 });
-    if (!canPublishInternetPlan({ name: plan.name, audience: plan.audience, technology: plan.technology ?? null, priceAmount: plan.priceAmount ?? null, currency: plan.currency ?? null })) return Response.json({ error: "Completá nombre, segmento y tecnología antes de publicar. El precio puede quedar pendiente." }, { status: 400 });
+    if (!canPublishInternetPlan({ name: plan.name, audience: plan.audience, technology: plan.technology ?? null, priceAmount: plan.priceAmount ?? null, currency: plan.currency ?? null })) return Response.json({ error: "Completá nombre, segmento y una tecnología comercial válida (FTTH o Internet inalámbrico) antes de publicar. El precio puede quedar pendiente." }, { status: 400 });
     const { data, error } = await session.admin.from("internet_plans").update({ ...values(plan), status: "published", published_at: new Date().toISOString() }).eq("id", plan.id).eq("status", "draft").select(columns).single();
     if (error || !data) return Response.json({ error: "No pudimos publicar el plan." }, { status: 503 });
     return Response.json({ plan: data, auditRecorded: await audit(session, data.id, "published") });
