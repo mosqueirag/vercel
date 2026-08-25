@@ -51,6 +51,10 @@ Separar límite técnico de requests y presupuesto de LLM. Las respuestas determ
 
 COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada por intención: una necesidad, un paso actual y una acción principal a la vez. La conversación queda disponible como contexto secundario, mientras cobertura, pagos, reclamos y atención humana reutilizan el mismo resolver y las mismas acciones tipadas. No se agregan integraciones externas ni se altera la fuente de verdad server-side.
 
+# Fase 4G.2 — Internet unificado
+
+**Implementada en código, pendiente de QA visual/CI del PR apilado.** La conectividad pública se consolida en `/internet`; `/fibra-optica` redirige permanentemente sin eliminar tecnología FTTH/fibra ni el flujo de cobertura. No se agregan datos comerciales: planes sólo aparecen publicados y compatibles; sin planes, el siguiente paso es validación o contacto comercial.
+
 # Fase 4G.1 — arquitectura y consolidación de contenido público
 
 **COMPLETADA como auditoría y decisión de arquitectura.** El siguiente trabajo es 4G.2: unificar la experiencia pública de Internet en `/internet`, evolucionar `site_pages` de forma aditiva si los bloques tipados resultan necesarios y recién entonces implementar el redirect permanente de `/fibra-optica`. La prioridad previa sigue siendo resolver las validaciones humanas de contenido sensible; no se publican borradores automáticamente.

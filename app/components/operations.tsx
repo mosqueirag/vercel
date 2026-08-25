@@ -10,7 +10,7 @@ import { usePublicContact } from "./public-contact-context";
 const actionGroups = [
   { id: "facturas", label: "Facturas y cuenta", image: "/images/quick-access-billing.webp", imageAlt: "Atención personalizada para consultar una factura", titles: ["Pagar factura", "Descargar factura", "Consultar deuda"] },
   { id: "energia", label: "Energía", image: "/images/quick-access-energy.webp", imageAlt: "Técnico trabajando en la red eléctrica de una localidad patagónica", titles: ["Falta de energía", "Cortes programados", "Nueva conexión", "Solicitar reconexión"] },
-  { id: "internet", label: "Internet y fibra", image: "/images/quick-access-internet.webp", imageAlt: "Técnico instalando conectividad en un hogar", titles: ["Consultar cobertura", "Contratar internet"] },
+  { id: "internet", label: "Internet", image: "/images/quick-access-internet.webp", imageAlt: "Técnico instalando conectividad en un hogar", titles: ["Consultar cobertura", "Contratar internet"] },
   { id: "asociado", label: "Datos y atención", image: "/images/quick-access-support.webp", imageAlt: "Atención de una consulta en una oficina de servicios", titles: ["Cambiar titularidad", "Actualizar datos", "WhatsApp"] },
 ] as const;
 

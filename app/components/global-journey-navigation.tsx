@@ -8,5 +8,5 @@ export function GlobalJourneyNavigation() {
   const navigation = useNavigationContext();
 
   if (!navigation.intent || navigation.recommendedActions.length === 0) return null;
-  return <aside className="global-contextual-shell" aria-label="Continuar gestión actual"><div><span>Gestión actual</span><strong>{navigation.service === "billing" ? "Facturas y pagos" : navigation.service === "energy" ? "Energía" : navigation.service === "internet" ? "Internet" : "Internet y fibra"}</strong></div><ContextualQuickActions /><Link className="global-contextual-back" href="/#asistente">Volver a COOPIA ↑</Link></aside>;
+  return <aside className="global-contextual-shell" aria-label="Continuar gestión actual"><div><span>Gestión actual</span><strong>{navigation.service === "billing" ? "Facturas y pagos" : navigation.service === "energy" ? "Energía" : navigation.service === "internet" || navigation.service === "fiber" ? "Internet" : "COOPSAR"}</strong></div><ContextualQuickActions /><Link className="global-contextual-back" href="/#asistente">Volver a COOPIA ↑</Link></aside>;
 }

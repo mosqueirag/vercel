@@ -28,7 +28,7 @@ export function coopiaMoreNeeds(context: CoopiaPageContext) {
 
 export function coopiaJourneyLabel(result?: AssistantResult | null) {
   if (!result) return "";
-  const service = ({ billing: "Facturas y pagos", energy: "Energía", internet: "Internet", fiber: "Internet y fibra", phone: "Telefonía", funeral: "Sepelio", general: "COOPSAR" } as const)[result.service];
+  const service = ({ billing: "Facturas y pagos", energy: "Energía", internet: "Internet", fiber: "Internet", phone: "Telefonía", funeral: "Sepelio", general: "COOPSAR" } as const)[result.service];
   const step = result.ui?.type === "fiber_coverage" ? "Cobertura" : result.ui?.type === "internet_plans" ? "Planes" : result.ui?.type === "payment" ? "Pago" : result.ui?.type === "complaint_service_picker" ? "Reclamo" : "Atención";
   return `${service} › ${step}`;
 }
@@ -37,7 +37,7 @@ export function coopiaJourneyLabel(result?: AssistantResult | null) {
  * detailed journey label so the UI does not repeat internal step names. */
 export function coopiaActiveContext(result?: AssistantResult | null) {
   if (!result) return "";
-  return ({ billing: "Facturas y pagos", energy: "Energía", internet: "Internet", fiber: "Internet y fibra", phone: "Telefonía", funeral: "Sepelio", general: "COOPSAR" } as const)[result.service];
+  return ({ billing: "Facturas y pagos", energy: "Energía", internet: "Internet", fiber: "Internet", phone: "Telefonía", funeral: "Sepelio", general: "COOPSAR" } as const)[result.service];
 }
 
 export function coopiaLoadingCopy(input: string) {

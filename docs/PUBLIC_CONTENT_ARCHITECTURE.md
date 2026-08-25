@@ -4,7 +4,7 @@
 
 Esta arquitectura consolida el contenido histórico curado de COOPSAR sin reproducir el WordPress anterior. WordPress y `content_import_*` son evidencia de migración privada; no son una fuente de runtime. El contenido público y COOPIA sólo pueden consumir proyecciones tipadas con estado `published`.
 
-**Decisión 4G.1:** Internet y Fibra Óptica forman una única experiencia pública: **Internet**, con URL canónica `/internet`. La futura `/fibra-optica` será un redirect permanente a `/internet`; no se implementa en 4G.1. Los conceptos `fiber`, `FTTH`, `fiber_coverage_check`, `fiber_coverage_result` y `fiber_waitlist` se conservan en backend, cobertura, analítica y operación comercial.
+**Decisión 4G.2:** Internet y Fibra Óptica forman una única experiencia pública: **Internet**, con URL canónica `/internet`. `/fibra-optica` redirige permanentemente a `/internet` para conservar compatibilidad de URLs. Los conceptos `fiber`, `FTTH`, `fiber_coverage_check`, `fiber_coverage_result` y `fiber_waitlist` se conservan en backend, cobertura, analítica y operación comercial.
 
 La experiencia pública responde a `necesidad → respuesta → acción`, no a un archivo de páginas históricas.
 
@@ -93,9 +93,15 @@ Es suficiente para hero + introducción + accesos. No representa una página com
 
 Hardcodes a retirar gradualmente, sin perder fallback hasta reemplazo publicado: contenido de `lib/service-pages.ts`, imágenes de `app/[slug]/page.tsx`, y valores de compatibilidad de `lib/coopsar-data.ts`. Los canales publicados ya ganan sobre los fallbacks.
 
-## Prioridades para 4G.2
+## Implementación 4G.2
 
-1. Consolidar `/internet` con bloques tipados y cobertura/planes server-side; preparar redirect permanente `/fibra-optica → /internet` después de QA.
+`app/internet/page.tsx` compone un hero comercial sobrio, soporte mediante COOPIA y el mismo `InternetCenter` que usa la Home. El motor de domicilio, cobertura y solicitud no se duplica: `/api/coverage-check` continúa decidiendo cobertura server-side y `/api/internet-leads` registra solicitudes con consentimiento operativo separado del opt-in de marketing.
+
+Los planes sólo se muestran si el resolver devuelve planes compatibles `published`. Sin planes publicados, la experiencia informa la ausencia de oferta online y conserva una acción de validación o contacto comercial sin inventar precio, velocidad ni disponibilidad. El handoff de COOPIA usa el contrato temporal existente en `sessionStorage`, sin dirección en URL ni analítica.
+
+## Prioridades posteriores a 4G.2
+
+1. Evolucionar el contenido editorial de `/internet` con bloques tipados sólo si hace falta, manteniendo cobertura y planes server-side.
 2. Convertir las fuentes de ayuda/institucional validadas en bloques publicados, empezando por baja sensibilidad.
 3. Diseñar `/sepelio` como flujo operativo respetuoso y no comercial.
 4. Sustituir los fallback hardcodeados sólo cuando una proyección publicada equivalente esté validada.

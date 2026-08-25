@@ -28,7 +28,7 @@ export type PublicCoverageResult = {
  */
 export const internetJourneyHandoffKey = "coopsar:internet-journey-handoff:v1";
 export const internetJourneyHandoffTtlMs = 20 * 60 * 1000;
-export const internetJourneyCanonicalHref = "/#contratar";
+export const internetJourneyCanonicalHref = "/internet#contratar";
 export const showInternetPlansEvent = "coopsar:show-internet-journey";
 
 export type InternetJourneyDestination = "plans" | "waitlist" | "validation";
