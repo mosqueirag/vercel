@@ -6,3 +6,8 @@ export function hasPublishedCompatiblePlans(coverage: Pick<PublicCoverageResult,
 }
 
 export const internetCanonicalPath = "/internet";
+
+/** The general catalog is useful only when COOPSAR has public plans to show. */
+export function shouldShowGeneralInternetCatalog(plans: readonly unknown[]) {
+  return plans.length > 0;
+}

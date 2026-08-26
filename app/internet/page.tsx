@@ -28,7 +28,7 @@ export default async function InternetPage() {
     <section className="internet-page-hero">
       <Image src="/images/coopsar-connectivity.png" alt="Infraestructura de conectividad de COOPSAR en Sarmiento" fill priority sizes="100vw" />
       <div className="internet-page-hero-shade" />
-      <div className="internet-page-hero-content"><span className="eyebrow eyebrow-light">Internet COOPSAR</span><h1>{title}</h1><p>{intro}</p><div className="internet-page-actions"><Link className="primary" href="#contratar">Consultar cobertura</Link><InternetCoopiaAction>Ya soy cliente / necesito soporte</InternetCoopiaAction></div></div>
+      <div className="internet-page-hero-content"><span className="eyebrow eyebrow-light">Internet COOPSAR</span><h1>{title}</h1><p>{intro}</p><div className="internet-page-actions"><Link className="primary" href="#contratar">Consultar cobertura</Link><InternetCoopiaAction>Ya soy cliente</InternetCoopiaAction></div></div>
     </section>
     <InternetCenter variant="page" />
     <InternetCommercialSections plans={plans} faqs={faqs} />
