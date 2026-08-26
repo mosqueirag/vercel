@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasPublishedCompatiblePlans, internetCanonicalPath, internetSalesHeroAction, shouldShowGeneralInternetCatalog } from "./public-experience";
-import { createPlanSelectionDetail, pickCompatiblePlan } from "./plan-selection";
+import { createPlanSelectedEvent, createPlanSelectionDetail, pickCompatiblePlan, requestedPlanIsCompatible } from "./plan-selection";
 
 describe("public Internet experience", () => {
   it("uses one canonical public route", () => {
@@ -31,5 +31,15 @@ describe("public Internet experience", () => {
     expect(createPlanSelectionDetail(plans[0])).toEqual({ planId: "compatible", planSlug: "fibra" });
     expect(pickCompatiblePlan(plans, "compatible")?.id).toBe("compatible");
     expect(pickCompatiblePlan(plans, "unavailable")?.id).toBe("compatible");
+    expect(requestedPlanIsCompatible(plans, "compatible")).toBe(true);
+    expect(requestedPlanIsCompatible(plans, "unavailable")).toBe(false);
+    expect(createPlanSelectedEvent(plans[0], "journey-test", "session-test")).toEqual({
+      journeyId: "journey-test",
+      sessionId: "session-test",
+      eventType: "plan_selected",
+      result: "fibra",
+      page: "/internet",
+      service: "internet",
+    });
   });
 });

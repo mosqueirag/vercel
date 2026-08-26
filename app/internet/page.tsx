@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 
 export default async function InternetPage() {
   const [published, plans, faqs] = await Promise.all([getPublishedSitePage("internet"), getPublishedInternetPlans(), getPublishedInternetFaqs()]);
-  const title = published?.title || "Internet para tu casa, trabajo y todos los días.";
-  const intro = published?.intro || "Conocé las opciones publicadas y consultá qué alternativa podemos ofrecerte en tu domicilio.";
+  const title = published?.title || "Internet COOPSAR para tu día a día.";
+  const intro = plans.length > 0 ? "Conocé nuestros planes de Internet y elegí cómo querés continuar." : "Conocé el servicio de Internet COOPSAR y empezá tu consulta.";
   const heroAction = internetSalesHeroAction(plans.length > 0);
 
   return <main>
@@ -28,7 +28,7 @@ export default async function InternetPage() {
       <Image src="/images/coopsar-connectivity.png" alt="Infraestructura de conectividad de COOPSAR en Sarmiento" fill priority sizes="100vw" />
       <div className="internet-page-hero-shade" />
       <div className="internet-page-hero-content">
-        <span className="eyebrow eyebrow-light">Conectividad para tu día a día</span>
+        <span className="eyebrow eyebrow-light">Internet COOPSAR</span>
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="internet-page-actions">

@@ -30,23 +30,9 @@ export function InternetCommercialIntro({ plans }: { plans: PublicInternetPlan[]
   const hasPlans = shouldShowGeneralInternetCatalog(plans);
   return <>
     {hasPlans && <section className="internet-sales-section internet-sales-offer" id="opciones" aria-labelledby="internet-options-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Opciones de Internet</span><h2 id="internet-options-title">Conocé las opciones disponibles.</h2></div><p>Elegí una opción y después confirmamos qué podemos instalar en tu domicilio.</p></div>
+      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div><p>La disponibilidad se confirma al consultar tu domicilio.</p></div>
       <div className="internet-sales-plans">{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
     </section>}
-    <section className="internet-sales-section internet-sales-needs" aria-labelledby="internet-needs-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Empezá por lo que necesitás</span><h2 id="internet-needs-title">Internet para tu día a día.</h2></div><p>Contanos dónde lo vas a usar y consultá las alternativas para tu domicilio.</p></div>
-      <div className="internet-sales-needs-grid">
-        <Link href="#contratar"><strong>Para tu casa</strong><span>Consultar opciones <b aria-hidden="true">→</b></span></Link>
-        <Link href="#contratar"><strong>Para trabajar y estudiar</strong><span>Consultar opciones <b aria-hidden="true">→</b></span></Link>
-        <Link href="#contratar"><strong>Para tu comercio</strong><span>Consultar opciones <b aria-hidden="true">→</b></span></Link>
-        <Link href="#contratar"><strong>Para varios dispositivos</strong><span>Consultar opciones <b aria-hidden="true">→</b></span></Link>
-      </div>
-    </section>
-    <section className="internet-sales-section internet-sales-value" aria-label="Cómo continuamos">
-      <article><span>01</span><h3>Elegís cómo querés usar Internet</h3><p>Empezá por una necesidad concreta.</p></article>
-      <article><span>02</span><h3>Consultás tu domicilio</h3><p>Revisamos la alternativa disponible.</p></article>
-      <article><span>03</span><h3>Continuamos tu solicitud</h3><p>El próximo paso queda claro desde el resultado.</p></article>
-    </section>
   </>;
 }
 
