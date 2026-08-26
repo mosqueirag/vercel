@@ -1,37 +1,45 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { InternetCommercialAfterCoverage, InternetCommercialIntro } from "../components/internet-commercial-sections";
+import { InternetCoopiaAction } from "../components/internet-coopia-action";
 import { InternetCenter } from "../components/internet-center";
+import { Contact, Footer, Header } from "../ui";
 import { getPublishedSitePage } from "../../lib/data/site-pages";
 import { getPublishedInternetFaqs, getPublishedInternetPlans } from "../../lib/data/public-content";
-import { internetCanonicalPath } from "../../lib/internet/public-experience";
-import { servicePages } from "../../lib/service-pages";
-import { Contact, Footer, Header } from "../ui";
-import { InternetCoopiaAction } from "../components/internet-coopia-action";
-import { InternetCommercialSections } from "../components/internet-commercial-sections";
-import Image from "next/image";
+import { internetCanonicalPath, internetSalesHeroAction } from "../../lib/internet/public-experience";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Internet | COOPSAR",
-  description: "Consultá la cobertura de Internet en tu domicilio y continuá con la alternativa disponible.",
+  description: "Conocé las opciones de Internet de COOPSAR y consultá disponibilidad en tu domicilio.",
   alternates: { canonical: internetCanonicalPath },
 };
 
 export default async function InternetPage() {
   const [published, plans, faqs] = await Promise.all([getPublishedSitePage("internet"), getPublishedInternetPlans(), getPublishedInternetFaqs()]);
-  const fallback = servicePages.internet;
-  const title = published?.title || fallback.title;
-  const intro = published?.intro || "Conocé qué alternativa de Internet puede llegar a tu domicilio y continuá con el próximo paso.";
+  const title = published?.title || "Internet COOPSAR para tu día a día.";
+  const intro = plans.length > 0 ? "Conocé nuestros planes de Internet y elegí cómo querés continuar." : "Conocé el servicio de Internet COOPSAR y empezá tu consulta.";
+  const heroAction = internetSalesHeroAction(plans.length > 0);
 
   return <main>
     <Header />
-    <section className="internet-page-hero">
+    <section className="internet-page-hero internet-sales-hero">
       <Image src="/images/coopsar-connectivity.png" alt="Infraestructura de conectividad de COOPSAR en Sarmiento" fill priority sizes="100vw" />
       <div className="internet-page-hero-shade" />
-      <div className="internet-page-hero-content"><span className="eyebrow eyebrow-light">Internet COOPSAR</span><h1>{title}</h1><p>{intro}</p><div className="internet-page-actions"><Link className="primary" href="#contratar">Consultar cobertura</Link><InternetCoopiaAction>Ya soy cliente</InternetCoopiaAction></div></div>
+      <div className="internet-page-hero-content">
+        <span className="eyebrow eyebrow-light">Internet COOPSAR</span>
+        <h1>{title}</h1>
+        <p>{intro}</p>
+        <div className="internet-page-actions">
+          <Link className="primary" href={heroAction.href}>{heroAction.label} <span aria-hidden="true">→</span></Link>
+          <InternetCoopiaAction>Ya soy cliente</InternetCoopiaAction>
+        </div>
+      </div>
     </section>
+    <InternetCommercialIntro plans={plans} />
     <InternetCenter variant="page" />
-    <InternetCommercialSections plans={plans} faqs={faqs} />
+    <InternetCommercialAfterCoverage faqs={faqs} />
     <Contact />
     <Footer />
   </main>;

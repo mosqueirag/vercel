@@ -29,3 +29,11 @@ La limpieza 4G.2.4.1 elimina el bloque que repetía los tres pasos del recorrido
 - CTA sticky en mobile: no se incorpora porque el formulario de cobertura permanece en el primer recorrido y añadirlo duplicaría la acción.
 - Comparadores de velocidad, recomendación por Mbps y precios estimados: postergados por no existir oferta publicada verificable.
 - Cambios de cobertura, planes, leads o analítica: fuera del alcance de esta mejora visual y de conversión.
+
+## 4G.2.5 — landing comercial
+
+- La cobertura es una herramienta de conversión, no la propuesta de valor de toda la landing.
+- El recorrido público se presenta como `DESEO → OFERTA → COBERTURA → CONTRATACIÓN`.
+- Si existen planes publicados, se muestran antes de pedir el domicilio. Elegir uno expresa una preferencia; el backend sólo lo considera seleccionado si luego resulta compatible con la cobertura real.
+- Si no hay planes publicados, la página conserva una propuesta de valor y conduce a la consulta de domicilio sin mostrar mensajes de catálogo vacío ni crear oferta ficticia.
+- La lista de espera se muestra únicamente después de un resultado de cobertura que la justifique.

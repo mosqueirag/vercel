@@ -6,6 +6,7 @@ import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { requestTypeFromCoverage } from "../../lib/coverage-request-type";
 import { coveragePresentation, coverageTechnologyLabel } from "../../lib/coverage-presentation";
 import { consumeInternetJourneyHandoff, showInternetPlansEvent, type InternetJourneyHandoff, type PublicCoverageResult, type ShowInternetPlansDetail } from "../../lib/internet/coverage-handoff";
+import { pickCompatiblePlan, requestedPlanIsCompatible, selectInternetPlanEvent, type SelectInternetPlanDetail } from "../../lib/internet/plan-selection";
 import { hasPublishedCompatiblePlans } from "../../lib/internet/public-experience";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; zone: string; street: string; streetNumber: string };
@@ -21,6 +22,7 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
   const [checkingCoverage, setCheckingCoverage] = useState(false);
   const [error, setError] = useState("");
   const [whatsapp, setWhatsapp] = useState<string | null>(null);
+  const [requestedPlanId, setRequestedPlanId] = useState<string | null>(null);
   const displayedPlanCoverage = useRef<string | null>(null);
 
   useEffect(() => { const controller = new AbortController(); void fetch("/api/public/contacts?service=internet", { signal: controller.signal }).then((response) => response.json()).then((data) => { const contact = (data.contacts || []).find((item: { channelType: string; purpose: string }) => item.channelType === "whatsapp" && item.purpose === "commercial"); if (contact?.value) setWhatsapp(String(contact.value)); }).catch(() => undefined); return () => controller.abort(); }, []);
@@ -31,10 +33,10 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
   const showCoverage = useCallback((data: CoverageResult, street: string, streetNumber: string, destination: InternetJourneyHandoff["destination"] = "plans") => {
     setAnswers((current) => ({ ...current, street, streetNumber }));
     setCoverage(data);
-    setSelected(data.plans[0] ?? null);
+    setSelected(pickCompatiblePlan(data.plans, requestedPlanId));
     setResult(null);
     setStep(destination === "plans" ? 2 : 3);
-  }, []);
+  }, [requestedPlanId]);
 
   useEffect(() => {
     const onShowPlans = (event: Event) => {
@@ -49,6 +51,21 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
     window.addEventListener(showInternetPlansEvent, onShowPlans);
     return () => window.removeEventListener(showInternetPlansEvent, onShowPlans);
   }, [showCoverage]);
+
+  useEffect(() => {
+    const onPlanSelection = (event: Event) => {
+      const detail = (event as CustomEvent<SelectInternetPlanDetail>).detail;
+      if (!detail?.planId) return;
+      setRequestedPlanId(detail.planId);
+      setSelected(null);
+      setCoverage(null);
+      setResult(null);
+      setError("");
+      setStep(1);
+    };
+    window.addEventListener(selectInternetPlanEvent, onPlanSelection);
+    return () => window.removeEventListener(selectInternetPlanEvent, onPlanSelection);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -76,6 +93,8 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
       const response = await fetch("/api/coverage-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ street: answers.street, number: answers.streetNumber, ...journey() }) });
       const data = await response.json() as CoverageResult & { error?: string };
       if (!response.ok) throw new Error(data.error || "No pudimos consultar la cobertura.");
+      const preferredPlan = pickCompatiblePlan(data.plans, requestedPlanId);
+      setSelected(preferredPlan);
       showCoverage(data, answers.street, answers.streetNumber, "plans");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos consultar la cobertura."); }
     finally { setCheckingCoverage(false); }
@@ -89,14 +108,15 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
   }
 
   const operationLabel = requestType() === "fiber_waitlist" ? "Solicitar aviso de cobertura" : requestType() === "coverage_validation" ? "Solicitar validación técnica" : "Continuar con la solicitud";
+  const RecommenderHeading = variant === "page" ? "h2" : "h3";
   return <section className={`internet-hub ${variant === "page" ? "internet-hub-page" : ""}`} id="contratar">
     {variant === "home" && <div className="section-heading"><div><span className="eyebrow">Internet</span><h2>Internet para estar<br />siempre conectado</h2></div><p>Consultá únicamente servicios y planes publicados por COOPSAR. La cobertura final siempre se confirma antes de contratar.</p></div>}
     {variant === "home" && <div className="internet-photo"><Image src="/images/coopsar-connectivity.png" alt="Técnico trabajando en infraestructura de conectividad en Sarmiento" fill sizes="(max-width: 900px) 100vw, 1200px" /></div>}
     <div className="recommender">
-      <div className="recommender-copy"><span className="eyebrow eyebrow-light">Disponibilidad por domicilio</span><h3>{variant === "page" ? "¿Qué Internet llega a tu casa?" : "Consultá el plan disponible en tu domicilio"}</h3>{variant === "home" && <><p>Buscamos servicios activos en la dirección indicada o en alturas cercanas de la misma calle. La factibilidad final requiere validación técnica.</p><div className="step-indicator"><span className={step >= 1 ? "active" : ""}>1</span><i /><span className={step >= 2 ? "active" : ""}>2</span><i /><span className={step >= 3 ? "active" : ""}>3</span></div></>}</div>
+      <div className="recommender-copy"><span className="eyebrow eyebrow-light">Tu domicilio</span><RecommenderHeading>{variant === "page" ? "Veamos qué alternativa podemos instalar." : "Consultá el plan disponible en tu domicilio"}</RecommenderHeading>{variant === "page" && <p>Ingresá calle y altura. La confirmación final siempre requiere validación técnica.</p>}{variant === "home" && <><p>Buscamos servicios activos en la dirección indicada o en alturas cercanas de la misma calle. La factibilidad final requiere validación técnica.</p><div className="step-indicator"><span className={step >= 1 ? "active" : ""}>1</span><i /><span className={step >= 2 ? "active" : ""}>2</span><i /><span className={step >= 3 ? "active" : ""}>3</span></div></>}</div>
       <div className="recommender-panel">
         {step === 1 && <form className="question-set" onSubmit={(event) => { event.preventDefault(); void checkCoverage(); }}><div className="field-row"><label>Calle<input required value={answers.street} onChange={(e) => setAnswers({ ...answers, street: e.target.value })} placeholder="Ej.: San Martín" /></label><label>Altura<input required inputMode="numeric" value={answers.streetNumber} onChange={(e) => setAnswers({ ...answers, streetNumber: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="Ej.: 1250" /></label></div>{error && <p className="form-error" role="alert">{error}</p>}<button className="primary" disabled={checkingCoverage}>{checkingCoverage ? "Consultando disponibilidad…" : "Consultar cobertura"}</button></form>}
-        {step === 2 && <div className="recommendation">{(() => { const presentation = coveragePresentation(coverage); const hasPlans = hasPublishedCompatiblePlans(coverage); return <><small>{presentation.eyebrow}</small><h4>{presentation.title}</h4>{coverage && <section className={`coverage-result ${coverage.coverageStatus}`} aria-live="polite"><p>{coverage.message}</p>{presentation.showTechnologies && <div className="coverage-technologies" aria-label="Tecnologías disponibles">{coverage.technologies.map((technology) => <span key={technology}>{coverageTechnologyLabel(technology)}</span>)}</div>}{hasPlans ? <div className="compatible-plans"><strong>Opciones disponibles para tu domicilio</strong>{coverage.plans.map((plan) => <button type="button" className={selected?.id === plan.id ? "selected-plan" : ""} key={plan.id} onClick={() => { setSelected(plan); track("plan_selected", plan.slug); }}><strong>{plan.name}</strong>{plan.technology && <span>{coverageTechnologyLabel(plan.technology)}</span>}{plan.speed_down_mbps && <span>{plan.speed_down_mbps} Mbps</span>}{plan.price_amount !== null && <span>{new Intl.NumberFormat("es-AR", { style: "currency", currency: plan.currency || "ARS", maximumFractionDigits: 0 }).format(plan.price_amount)}</span>}</button>)}</div> : <p>Podemos continuar con la validación técnica o el contacto comercial.</p>}</section>}<div><button onClick={() => setStep(1)}>Modificar domicilio</button><button className="primary" onClick={() => { if (requestType() === "fiber_waitlist") track("fiber_waitlist_started"); setStep(3); }}>{operationLabel}</button></div></>; })()}</div>}
+        {step === 2 && <div className="recommendation">{(() => { const presentation = coveragePresentation(coverage); const hasPlans = hasPublishedCompatiblePlans(coverage); const preferredPlanIsCompatible = requestedPlanIsCompatible(coverage?.plans ?? [], requestedPlanId); return <><small>{presentation.eyebrow}</small><h4>{presentation.title}</h4>{coverage && <section className={`coverage-result ${coverage.coverageStatus}`} aria-live="polite"><p>{coverage.message}</p>{presentation.showTechnologies && <div className="coverage-technologies" aria-label="Tecnologías disponibles">{coverage.technologies.map((technology) => <span key={technology}>{coverageTechnologyLabel(technology)}</span>)}</div>}{hasPlans ? <div className="compatible-plans"><strong>Opciones disponibles para tu domicilio</strong>{!preferredPlanIsCompatible && <p className="coverage-plan-note">Para este domicilio te mostramos otras opciones compatibles.</p>}{coverage.plans.map((plan) => <button type="button" className={selected?.id === plan.id ? "selected-plan" : ""} key={plan.id} onClick={() => { setSelected(plan); track("plan_selected", plan.slug); }}><strong>{plan.name}</strong>{plan.technology && <span>{coverageTechnologyLabel(plan.technology)}</span>}{plan.speed_down_mbps && <span>{plan.speed_down_mbps} Mbps</span>}{plan.price_amount !== null && <span>{new Intl.NumberFormat("es-AR", { style: "currency", currency: plan.currency || "ARS", maximumFractionDigits: 0 }).format(plan.price_amount)}</span>}</button>)}</div> : <p>Podemos continuar con la validación técnica o el contacto comercial.</p>}</section>}<div><button onClick={() => setStep(1)}>Modificar domicilio</button><button className="primary" onClick={() => { if (requestType() === "fiber_waitlist") track("fiber_waitlist_started"); setStep(3); }}>{operationLabel}</button></div></>; })()}</div>}
         {step === 3 && !result && <form className="lead-form" onSubmit={submit}><h4>{requestType() === "fiber_waitlist" ? "Datos para avisarte" : "Datos para contactarte"}</h4><label>El servicio es para<select value={answers.type} onChange={(e) => setAnswers({ ...answers, type: e.target.value as Answers["type"] })}><option value="hogar">Hogar</option><option value="comercio">Comercio</option><option value="empresa">Empresa</option></select></label><div className="field-row"><label>Nombre y apellido<input required name="name" minLength={3} /></label><label>Teléfono<input required name="phone" type="tel" minLength={8} /></label></div><div className="field-row"><label>Correo electrónico (opcional)<input name="email" type="email" /></label><label>Domicilio<input required name="address" minLength={5} defaultValue={`${answers.street} ${answers.streetNumber}`.trim()} /></label></div><label>Barrio o zona (opcional)<input name="zone" /></label><label className="check"><input required name="consent" type="checkbox" /> Autorizo a COOPSAR a contactarme por esta solicitud.</label><label className="check"><input name="marketingOptIn" type="checkbox" /> Quiero recibir novedades de Internet.</label>{error && <p className="form-error">{error}</p>}<button className="primary">Revisar y confirmar solicitud</button></form>}
         {result && <div className={result.stored ? "success-card" : "pending-card"}><strong>{result.stored ? "Solicitud recibida" : "Configuración pendiente"}</strong><p>{result.message}</p><b>{result.requestNumber}</b>{whatsapp ? <a href={`https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola, quiero consultar por internet. Solicitud ${result.requestNumber}.`)}`}>Continuar por WhatsApp →</a> : <p>El canal de contacto se publicará cuando COOPSAR lo confirme.</p>}</div>}
       </div>

@@ -11,3 +11,9 @@ export const internetCanonicalPath = "/internet";
 export function shouldShowGeneralInternetCatalog(plans: readonly unknown[]) {
   return plans.length > 0;
 }
+
+export function internetSalesHeroAction(hasPublishedPlans: boolean) {
+  return hasPublishedPlans
+    ? { href: "#opciones", label: "Ver opciones de Internet" }
+    : { href: "#contratar", label: "Consultar Internet disponible" };
+}
