@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { hasPublishedCompatiblePlans, internetCanonicalPath, shouldShowGeneralInternetCatalog } from "./public-experience";
+import { hasPublishedCompatiblePlans, internetCanonicalPath, internetSalesHeroAction, shouldShowGeneralInternetCatalog } from "./public-experience";
+import { createPlanSelectionDetail, pickCompatiblePlan } from "./plan-selection";
 
 describe("public Internet experience", () => {
   it("uses one canonical public route", () => {
@@ -18,5 +19,17 @@ describe("public Internet experience", () => {
     expect(hasPublishedCompatiblePlans({ commercialAvailability: false, plans: [] })).toBe(false);
     expect(shouldShowGeneralInternetCatalog([])).toBe(false);
     expect(shouldShowGeneralInternetCatalog([{ id: "published" }])).toBe(true);
+  });
+
+  it("keeps the landing commercial when no public plan exists", () => {
+    expect(internetSalesHeroAction(false)).toEqual({ href: "#contratar", label: "Consultar Internet disponible" });
+    expect(internetSalesHeroAction(true)).toEqual({ href: "#opciones", label: "Ver opciones de Internet" });
+  });
+
+  it("carries a selected public offer to coverage without treating it as compatible yet", () => {
+    const plans = [{ id: "compatible", slug: "fibra", }, { id: "other", slug: "wireless" }];
+    expect(createPlanSelectionDetail(plans[0])).toEqual({ planId: "compatible", planSlug: "fibra" });
+    expect(pickCompatiblePlan(plans, "compatible")?.id).toBe("compatible");
+    expect(pickCompatiblePlan(plans, "unavailable")?.id).toBe("compatible");
   });
 });

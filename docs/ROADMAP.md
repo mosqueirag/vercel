@@ -72,3 +72,7 @@ La gobernanza comercial está cerrada: el flujo Centro de Gestión → borrador 
 # Fase 4G.2.4.3 — matriz de validación humana de planes
 
 La matriz de validación humana fue creada sobre staging: 11 borradores, 0 publicados y 1 registro archivado. La oferta comercial, precios y vigencia **todavía no están confirmados por COOPSAR**. El próximo gate obligatorio es la confirmación humana de planes, precios y vigencia; recién después podrá hacerse una publicación controlada en staging y, sólo entonces, diseñar 4G.2.5 de enriquecimiento comercial/recomendador. La matriz vigente está en `docs/INTERNET_PLAN_VALIDATION.md`.
+
+# Fase 4G.2.5 — Internet Commercial Sales Experience
+
+La landing pública organiza el recorrido `DESEO → OFERTA → COBERTURA → CONTRATACIÓN`. La cobertura deja de dominar el inicio de la página: confirma la alternativa técnica y comercial después de la propuesta de valor y, cuando existan, de los planes `published`. La publicación de planes, precios o condiciones continúa requiriendo validación humana explícita; no se crean recomendaciones técnicas, precios ni promesas comerciales sin datos oficiales.
