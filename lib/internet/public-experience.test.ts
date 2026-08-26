@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPublishedCompatiblePlans, internetCanonicalPath } from "./public-experience";
+import { hasPublishedCompatiblePlans, internetCanonicalPath, shouldShowGeneralInternetCatalog } from "./public-experience";
 
 describe("public Internet experience", () => {
   it("uses one canonical public route", () => {
@@ -12,5 +12,11 @@ describe("public Internet experience", () => {
 
   it("renders only compatible plans returned by the server", () => {
     expect(hasPublishedCompatiblePlans({ commercialAvailability: true, plans: [{ id: "published", name: "Plan", slug: "plan", technology: "FTTH", speed_down_mbps: null, price_amount: null, currency: null }] })).toBe(true);
+  });
+
+  it("keeps an empty general catalog separate from a coverage result", () => {
+    expect(hasPublishedCompatiblePlans({ commercialAvailability: false, plans: [] })).toBe(false);
+    expect(shouldShowGeneralInternetCatalog([])).toBe(false);
+    expect(shouldShowGeneralInternetCatalog([{ id: "published" }])).toBe(true);
   });
 });
