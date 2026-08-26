@@ -53,14 +53,22 @@ COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada p
 
 # Fase 4G.2 — Internet unificado
 
-**Implementada en código, pendiente de QA visual/CI del PR apilado.** La conectividad pública se consolida en `/internet`; `/fibra-optica` redirige permanentemente sin eliminar tecnología FTTH/fibra ni el flujo de cobertura. No se agregan datos comerciales: planes sólo aparecen publicados y compatibles; sin planes, el siguiente paso es validación o contacto comercial.
+**CERRADA en código y QA local del HEAD exacto.** La conectividad pública se consolida en `/internet`; `/fibra-optica` redirige permanentemente sin eliminar tecnología FTTH/fibra ni el flujo de cobertura. La QA local de 4G.2.4 registró P0 = 0 y P1 = 0; el Preview quedó READY. La inspección visual remota autenticada no fue verificada y no bloquea el cierre. No se agregan datos comerciales: planes sólo aparecen publicados y compatibles; sin planes, el siguiente paso es validación o contacto comercial.
 
 # Fase 4G.1 — arquitectura y consolidación de contenido público
 
 **COMPLETADA como auditoría y decisión de arquitectura.** El siguiente trabajo es 4G.2: unificar la experiencia pública de Internet en `/internet`, evolucionar `site_pages` de forma aditiva si los bloques tipados resultan necesarios y recién entonces implementar el redirect permanente de `/fibra-optica`. La prioridad previa sigue siendo resolver las validaciones humanas de contenido sensible; no se publican borradores automáticamente.
 # Fase 4G.2.2 — experiencia comercial de Internet
 
-En curso: consolidar el funnel público `visita → cobertura → tecnología → plan/alternativa → solicitud/contacto`, manteniendo cobertura y oferta como decisiones separadas. Próximo P2: recomendador administrable por perfil de uso; no se debe implementar una recomendación de Mbps sin reglas comerciales verificadas.
+El funnel público quedó consolidado como `visita → cobertura → tecnología → plan/alternativa → solicitud/contacto`, manteniendo cobertura y oferta como decisiones separadas. El enriquecimiento comercial y cualquier recomendador continúan bloqueados hasta contar con reglas comerciales verificadas.
 # 4G.2.3 — Oferta comercial administrable de Internet
 
-Se incorporó el flujo Centro de Gestión → borrador → validación humana → publicación explícita → lectura pública tipada. La gobernanza impide publicar fixtures, tecnologías no reconocidas y ADSL legado sin confirmación comercial. Los 11 borradores de Staging quedan clasificados para validación humana; la migración de auditoría sigue pendiente de autorización. Próximo paso propuesto: 4G.2.4, recomendador, únicamente después de validar la oferta.
+La gobernanza comercial está cerrada: el flujo Centro de Gestión → borrador → validación humana → publicación explícita → lectura pública tipada está activo. La migración `internet_plan_admin_audit` está aplicada en staging y la auditoría administrativa registra creación, edición, publicación y archivado. La gobernanza impide publicar fixtures, tecnologías no reconocidas y ADSL legado sin confirmación comercial.
+
+# Fase 4G.2.4 — Internet Conversion UX
+
+**CERRADA.** La QA local del HEAD exacto `a51637e7f0b3ef3898cc74c52f08e300c8329c11` finalizó con P0 = 0 y P1 = 0; el Preview está READY. La QA visual remota autenticada permanece no verificada y no bloquea este cierre.
+
+# Fase 4G.2.4.3 — matriz de validación humana de planes
+
+La matriz de validación humana fue creada sobre staging: 11 borradores, 0 publicados y 1 registro archivado. La oferta comercial, precios y vigencia **todavía no están confirmados por COOPSAR**. El próximo gate obligatorio es la confirmación humana de planes, precios y vigencia; recién después podrá hacerse una publicación controlada en staging y, sólo entonces, diseñar 4G.2.5 de enriquecimiento comercial/recomendador. La matriz vigente está en `docs/INTERNET_PLAN_VALIDATION.md`.
