@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coveragePresentation } from "./coverage-presentation";
+import { coveragePresentation, coverageTechnologyLabel } from "./coverage-presentation";
 
 describe("coverage presentation", () => {
   it("presents exact FTTH availability independently from commercial plans", () => {
@@ -12,5 +12,11 @@ describe("coverage presentation", () => {
 
   it("only presents an unavailable result as no confirmed coverage", () => {
     expect(coveragePresentation({ coverageSource: "exact_address", coverageStatus: "unavailable", technologies: ["FTTH"], commercialAvailability: false })).toMatchObject({ title: "Sin cobertura confirmada" });
+  });
+
+  it("uses public technology labels without changing canonical resolver keys", () => {
+    expect(coverageTechnologyLabel("FTTH")).toBe("Fibra óptica");
+    expect(coverageTechnologyLabel("WIRELESS")).toBe("Internet inalámbrico");
+    expect(coverageTechnologyLabel("ADSL")).toBe("ADSL");
   });
 });

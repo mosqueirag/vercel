@@ -13,4 +13,8 @@ describe("public Internet experience", () => {
   it("renders only compatible plans returned by the server", () => {
     expect(hasPublishedCompatiblePlans({ commercialAvailability: true, plans: [{ id: "published", name: "Plan", slug: "plan", technology: "FTTH", speed_down_mbps: null, price_amount: null, currency: null }] })).toBe(true);
   });
+
+  it("keeps an empty general catalog separate from a coverage result", () => {
+    expect(hasPublishedCompatiblePlans({ commercialAvailability: false, plans: [] })).toBe(false);
+  });
 });

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { PublicFaq, PublicInternetPlan } from "../../lib/data/public-content";
+import { coverageTechnologyLabel } from "../../lib/coverage-presentation";
 import { InternetCoopiaAction } from "./internet-coopia-action";
 
 function PlanDetails({ plan }: { plan: PublicInternetPlan }) {
   return <article className="internet-commercial-plan">
-    <div><span className="eyebrow">{plan.technology || "Tecnología publicada"}</span><h3>{plan.name}</h3></div>
+    <div><span className="eyebrow">{plan.technology ? coverageTechnologyLabel(plan.technology) : "Tecnología publicada"}</span><h3>{plan.name}</h3></div>
     {plan.description && <p>{plan.description}</p>}
     <dl>
       {plan.speed_down_mbps !== null && <div><dt>Velocidad publicada</dt><dd>{plan.speed_down_mbps} Mbps</dd></div>}
@@ -28,8 +29,8 @@ export function InternetCommercialSections({ plans, faqs }: { plans: PublicInter
     </section>
 
     <section className="internet-commercial-section internet-offer" id="planes">
-      <div className="section-heading"><div><span className="eyebrow">Oferta publicada</span><h2>Planes cuando estén confirmados.</h2></div><p>Mostramos únicamente datos comerciales publicados por COOPSAR y compatibles con la cobertura consultada.</p></div>
-      {plans.length > 0 ? <div className="internet-commercial-plans">{plans.map((plan) => <PlanDetails key={plan.id} plan={plan} />)}</div> : <div className="internet-offer-empty"><div><span className="eyebrow">Siguiente paso</span><h3>Consultá la cobertura y te orientamos.</h3><p>Todavía no hay planes publicados para mostrar. Podés conocer la alternativa disponible y solicitar validación técnica o contacto comercial.</p></div><Link href="#contratar" className="primary">Consultar cobertura</Link></div>}
+      <div className="section-heading"><div><span className="eyebrow">Oferta publicada</span><h2>Planes de Internet COOPSAR.</h2></div><p>Este es el catálogo general. La disponibilidad de cada plan se confirma al consultar tu domicilio.</p></div>
+      {plans.length > 0 ? <div className="internet-commercial-plans">{plans.map((plan) => <PlanDetails key={plan.id} plan={plan} />)}</div> : <div className="internet-offer-empty"><div><span className="eyebrow">Catálogo en preparación</span><h3>Primero, consultá tu cobertura.</h3><p>Todavía no hay planes publicados en el catálogo general. Podemos mostrarte la alternativa disponible en tu domicilio.</p></div><Link href="#contratar" className="primary">Consultar cobertura</Link></div>}
     </section>
 
     <section className="internet-commercial-section internet-waitlist">

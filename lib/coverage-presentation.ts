@@ -9,6 +9,13 @@ function hasTechnology(coverage: CoveragePresentationInput, technology: string) 
   return coverage.technologies.includes(technology);
 }
 
+/** Public labels stay understandable while the resolver keeps canonical keys. */
+export function coverageTechnologyLabel(technology: string) {
+  if (technology === "FTTH") return "Fibra óptica";
+  if (technology === "WIRELESS") return "Internet inalámbrico";
+  return technology;
+}
+
 /**
  * Presentation follows the resolver's technical coverage result. Commercial
  * availability only adds plan information; it never negates confirmed coverage.
