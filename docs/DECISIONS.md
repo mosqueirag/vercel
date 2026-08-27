@@ -1,5 +1,9 @@
 # Decisiones técnicas
 
+## 4G.3 — Atención de Sepelio publicada y contextual
+
+La atención urgente del servicio de sepelio se resuelve primero mediante el canal publicado `funeral/emergency`; la página no duplica teléfonos ni condiciones contractuales. Las consultas no urgentes abren la única instancia global de COOPIA con contexto de Sepelio, y las FAQ se muestran únicamente cuando existen registros publicados y relevantes.
+
 - Staging (`wwvqlbycwzxvjnexklwg`) es el único remoto autorizado para PR #2 y PR #3; ningún test ni reparación toca producción.
 - El historial de trece migraciones es canónico y el esquema se modifica solo mediante migraciones aditivas revisadas.
 - Los límites distribuidos usan `consume_rate_limit` y huellas con hash/sal; no se persiste IP cruda. Si falla la protección, los endpoints protegidos fallan cerrados.
