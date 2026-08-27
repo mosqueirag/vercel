@@ -23,12 +23,12 @@ describe("public Internet experience", () => {
 
   it("keeps the landing commercial when no public plan exists", () => {
     expect(internetSalesHeroAction(false)).toEqual({ href: "#contratar", label: "Consultar Internet disponible" });
-    expect(internetSalesHeroAction(true)).toEqual({ href: "#opciones", label: "Ver opciones de Internet" });
+    expect(internetSalesHeroAction(true)).toEqual({ href: "#planes", label: "Ver opciones de Internet" });
   });
 
   it("carries a selected public offer to coverage without treating it as compatible yet", () => {
     const plans = [{ id: "compatible", slug: "fibra", }, { id: "other", slug: "wireless" }];
-    expect(createPlanSelectionDetail(plans[0])).toEqual({ planId: "compatible", planSlug: "fibra" });
+    expect(createPlanSelectionDetail(plans[0])).toMatchObject({ planId: "compatible", planSlug: "fibra", planDisplayName: "Plan de Internet" });
     expect(pickCompatiblePlan(plans, "compatible")?.id).toBe("compatible");
     expect(pickCompatiblePlan(plans, "unavailable")?.id).toBe("compatible");
     expect(requestedPlanIsCompatible(plans, "compatible")).toBe(true);

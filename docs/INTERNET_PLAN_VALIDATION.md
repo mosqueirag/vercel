@@ -77,3 +77,6 @@ Los campos de precio, instalación, beneficios y condiciones pueden permanecer v
 ## Próximo paso humano
 
 Un responsable comercial de COOPSAR debe completar esta matriz, resolver los grupos potencialmente duplicados y validar cada dato antes de cambiar un borrador a `published`. Hasta entonces, la oferta comercial permanece sin confirmar.
+## Simulación comercial de staging (4G.2.7)
+
+Los valores demo habilitan una revisión UX/CRO antes de la confirmación comercial humana. Sólo pueden mostrarse en staging, con estado draft y una allowlist de slugs. No deben publicarse, actualizarse ni tratarse como oferta oficial hasta completar la validación comercial.

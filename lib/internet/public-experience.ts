@@ -12,8 +12,8 @@ export function shouldShowGeneralInternetCatalog(plans: readonly unknown[]) {
   return plans.length > 0;
 }
 
-export function internetSalesHeroAction(hasPublishedPlans: boolean) {
-  return hasPublishedPlans
-    ? { href: "#opciones", label: "Ver opciones de Internet" }
+export function internetSalesHeroAction(hasCatalog: boolean) {
+  return hasCatalog
+    ? { href: "#planes", label: "Ver opciones de Internet" }
     : { href: "#contratar", label: "Consultar Internet disponible" };
 }

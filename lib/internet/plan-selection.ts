@@ -1,6 +1,13 @@
+import { getInternetPlanPresentation } from "./plan-presentation";
+
 export type InternetPlanChoice = {
   id: string;
   slug: string;
+  name?: string;
+  speed_down_mbps?: number | null;
+  speed_up_mbps?: number | null;
+  price_amount?: number | null;
+  currency?: string | null;
 };
 
 export const selectInternetPlanEvent = "coopsar:select-internet-plan";
@@ -8,6 +15,12 @@ export const selectInternetPlanEvent = "coopsar:select-internet-plan";
 export type SelectInternetPlanDetail = {
   planId: string;
   planSlug: string;
+  planName?: string;
+  speedDownMbps?: number | null;
+  speedUpMbps?: number | null;
+  priceAmount?: number | null;
+  currency?: string | null;
+  planDisplayName?: string;
 };
 
 export type PlanSelectedEvent = {
@@ -33,7 +46,8 @@ export function requestedPlanIsCompatible<T extends InternetPlanChoice>(plans: r
 }
 
 export function createPlanSelectionDetail(plan: InternetPlanChoice): SelectInternetPlanDetail {
-  return { planId: plan.id, planSlug: plan.slug };
+  const presentation = getInternetPlanPresentation({ ...plan, name: plan.name || "Plan de Internet", audience: "", technology: null, installation_price: null, installation_notes: null });
+  return { planId: plan.id, planSlug: plan.slug, planName: plan.name, planDisplayName: presentation.displayName, speedDownMbps: plan.speed_down_mbps, speedUpMbps: plan.speed_up_mbps, priceAmount: plan.price_amount, currency: plan.currency };
 }
 
 export function createPlanSelectedEvent(plan: InternetPlanChoice, journeyId: string, sessionId: string): PlanSelectedEvent {

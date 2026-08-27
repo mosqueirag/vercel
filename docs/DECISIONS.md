@@ -43,3 +43,6 @@
 # 2026-08-25 — 4G.2.3: publicación de planes explícita
 
 Se mantiene `internet_plans` como fuente comercial única. No se publica por guardar ni se permite editar en vivo una oferta publicada. La migración aditiva de auditoría queda preparada, sin aplicarse a Staging ni Producción desde esta rama.
+## 4G.2.7 — Catálogo demo aislado de la oferta oficial
+
+Los planes y FAQ draft pueden utilizarse para una simulación comercial sólo en staging, con una etiqueta visible y allowlist explícita. No ingresan al resolver de cobertura, a COOPIA pública ni a Production; la cobertura sigue siendo la autoridad técnica y los valores no constituyen una oferta publicada.
