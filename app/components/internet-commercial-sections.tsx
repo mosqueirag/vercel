@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PublicFaq, PublicInternetPlan } from "../../lib/data/public-content";
 import { coverageTechnologyLabel } from "../../lib/coverage-presentation";
-import { shouldShowGeneralInternetCatalog, shouldShowInternetProductStory } from "../../lib/internet/public-experience";
+import { shouldShowGeneralInternetCatalog } from "../../lib/internet/public-experience";
 import { InternetCoopiaAction } from "./internet-coopia-action";
 import { InternetPlanSelectionAction } from "./internet-plan-selection-action";
 import { InternetAudienceSelection } from "./internet-audience-selection";
@@ -29,22 +29,21 @@ function PlanCard({ plan }: { plan: PublicInternetPlan }) {
 
 export function InternetCommercialIntro({ plans }: { plans: PublicInternetPlan[] }) {
   const hasPlans = shouldShowGeneralInternetCatalog(plans);
-  const hasProductStory = shouldShowInternetProductStory(plans);
   return <>
-    {hasProductStory && <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Internet COOPSAR</span><h2 id="internet-product-title">Una consulta clara para elegir cómo conectarte.</h2></div><p>Empezá por el uso que querés resolver y continuá con la alternativa que corresponda.</p></div>
+    <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
+      <div className="internet-sales-heading"><div><span className="eyebrow">Internet COOPSAR</span><h2 id="internet-product-title">Elegí la conexión que estás buscando.</h2></div><p>Seleccioná la opción que describe tu necesidad.</p></div>
       <InternetAudienceSelection />
-    </section>}
-    <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Dos formas de conectarte</span><h2 id="internet-technologies-title">La alternativa se define con información real.</h2></div><p>La consulta de tu domicilio permite orientar el siguiente paso.</p></div>
-      <div className="internet-technology-options internet-sales-technology-options">
-        <article><span>Fibra óptica</span><h3>Una alternativa basada en la red de fibra óptica de COOPSAR.</h3><p>La disponibilidad se confirma para cada domicilio.</p></article>
-        <article><span>Internet inalámbrico</span><h3>Una alternativa de conectividad para los lugares donde corresponda.</h3><p>Consultá tu domicilio para conocer la opción aplicable.</p></article>
-      </div>
     </section>
-    <section className="internet-sales-story" aria-labelledby="internet-story-title"><div><span className="eyebrow eyebrow-light">Tu próximo paso</span><h2 id="internet-story-title">Una decisión más simple empieza por tu domicilio.</h2></div><p>COOPSAR combina la información disponible con una consulta guiada para que puedas avanzar sin adivinar.</p><a className="button-light" href="#contratar">Consultar mi domicilio <span aria-hidden="true">→</span></a></section>
+    <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
+      <div className="internet-sales-heading"><div><span className="eyebrow">Dos formas de conectarte</span><h2 id="internet-technologies-title">Conocé las alternativas de Internet COOPSAR.</h2></div><p>Elegí la forma de conectarte que querés conocer.</p></div>
+      <div className="internet-technology-options internet-sales-technology-options">
+        <article><span>Fibra óptica</span><h3>Conectividad a través de la red de fibra óptica de COOPSAR.</h3><p>Una de las alternativas de Internet COOPSAR.</p></article>
+        <article><span>Internet inalámbrico</span><h3>Conectividad mediante tecnología inalámbrica.</h3><p>Una de las alternativas de Internet COOPSAR.</p></article>
+      </div>
+      <p className="internet-technology-disclaimer">La disponibilidad de cada tecnología se confirma al consultar tu dirección.</p>
+    </section>
     {hasPlans && <section className="internet-sales-section internet-sales-offer" id="opciones" aria-labelledby="internet-options-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div><p>La disponibilidad se confirma al consultar tu domicilio.</p></div>
+      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div></div>
       <div className="internet-sales-plans">{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
     </section>}
   </>;

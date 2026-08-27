@@ -52,6 +52,12 @@ El recorrido técnico ya resolvía cobertura, tecnología, validación, solicitu
 - Fibra óptica e Internet inalámbrico se presentan como alternativas de producto en lenguaje humano. La cobertura, la tecnología concreta y la compatibilidad comercial continúan resolviéndose server-side.
 - El activo existente `coopsar-connectivity.png` se conserva como hero reutilizable. La fotografía futura recomendada es una escena cotidiana y local de conectividad en Sarmiento, con permiso de uso verificable y sin apariencia de banco de imágenes multinacional.
 
+## 4G.2.6.1 — limpieza de relato comercial
+
+- Antes de `InternetCenter`, el copy se limita a producto, necesidad y tecnologías. La disponibilidad por dirección aparece una sola vez como aclaración general y se desarrolla únicamente dentro del flujo de cobertura.
+- Se retiró el bloque narrativo que repetía consulta, domicilio y CTA antes del formulario. La página conserva producto → segmento → tecnología → planes publicados cuando existan → cobertura → resultado.
+- No se implementó un bloque “Por qué COOPSAR”: la documentación disponible no aporta dos o tres claims comerciales verificables independientes. Mantenerlo fuera evita convertir datos operativos o históricos en promesas públicas.
+
 # Operación administrable (4G.2.3)
 
 La oferta pública se gobierna desde `/admin/internet/planes`, reutilizando el Centro de Gestión. Se amplió el editor existente con beneficios ordenables, campos comerciales y una vista previa privada. Guardar siempre conserva el estado `draft`; publicar es una acción explícita y validada. La implementación no introduce precios o velocidades hardcodeados.

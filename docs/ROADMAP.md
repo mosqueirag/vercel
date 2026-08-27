@@ -80,3 +80,7 @@ La landing pública organiza el recorrido `DESEO → OFERTA → COBERTURA → CO
 # Fase 4G.2.6 — Internet Product Storytelling
 
 `/internet` conserva contenido comercial útil con 0 planes publicados: categoría, segmentos funcionales y alternativas de conectividad preceden a la consulta de cobertura. La publicación de un plan sigue siendo el único habilitador de precios, velocidades, beneficios y CTA de oferta. La siguiente revisión es exclusivamente visual/comercial; no autoriza cambios de cobertura, datos ni producción.
+
+## 4G.2.6.1 — Product Storytelling Cleanup
+
+Se simplificó el relato de producto antes de cobertura para eliminar la repetición de domicilio y disponibilidad. No se agregaron claims, una sección de valor no verificada ni datos comerciales. La siguiente tarea autorizada sigue siendo QA visual/comercial final del PR #23.
