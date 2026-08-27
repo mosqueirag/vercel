@@ -6,7 +6,7 @@ import { InternetCoopiaAction } from "../components/internet-coopia-action";
 import { InternetCenter } from "../components/internet-center";
 import { Contact, Footer, Header } from "../ui";
 import { getPublishedSitePage } from "../../lib/data/site-pages";
-import { getPublishedInternetFaqs, getPublishedInternetPlans } from "../../lib/data/public-content";
+import { getPublishedInternetFaqs, getPublishedInternetPlans, getStagingInternetDemoFaqs, getStagingInternetDemoPlans } from "../../lib/data/public-content";
 import { internetCanonicalPath, internetSalesHeroAction } from "../../lib/internet/public-experience";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +17,13 @@ export const metadata: Metadata = {
 };
 
 export default async function InternetPage() {
-  const [published, plans, faqs] = await Promise.all([getPublishedSitePage("internet"), getPublishedInternetPlans(), getPublishedInternetFaqs()]);
+  const [published, plans, faqs, demoPlans, demoFaqs] = await Promise.all([getPublishedSitePage("internet"), getPublishedInternetPlans(), getPublishedInternetFaqs(), getStagingInternetDemoPlans(), getStagingInternetDemoFaqs()]);
+  const catalogPlans = plans.length > 0 ? plans : demoPlans;
+  const catalogIsDemo = plans.length === 0 && demoPlans.length > 0;
+  const visibleFaqs = faqs.length > 0 ? faqs : demoFaqs;
   const title = published?.title || "Conectate a lo que importa.";
   const intro = plans.length > 0 ? "Conocé nuestras opciones de Internet y elegí cómo querés continuar." : "Alternativas de conectividad para tu hogar, comercio o empresa.";
-  const heroAction = internetSalesHeroAction(plans.length > 0);
+  const heroAction = internetSalesHeroAction(catalogPlans.length > 0);
 
   return <main>
     <Header />
@@ -37,9 +40,9 @@ export default async function InternetPage() {
         </div>
       </div>
     </section>
-    <InternetCommercialIntro plans={plans} />
+    <InternetCommercialIntro plans={catalogPlans} isDemo={catalogIsDemo} />
     <InternetCenter variant="page" />
-    <InternetCommercialAfterCoverage faqs={faqs} />
+    <InternetCommercialAfterCoverage faqs={visibleFaqs} />
     <Contact />
     <Footer />
   </main>;

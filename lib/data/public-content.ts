@@ -11,6 +11,24 @@ export type PublicInternetPlan = {
 export type PublicContact = { id: string; service: string; channelType: string; label: string; value: string; purpose: string };
 export type PublicFaq = { question: string; answer: string; category: string };
 
+export const stagingInternetDemoPlanSlugs = [
+  "plan-hogar-50-mb",
+  "plan-hogar-100-mb",
+  "inalambrico-20-mb",
+  "ftth-comercial-y-educacional-50-mb",
+  "plan-comercial-100-mb-simetrico",
+] as const;
+
+type RuntimeEnvironment = { appEnv?: string; vercelEnv?: string };
+
+/**
+ * Draft catalog records are deliberately available only in a staging runtime.
+ * Production always remains on the published-only data path.
+ */
+export function isStagingInternetCommercialDemo({ appEnv = process.env.NEXT_PUBLIC_APP_ENV, vercelEnv = process.env.VERCEL_ENV }: RuntimeEnvironment = {}) {
+  return appEnv === "staging" && vercelEnv !== "production";
+}
+
 /**
  * Keeps contact-read telemetry useful without ever serializing a provider
  * message, contact value, request headers, or credentials into runtime logs.
@@ -74,6 +92,20 @@ export async function getAssistantKnowledge() {
   return ["Usá solo los datos publicados a continuación. Si no hay información, indicá que no está publicada y ofrecé reintentar.", contactLines, planLines, formatCuratedKnowledge(curated)].filter(Boolean).join("\n");
 }
 
+/** A read-only, allowlisted catalog used exclusively to validate the staging sales UX. */
+export async function getStagingInternetDemoPlans(): Promise<PublicInternetPlan[]> {
+  if (!isStagingInternetCommercialDemo()) return [];
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("internet_plans")
+    .select("id,slug,name,description,audience,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,installation_price,installation_notes,benefits,conditions")
+    .eq("status", "draft")
+    .in("slug", [...stagingInternetDemoPlanSlugs])
+    .order("sort_order");
+  if (error) { console.error("Staging demo plans query failed", error.code); return []; }
+  return (data ?? []).map((plan) => ({ ...plan, benefits: Array.isArray(plan.benefits) ? plan.benefits.filter((item): item is string => typeof item === "string") : [] }));
+}
+
 /** Keeps the Internet surface limited to published, relevant answers. */
 export function isInternetRelatedFaq(faq: PublicFaq) {
   return /\b(internet|fibra|ftth|inal[aá]mbric|wifi|wi-fi|conectividad|cobertura)\b/i.test(`${faq.category} ${faq.question} ${faq.answer}`);
@@ -90,4 +122,21 @@ export async function getPublishedInternetFaqs(): Promise<PublicFaq[]> {
     .limit(40);
   if (error) { console.error("Published Internet FAQ query failed", error.code); return []; }
   return (data ?? []).filter(isInternetRelatedFaq).slice(0, 6);
+}
+
+/** Draft FAQs are only a staging aid; they never become public knowledge by being read here. */
+export async function getStagingInternetDemoFaqs(): Promise<PublicFaq[]> {
+  if (!isStagingInternetCommercialDemo()) return [];
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("faqs")
+    .select("question,answer,category")
+    .eq("status", "draft")
+    .order("sort_order")
+    .limit(40);
+  if (error) { console.error("Staging demo FAQ query failed", error.code); return []; }
+  return (data ?? []).filter((faq) => {
+    const category = String(faq.category ?? "");
+    return /cobertura|planes?|contrataci[oó]n/i.test(category) && isInternetRelatedFaq(faq as PublicFaq);
+  }).slice(0, 8) as PublicFaq[];
 }

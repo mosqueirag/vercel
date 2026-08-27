@@ -84,3 +84,7 @@ La landing pública organiza el recorrido `DESEO → OFERTA → COBERTURA → CO
 ## 4G.2.6.1 — Product Storytelling Cleanup
 
 Se simplificó el relato de producto antes de cobertura para eliminar la repetición de domicilio y disponibilidad. No se agregaron claims, una sección de valor no verificada ni datos comerciales. La siguiente tarea autorizada sigue siendo QA visual/comercial final del PR #23.
+## 4G.2.7 — Simulación comercial de Internet en staging
+
+- El catálogo comercial de demo se limita a drafts con slugs explícitamente permitidos y sólo se lee cuando el runtime es staging; Production conserva el acceso exclusivo a planes y FAQ publicados.
+- La simulación permite validar jerarquía de producto, precio, velocidad, selección de audiencia y continuidad hacia cobertura sin afirmar factibilidad ni publicar datos comerciales.
