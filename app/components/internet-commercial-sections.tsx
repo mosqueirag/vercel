@@ -4,6 +4,7 @@ import { coverageTechnologyLabel } from "../../lib/coverage-presentation";
 import { shouldShowGeneralInternetCatalog } from "../../lib/internet/public-experience";
 import { InternetCoopiaAction } from "./internet-coopia-action";
 import { InternetPlanSelectionAction } from "./internet-plan-selection-action";
+import { InternetAudienceSelection } from "./internet-audience-selection";
 
 function formatPrice(plan: PublicInternetPlan) {
   if (plan.price_amount === null) return null;
@@ -29,8 +30,20 @@ function PlanCard({ plan }: { plan: PublicInternetPlan }) {
 export function InternetCommercialIntro({ plans }: { plans: PublicInternetPlan[] }) {
   const hasPlans = shouldShowGeneralInternetCatalog(plans);
   return <>
+    <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
+      <div className="internet-sales-heading"><div><span className="eyebrow">Internet COOPSAR</span><h2 id="internet-product-title">Elegí la conexión que estás buscando.</h2></div><p>Seleccioná la opción que describe tu necesidad.</p></div>
+      <InternetAudienceSelection />
+    </section>
+    <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
+      <div className="internet-sales-heading"><div><span className="eyebrow">Dos formas de conectarte</span><h2 id="internet-technologies-title">Conocé las alternativas de Internet COOPSAR.</h2></div><p>Elegí la forma de conectarte que querés conocer.</p></div>
+      <div className="internet-technology-options internet-sales-technology-options">
+        <article><span>Fibra óptica</span><h3>Conectividad a través de la red de fibra óptica de COOPSAR.</h3><p>Una de las alternativas de Internet COOPSAR.</p></article>
+        <article><span>Internet inalámbrico</span><h3>Conectividad mediante tecnología inalámbrica.</h3><p>Una de las alternativas de Internet COOPSAR.</p></article>
+      </div>
+      <p className="internet-technology-disclaimer">La disponibilidad de cada tecnología se confirma al consultar tu dirección.</p>
+    </section>
     {hasPlans && <section className="internet-sales-section internet-sales-offer" id="opciones" aria-labelledby="internet-options-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div><p>La disponibilidad se confirma al consultar tu domicilio.</p></div>
+      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div></div>
       <div className="internet-sales-plans">{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
     </section>}
   </>;

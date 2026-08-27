@@ -60,6 +60,10 @@ La ruta explícita `/internet` usa `getPublishedSitePage("internet")` solamente 
 
 `InternetCommercialSections` es una composición server-rendered de `/internet`: recibe `getPublishedInternetPlans()` y `getPublishedInternetFaqs()` desde `lib/data/public-content.ts`, y no consulta desde componentes cliente. Sólo renderiza campos realmente publicados de cada plan; si no hay planes publicados, mantiene el CTA de cobertura/validación. `InternetCoopiaAction` continúa abriendo el único `CoopiaProvider` global, preservando sesión, journey y contexto de página.
 
+## Fase 4G.2.6 — contenido de producto y segmento funcional
+
+La composición server-rendered de `/internet` siempre muestra contenido de categoría neutral, incluso cuando la DAL retorna cero planes publicados. `InternetAudienceSelection` es el único cliente agregado: emite `internet_audience_selected` sin PII y comunica el segmento al `InternetCenter` por un evento de navegador temporal. El centro reutiliza ese valor como `customerType` en la solicitud existente; no realiza otro `coverage-check`, no consulta Supabase desde el cliente y no cambia el resolver de cobertura.
+
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.

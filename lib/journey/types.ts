@@ -3,7 +3,7 @@ import type { AssistantIntent, AssistantService } from "../ai/intents";
 export const journeyEventTypes = [
   "journey_started", "page_viewed", "assistant_opened", "assistant_question_sent",
   "intent_detected", "tool_started", "tool_completed", "tool_failed",
-  "fiber_coverage_checked", "fiber_lead_started", "fiber_lead_created",
+  "fiber_coverage_checked", "fiber_lead_started", "fiber_lead_created", "internet_audience_selected",
   "fiber_coverage_check", "fiber_coverage_result", "internet_plans_viewed", "plan_view", "plan_selected", "lead_started", "lead_created", "lead_failed", "fiber_waitlist_started", "fiber_waitlist_created",
   "service_request_started", "service_request_submitted", "service_request_created", "service_request_failed",
   "service_request_status_checked", "human_handoff_opened",
