@@ -5,9 +5,9 @@ import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { createInternetAudienceEvent, internetAudienceSelectedEvent, type InternetAudience } from "../../lib/internet/audience-selection";
 
 const choices: Array<{ audience: InternetAudience; title: string; description: string }> = [
-  { audience: "hogar", title: "Para mi hogar", description: "Uso residencial." },
-  { audience: "comercio", title: "Para mi comercio", description: "Conectividad para mi actividad comercial." },
-  { audience: "empresa", title: "Para mi empresa", description: "Una consulta orientada a mi organización." },
+  { audience: "hogar", title: "Para mi hogar", description: "Ver planes para tu casa." },
+  { audience: "comercio", title: "Para mi comercio", description: "Ver opciones para tu actividad." },
+  { audience: "empresa", title: "Para mi empresa", description: "Consultar una alternativa comercial." },
 ];
 
 export function InternetAudienceSelection() {
