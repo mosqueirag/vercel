@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPublishedCompatiblePlans, internetCanonicalPath, internetSalesHeroAction, shouldShowGeneralInternetCatalog } from "./public-experience";
+import { hasPublishedCompatiblePlans, internetCanonicalPath, internetSalesHeroAction, shouldShowGeneralInternetCatalog, shouldShowInternetProductStory } from "./public-experience";
 import { createPlanSelectedEvent, createPlanSelectionDetail, pickCompatiblePlan, requestedPlanIsCompatible } from "./plan-selection";
 
 describe("public Internet experience", () => {
@@ -19,6 +19,11 @@ describe("public Internet experience", () => {
     expect(hasPublishedCompatiblePlans({ commercialAvailability: false, plans: [] })).toBe(false);
     expect(shouldShowGeneralInternetCatalog([])).toBe(false);
     expect(shouldShowGeneralInternetCatalog([{ id: "published" }])).toBe(true);
+  });
+
+  it("keeps product content available when no plan is published", () => {
+    expect(shouldShowInternetProductStory([])).toBe(true);
+    expect(shouldShowInternetProductStory([{ id: "published" }])).toBe(true);
   });
 
   it("keeps the landing commercial when no public plan exists", () => {

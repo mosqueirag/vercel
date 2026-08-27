@@ -12,6 +12,11 @@ export function shouldShowGeneralInternetCatalog(plans: readonly unknown[]) {
   return plans.length > 0;
 }
 
+/** Product framing remains useful while the commercial catalog is still empty. */
+export function shouldShowInternetProductStory(_plans: readonly unknown[]) {
+  return _plans.length >= 0;
+}
+
 export function internetSalesHeroAction(hasPublishedPlans: boolean) {
   return hasPublishedPlans
     ? { href: "#opciones", label: "Ver opciones de Internet" }

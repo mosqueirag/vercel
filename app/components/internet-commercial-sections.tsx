@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PublicFaq, PublicInternetPlan } from "../../lib/data/public-content";
 import { coverageTechnologyLabel } from "../../lib/coverage-presentation";
-import { shouldShowGeneralInternetCatalog } from "../../lib/internet/public-experience";
+import { shouldShowGeneralInternetCatalog, shouldShowInternetProductStory } from "../../lib/internet/public-experience";
 import { InternetCoopiaAction } from "./internet-coopia-action";
 import { InternetPlanSelectionAction } from "./internet-plan-selection-action";
 import { InternetAudienceSelection } from "./internet-audience-selection";
@@ -29,11 +29,12 @@ function PlanCard({ plan }: { plan: PublicInternetPlan }) {
 
 export function InternetCommercialIntro({ plans }: { plans: PublicInternetPlan[] }) {
   const hasPlans = shouldShowGeneralInternetCatalog(plans);
+  const hasProductStory = shouldShowInternetProductStory(plans);
   return <>
-    <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
+    {hasProductStory && <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
       <div className="internet-sales-heading"><div><span className="eyebrow">Internet COOPSAR</span><h2 id="internet-product-title">Una consulta clara para elegir cómo conectarte.</h2></div><p>Empezá por el uso que querés resolver y continuá con la alternativa que corresponda.</p></div>
       <InternetAudienceSelection />
-    </section>
+    </section>}
     <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
       <div className="internet-sales-heading"><div><span className="eyebrow">Dos formas de conectarte</span><h2 id="internet-technologies-title">La alternativa se define con información real.</h2></div><p>La consulta de tu domicilio permite orientar el siguiente paso.</p></div>
       <div className="internet-technology-options internet-sales-technology-options">
