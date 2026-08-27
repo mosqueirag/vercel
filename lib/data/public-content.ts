@@ -111,6 +111,24 @@ export function isInternetRelatedFaq(faq: PublicFaq) {
   return /\b(internet|fibra|ftth|inal[aá]mbric|wifi|wi-fi|conectividad|cobertura)\b/i.test(`${faq.category} ${faq.question} ${faq.answer}`);
 }
 
+/** Keeps the sensitive Sepelio surface limited to confirmed, published answers. */
+export function isFuneralRelatedFaq(faq: PublicFaq) {
+  return /\b(sepelio|funeral|servicio solidario|grupo familiar|adherente|beneficiario)\b/i.test(`${faq.category} ${faq.question} ${faq.answer}`);
+}
+
+export async function getPublishedFuneralFaqs(): Promise<PublicFaq[]> {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("faqs")
+    .select("question,answer,category")
+    .eq("status", "published")
+    .lte("published_at", now())
+    .order("sort_order")
+    .limit(40);
+  if (error) { console.error("Published funeral FAQ query failed", error.code); return []; }
+  return (data ?? []).filter(isFuneralRelatedFaq).slice(0, 6);
+}
+
 export async function getPublishedInternetFaqs(): Promise<PublicFaq[]> {
   const supabase = createSupabaseAdmin();
   if (!supabase) return [];

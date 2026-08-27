@@ -1,5 +1,9 @@
 # Roadmap posterior al cierre de Fase 2
 
+## 4G.3 — Experiencia específica de Sepelio
+
+Pendiente de revisión visual: `/sepelio` prioriza la guardia publicada, ofrece orientación contextual con la única instancia global de COOPIA y oculta FAQ cuando no hay contenido publicado relevante. No incorpora formularios sensibles, beneficios no confirmados ni una fuente paralela de contactos.
+
 1. Revisar humanamente el release candidate apilado: PR #2 está Ready for Review y PR #3 permanece Draft; no hacer merge automático.
 2. Aprobar o mantener en borrador los 7 planes y 20 FAQ oficiales cargados sólo en staging; revisar las 85 coberturas excluidas antes de un lote posterior.
 3. Completar vistas internas autorizadas para solicitudes, alertas y consultas antes de operar comercialmente.
