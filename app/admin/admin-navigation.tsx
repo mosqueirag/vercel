@@ -8,7 +8,7 @@ type NavigationItem = { label: string; href: string };
 const groups: Array<{ title?: string; items: NavigationItem[] }> = [
   { items: [{ label: "Inicio", href: "/admin/gestion" }] },
   { title: "Contenidos", items: [{ label: "Páginas", href: "/admin/gestion/paginas" }, { label: "Noticias", href: "/admin/noticias" }, { label: "Curaduría IA", href: "/admin/contenidos" }, { label: "Alertas de servicio", href: "/admin/alertas" }] },
-  { title: "Servicios", items: [{ label: "Planes Internet/Fibra", href: "/admin/internet/planes" }, { label: "Cobertura", href: "/admin/internet/cobertura" }, { label: "Contactos y guardias", href: "/admin/configuracion/contactos" }] },
+  { title: "Servicios", items: [{ label: "Planes Internet/Fibra", href: "/admin/internet/planes" }, { label: "Cobertura", href: "/admin/internet/cobertura" }, { label: "Sepelio · planillas", href: "/admin/sepelio/planillas" }, { label: "Contactos y guardias", href: "/admin/configuracion/contactos" }] },
   { title: "Comercial", items: [{ label: "Solicitudes", href: "/admin/comercial" }, { label: "Leads / interesados", href: "/admin/solicitudes-internet" }] },
   { title: "COOPIA", items: [{ label: "Panel COOPIA", href: "/admin/coopia" }, { label: "Consultas", href: "/admin/consultas" }, { label: "Preguntas sin resolver", href: "/admin/consultas" }] },
   { title: "Configuración", items: [{ label: "Datos públicos", href: "/admin/configuracion/contactos" }, { label: "Administración", href: "/admin/gestion" }] },

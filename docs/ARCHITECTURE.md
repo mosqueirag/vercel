@@ -67,6 +67,10 @@ La composición server-rendered de `/internet` siempre muestra contenido de cate
 ## Estado del release candidate de Fase 2
 
 El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `coopsar-staging`. El Lote Oficial 1 existe sólo en staging: 7 planes y 20 FAQ permanecen en `draft`, 10 contactos están publicados y 2.126 coberturas oficiales fueron importadas; 85 filas pendientes de revisión quedaron excluidas. Estos datos no se versionan en migraciones ni se trasladarán a producción sólo por integrar código.
+
+## Fase 4G.3.1 — solicitudes familiares privadas
+
+`funeral_family_update_requests`, `funeral_family_update_members` y `funeral_family_update_audit` son **server only**. Sólo la API server-side invoca el RPC atómico de creación y sólo el Centro de Gestión autorizado consulta el detalle; no se conceden políticas de navegador ni se registra PII en analítica.
 # Administración de planes Internet
 
 `/admin/internet/planes` usa Google OAuth + `requireNewsAdmin()` y una route handler server-side. El sitio público usa `lib/data/public-content.ts`; cobertura consume la misma proyección publicada y filtra compatibilidad por tecnología. La publicación valida con el mismo normalizador técnico usado por cobertura y restringe la oferta comercial a `FTTH`/`WIRELESS`; `ADSL` se conserva como legado. El registro administrativo propuesto `internet_plan_admin_audit` es server-only y permanece pendiente de aplicación autorizada.

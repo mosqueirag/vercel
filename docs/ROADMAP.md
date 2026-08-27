@@ -92,3 +92,7 @@ Se simplificó el relato de producto antes de cobertura para eliminar la repetic
 
 - El catálogo comercial de demo se limita a drafts con slugs explícitamente permitidos y sólo se lee cuando el runtime es staging; Production conserva el acceso exclusivo a planes y FAQ publicados.
 - La simulación permite validar jerarquía de producto, precio, velocidad, selección de audiencia y continuidad hacia cobertura sin afirmar factibilidad ni publicar datos comerciales.
+
+## Fase 4G.3.1 — Sepelio: contenido y actualización de grupo familiar
+
+Sepelio separa la urgencia (guardia publicada) de la información y de la gestión privada. La actualización de grupo familiar crea una solicitud privada con trazabilidad y revisión humana; no confirma altas, bajas, cobertura ni condiciones contractuales. El contenido histórico de COOPSAR es candidato sólo en staging y requiere validación humana antes de publicación.
