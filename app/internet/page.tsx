@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 
 export default async function InternetPage() {
   const [published, plans, faqs] = await Promise.all([getPublishedSitePage("internet"), getPublishedInternetPlans(), getPublishedInternetFaqs()]);
-  const title = published?.title || "Internet COOPSAR para tu día a día.";
-  const intro = plans.length > 0 ? "Conocé nuestros planes de Internet y elegí cómo querés continuar." : "Conocé el servicio de Internet COOPSAR y empezá tu consulta.";
+  const title = published?.title || "Conectate a lo que importa.";
+  const intro = plans.length > 0 ? "Conocé nuestras opciones de Internet y elegí cómo querés continuar." : "Conocé las alternativas de Internet COOPSAR y empezá por una consulta simple.";
   const heroAction = internetSalesHeroAction(plans.length > 0);
 
   return <main>

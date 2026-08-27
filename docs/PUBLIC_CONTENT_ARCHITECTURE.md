@@ -99,6 +99,10 @@ Hardcodes a retirar gradualmente, sin perder fallback hasta reemplazo publicado:
 
 Los planes sólo se muestran si el resolver devuelve planes compatibles `published`. Sin planes publicados, la experiencia informa la ausencia de oferta online y conserva una acción de validación o contacto comercial sin inventar precio, velocidad ni disponibilidad. El handoff de COOPIA usa el contrato temporal existente en `sessionStorage`, sin dirección en URL ni analítica.
 
+## Evolución 4G.2.6: contenido de producto antes de la oferta
+
+El relato comercial neutral de `/internet` no requiere una nueva tabla ni reemplaza el CMS: orienta la consulta de cobertura y las alternativas tecnológicas con copy estático verificado. Los elementos que constituyen una oferta —planes, precios, velocidades, beneficios, condiciones y FAQ operativas— siguen llegando exclusivamente desde las proyecciones publicadas de Supabase. Así, el sitio conserva información útil cuando la oferta publicada es cero, sin presentar datos históricos o draft como comerciales.
+
 ## Prioridades posteriores a 4G.2
 
 1. Evolucionar el contenido editorial de `/internet` con bloques tipados sólo si hace falta, manteniendo cobertura y planes server-side.

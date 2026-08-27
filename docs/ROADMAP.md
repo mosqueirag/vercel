@@ -76,3 +76,7 @@ La matriz de validación humana fue creada sobre staging: 11 borradores, 0 publi
 # Fase 4G.2.5 — Internet Commercial Sales Experience
 
 La landing pública organiza el recorrido `DESEO → OFERTA → COBERTURA → CONTRATACIÓN`. La cobertura deja de dominar el inicio de la página: confirma la alternativa técnica y comercial después de la propuesta de valor y, cuando existan, de los planes `published`. La publicación de planes, precios o condiciones continúa requiriendo validación humana explícita; no se crean recomendaciones técnicas, precios ni promesas comerciales sin datos oficiales.
+
+# Fase 4G.2.6 — Internet Product Storytelling
+
+`/internet` conserva contenido comercial útil con 0 planes publicados: categoría, segmentos funcionales y alternativas de conectividad preceden a la consulta de cobertura. La publicación de un plan sigue siendo el único habilitador de precios, velocidades, beneficios y CTA de oferta. La siguiente revisión es exclusivamente visual/comercial; no autoriza cambios de cobertura, datos ni producción.

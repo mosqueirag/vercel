@@ -8,6 +8,7 @@ import { coveragePresentation, coverageTechnologyLabel } from "../../lib/coverag
 import { consumeInternetJourneyHandoff, showInternetPlansEvent, type InternetJourneyHandoff, type PublicCoverageResult, type ShowInternetPlansDetail } from "../../lib/internet/coverage-handoff";
 import { pickCompatiblePlan, requestedPlanIsCompatible, selectInternetPlanEvent, type SelectInternetPlanDetail } from "../../lib/internet/plan-selection";
 import { hasPublishedCompatiblePlans } from "../../lib/internet/public-experience";
+import { internetAudienceSelectedEvent, type InternetAudience } from "../../lib/internet/audience-selection";
 
 type Answers = { type: "hogar" | "comercio" | "empresa"; zone: string; street: string; streetNumber: string };
 type Plan = PublicCoverageResult["plans"][number];
@@ -65,6 +66,16 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
     };
     window.addEventListener(selectInternetPlanEvent, onPlanSelection);
     return () => window.removeEventListener(selectInternetPlanEvent, onPlanSelection);
+  }, []);
+
+  useEffect(() => {
+    const onAudienceSelected = (event: Event) => {
+      const audience = (event as CustomEvent<{ audience?: InternetAudience }>).detail?.audience;
+      if (!audience) return;
+      setAnswers((current) => ({ ...current, type: audience }));
+    };
+    window.addEventListener(internetAudienceSelectedEvent, onAudienceSelected);
+    return () => window.removeEventListener(internetAudienceSelectedEvent, onAudienceSelected);
   }, []);
 
   useEffect(() => {
