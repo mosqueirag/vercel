@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(18);
 
 set local role service_role;
 select lives_ok($$ select * from public.create_funeral_family_update_request('SEP-2026-4A310001', 'JRN-2026-4A310001', 'SES-4A3100010000001', 'TEST-1', 'Persona Titular', '12345678', '2974000001', 'test@coopsar.local', true, 'test', 'test-funeral-dedupe', '[{"full_name":"Integrante Test","dni":"23456789","birth_date":"1990-01-01","relationship":"other"}]'::jsonb) $$, 'service role can create a private request atomically');
@@ -8,11 +8,27 @@ select is((select count(*)::integer from public.funeral_family_update_requests w
 select is((select count(*)::integer from public.funeral_family_update_members), 1, 'member is persisted with request');
 select is((select count(*)::integer from public.funeral_family_update_audit where action = 'created'), 1, 'creation audit is recorded');
 select is((select created from public.create_funeral_family_update_request('SEP-2026-4A310002', 'JRN-2026-4A310001', 'SES-4A3100010000001', 'TEST-1', 'Persona Titular', '12345678', '2974000001', 'test@coopsar.local', true, 'test', 'test-funeral-dedupe', '[{"full_name":"Integrante Test","dni":"23456789","birth_date":"1990-01-01","relationship":"other"}]'::jsonb)), false, 'deduplication reuses existing request without adding PII rows');
+select lives_ok($$ select * from public.update_funeral_family_request_status((select id from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'in_review', 'admin@coopsar.local') $$, 'service role updates status and audit atomically');
+select is((select status from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'in_review', 'status transition is persisted');
+select is((select count(*)::integer from public.funeral_family_update_audit where action = 'status_changed' and old_status = 'new' and new_status = 'in_review'), 1, 'status transition has exactly one audit row');
+select is((select unchanged from public.update_funeral_family_request_status((select id from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'in_review', 'admin@coopsar.local')), true, 'same status transition is unchanged');
+select is((select count(*)::integer from public.funeral_family_update_audit where action = 'status_changed'), 1, 'same status creates no additional audit row');
+select throws_ok($$ select * from public.update_funeral_family_request_status((select id from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'invalid', 'admin@coopsar.local') $$, '22023', 'invalid funeral family update status', 'invalid status is rejected');
+select throws_ok($$ select * from public.update_funeral_family_request_status('00000000-0000-0000-0000-000000000000'::uuid, 'waiting_customer', 'admin@coopsar.local') $$, 'P0002', 'funeral family update request not found', 'missing request is rejected');
 reset role;
+create function public.test_fail_funeral_audit() returns trigger language plpgsql as $$ begin if new.new_status = 'waiting_customer' then raise exception 'forced audit error'; end if; return new; end; $$;
+create trigger test_fail_funeral_audit before insert on public.funeral_family_update_audit for each row execute function public.test_fail_funeral_audit();
+set local role service_role;
+select throws_ok($$ select * from public.update_funeral_family_request_status((select id from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'waiting_customer', 'admin@coopsar.local') $$, 'P0001', 'forced audit error', 'audit insertion failure rejects the full transition');
+select is((select status from public.funeral_family_update_requests where request_number = 'SEP-2026-4A310001'), 'in_review', 'audit failure rolls back the status update');
+reset role;
+drop trigger test_fail_funeral_audit on public.funeral_family_update_audit;
+drop function public.test_fail_funeral_audit();
 set local role anon;
 select throws_ok($$ select count(*) from public.funeral_family_update_requests $$, '42501', 'permission denied for table funeral_family_update_requests', 'anon cannot read private requests');
 select throws_ok($$ select count(*) from public.funeral_family_update_members $$, '42501', 'permission denied for table funeral_family_update_members', 'anon cannot read private family members');
 select throws_ok($$ select count(*) from public.funeral_family_update_audit $$, '42501', 'permission denied for table funeral_family_update_audit', 'anon cannot read private audit');
+select throws_ok($$ select * from public.update_funeral_family_request_status('00000000-0000-0000-0000-000000000000'::uuid, 'in_review', 'anon@coopsar.local') $$, '42501', 'permission denied for function update_funeral_family_request_status', 'anon cannot invoke private transition RPC');
 reset role;
 select * from finish();
 rollback;
