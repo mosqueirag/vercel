@@ -24,12 +24,12 @@ export async function POST(request: NextRequest) {
   });
   if (error) {
     console.error("Funeral family update storage failed", error.code);
-    return Response.json({ error: "No pudimos registrar la actualización. Intentá nuevamente o comunicate con la guardia." }, { status: error.code === "23505" ? 409 : 503 });
+    return Response.json({ error: "No pudimos registrar la actualización. Intentá nuevamente." }, { status: error.code === "23505" ? 409 : 503 });
   }
   const row = Array.isArray(data) ? data[0] : data;
   const created = row?.created !== false;
   if (value.journeyId && value.sessionId && isJourneyId(value.journeyId) && isSessionId(value.sessionId)) {
-    await recordJourneyEvent({ journeyId: value.journeyId, sessionId: value.sessionId, page: "/sepelio/actualizar-grupo-familiar", service: "funeral", eventType: created ? "form_completed" : "form_started", action: "funeral_family_update", result: created ? "stored" : "duplicate", metadata: { member_count: value.members.length, source: "sepelio_web" } });
+    await recordJourneyEvent({ journeyId: value.journeyId, sessionId: value.sessionId, page: "/sepelio/actualizar-grupo-familiar", service: "funeral", eventType: "form_completed", action: "funeral_family_update", result: created ? "stored" : "duplicate", metadata: { member_count: value.members.length, source: "sepelio_web" } });
   }
   return Response.json({ requestNumber: row?.request_number || requestNumber, stored: created, message: created ? "Recibimos tu solicitud. El equipo de Sepelio la revisará y se comunicará por el canal informado." : "Esta solicitud ya fue recibida recientemente." }, { status: created ? 201 : 200 });
 }
