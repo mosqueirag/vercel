@@ -50,3 +50,7 @@ Se mantiene `internet_plans` como fuente comercial única. No se publica por gua
 ## 4G.2.7 — Catálogo demo aislado de la oferta oficial
 
 Los planes y FAQ draft pueden utilizarse para una simulación comercial sólo en staging, con una etiqueta visible y allowlist explícita. No ingresan al resolver de cobertura, a COOPIA pública ni a Production; la cobertura sigue siendo la autoridad técnica y los valores no constituyen una oferta publicada.
+
+## 4G.3.1 — Gestión familiar con revisión humana
+
+La solicitud de actualización familiar se modela como un trámite privado y no como una afirmación de cobertura, asociación o elegibilidad. Un contacto `funeral/emergency` sólo se utiliza si está publicado en `public_contact_channels`; nunca se recupera un número histórico como fallback. Las referencias recuperadas del WordPress anterior se etiquetan como candidatas de staging y no se consultan en runtime productivo.

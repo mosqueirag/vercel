@@ -65,3 +65,7 @@ La landing de Internet mantiene utilidad comercial aun con cero planes publicado
 # Oferta Internet
 
 La oferta de Internet usa `internet_plans`; los precios, velocidades y beneficios públicos vienen exclusivamente de planes publicados. La cobertura técnica continúa decidiendo disponibilidad de domicilio y no se infiere desde la existencia de un plan. Publicar exige una tecnología comercial normalizada (`FTTH` o `WIRELESS`); `ADSL` legado y fixtures quedan fuera hasta validación comercial humana.
+
+## Fase 4G.3.1 — workflow privado de Sepelio
+
+`funeral_family_update_requests`, sus integrantes y su auditoría son registros operativos privados. El formulario público sólo envía información por una ruta server-side con validación, consentimiento, deduplicación y rate limit; `anon` y `authenticated` no tienen acceso directo. La bandeja `/admin/sepelio/planillas` reutiliza Google OAuth y `requireNewsAdmin()`. No se registra PII en journeys/analytics ni se publica contenido de Sepelio por esta fase.

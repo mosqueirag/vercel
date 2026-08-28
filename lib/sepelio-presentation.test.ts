@@ -8,7 +8,9 @@ describe("Sepelio presentation", () => {
     expect(guard.href).toBe("tel:+5492970000000");
   });
 
-  it("retains the existing fallback when the published channel is unavailable", () => {
-    expect(resolveFuneralGuard([]).isPublished).toBe(false);
+  it("does not expose a historical fallback when the published channel is unavailable", () => {
+    const guard = resolveFuneralGuard([]);
+    expect(guard.isPublished).toBe(false);
+    expect(guard.href).toBe("/contacto");
   });
 });
