@@ -21,7 +21,7 @@ set local role service_role;
 insert into public.funeral_document_upload_sessions (id, front_path, back_path, front_mime_type, back_mime_type, front_file_size, back_file_size, expires_at)
 values ('11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111/holder-dni-front.jpg', '11111111-1111-4111-8111-111111111111/holder-dni-back.jpg', 'image/jpeg', 'image/jpeg', 1, 1, now() + interval '10 minutes');
 select is((select count(*)::integer from public.funeral_document_upload_sessions), 1, 'service role can create an upload session');
-select throws_ok($$ select * from public.create_funeral_family_update_with_documents('11111111-1111-4111-8111-111111111111'::uuid, 'SEP-2026-4G320001', '', '', 'TEST', 'Test', '12345678', '0000000000', '', true, 'test', 'test-documents', '[{"full_name":"Member Test","dni":"23456789","birth_date":"1990-01-01","relationship":"other"}]'::jsonb) $$, '22023', 'required document metadata is required before the request is created');
+select throws_ok($$ select * from public.create_funeral_family_update_with_documents('11111111-1111-4111-8111-111111111111'::uuid, 'SEP-2026-4G320001', '', '', 'TEST', 'Test', '12345678', '0000000000', '', true, 'test', 'test-documents', '[{"full_name":"Member Test","dni":"23456789","birth_date":"1990-01-01","relationship":"other"}]'::jsonb) $$, '22023', 'required document upload is incomplete or invalid', 'required document metadata is required before the request is created');
 select is((select count(*)::integer from public.funeral_family_update_requests where request_number = 'SEP-2026-4G320001'), 0, 'incomplete uploads do not create requests');
 reset role;
 
