@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adminNavigationGroups } from "./admin-navigation";
-import { adminLoginCopy } from "./login-form";
+import { adminLoginCopy, adminLoginMessages } from "./login-form";
 
 describe("admin experience navigation", () => {
   it("keeps each visible destination unique", () => {
@@ -15,6 +15,6 @@ describe("admin experience navigation", () => {
 
   it("keeps login copy focused on authorization rather than implementation details", () => {
     expect(adminLoginCopy.authorizedOnly).toContain("administradores autorizados");
-    expect(adminLoginCopy.authorizedOnly.toLowerCase()).not.toContain("supabase");
+    expect(`${adminLoginCopy.authorizedOnly} ${Object.values(adminLoginMessages).join(" ")}`.toLowerCase()).not.toContain("supabase");
   });
 });
