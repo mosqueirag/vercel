@@ -50,7 +50,7 @@ Para cada plan que se quiera publicar, COOPSAR debe confirmar explícitamente:
 
 1. Nombre comercial final y `slug`.
 2. Segmento: Hogar, Comercio, Empresa o Todos.
-3. Tecnología comercial: sólo **FTTH** o **WIRELESS/Internet inalámbrico** son actualmente normalizables y publicables.
+3. Tecnología comercial: **FTTH**, **ADSL** o **WIRELESS/Internet inalámbrico** son normalizables y pueden publicarse únicamente después de una validación humana explícita.
 4. Velocidad de bajada y, si corresponde, subida.
 5. Precio mensual vigente y moneda, o que el precio queda deliberadamente pendiente de publicación.
 6. Precio/condiciones de instalación, si corresponden.
@@ -61,11 +61,10 @@ Los campos de precio, instalación, beneficios y condiciones pueden permanecer v
 
 ## Taxonomía y controles existentes
 
-- **FTTH** y **WIRELESS / Internet inalámbrico**: tecnologías que el control actual puede normalizar como candidatas a publicar, siempre que un humano confirme los datos comerciales.
-- **ADSL**: etiqueta histórica; queda bloqueada para publicación hasta confirmación comercial explícita.
+- **FTTH**, **ADSL** y **WIRELESS / Internet inalámbrico**: tecnologías que el control actual puede normalizar como candidatas a publicar, siempre que un humano confirme los datos comerciales.
 - **TEST**, fixture o tecnología desconocida: no publicable.
 - El Centro de Gestión permite editar borradores, publicar de forma explícita y archivar. Los estados publicados/archivados no se editan en vivo.
-- `internet_plan_admin_audit` existe como auditoría privada para las acciones `created`, `updated`, `published` y `archived`; no contiene solicitudes comerciales ni PII de clientes.
+- `internet_plan_admin_audit` existe como auditoría privada para las acciones `created`, `updated`, `published`, `archived` y `deleted`; la eliminación es soft delete y no contiene solicitudes comerciales ni PII de clientes.
 
 ## Comportamiento público verificado en código
 

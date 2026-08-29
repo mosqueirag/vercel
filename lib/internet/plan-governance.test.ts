@@ -16,7 +16,7 @@ describe("internet plan governance", () => {
     expect(canonicalCommercialTechnology("FTTH")).toBe("FTTH");
     expect(canonicalCommercialTechnology("Internet inalámbrico")).toBe("WIRELESS");
     expect(canonicalCommercialTechnology("inalambrico")).toBe("WIRELESS");
-    expect(canonicalCommercialTechnology("ADSL")).toBeNull();
+    expect(canonicalCommercialTechnology("ADSL")).toBe("ADSL");
   });
   it("blocks fixture, test, and unsupported technologies from publication while keeping them editable as drafts", () => {
     const fixture = { ...complete, name: "Plan TEST", technology: "TEST" };
@@ -25,8 +25,9 @@ describe("internet plan governance", () => {
     expect(canEditPlan("draft")).toBe(true);
     expect(canPublishInternetPlan({ ...complete, technology: "Satelital" })).toBe(false);
   });
-  it("does not publish legacy ADSL automatically", () => {
-    expect(canPublishInternetPlan({ ...complete, technology: "ADSL" })).toBe(false);
+  it("allows complete ADSL offers only after an explicit publication action", () => {
+    expect(canPublishInternetPlan({ ...complete, technology: "ADSL" })).toBe(true);
+    expect(canPublishInternetPlan({ ...complete, technology: "ADSL", audience: null })).toBe(false);
   });
   it("keeps benefits editor-safe and limits only empty or surplus entries", () => {
     expect(normalizePlanBenefits(["  Instalación sujeta a validación  ", "", "Soporte"])).toEqual(["Instalación sujeta a validación", "Soporte"]);

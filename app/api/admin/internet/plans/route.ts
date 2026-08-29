@@ -17,7 +17,7 @@ const values = (data: z.infer<typeof planSchema>) => ({
   installation_price: data.installationPrice ?? null, installation_notes: data.installationNotes || null, benefits: normalizePlanBenefits(data.benefits), conditions: data.conditions || null, sort_order: data.sortOrder,
 });
 
-async function audit(session: NonNullable<Awaited<ReturnType<typeof requireNewsAdmin>>>, planId: string, action: "created" | "updated" | "published" | "archived") {
+async function audit(session: NonNullable<Awaited<ReturnType<typeof requireNewsAdmin>>>, planId: string, action: "created" | "updated" | "published" | "archived" | "deleted") {
   const { error } = await session.admin.from("internet_plan_admin_audit").insert({ plan_id: planId, action, actor_email: session.email });
   if (error) console.warn("Internet plan audit was not recorded", { action, code: error.code });
   return !error;
@@ -26,7 +26,7 @@ async function audit(session: NonNullable<Awaited<ReturnType<typeof requireNewsA
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const { data, error } = await session.admin.from("internet_plans").select(columns).order("sort_order").order("updated_at", { ascending: false });
+  const { data, error } = await session.admin.from("internet_plans").select(columns).is("deleted_at", null).order("sort_order").order("updated_at", { ascending: false });
   return error ? Response.json({ error: "No pudimos cargar los planes." }, { status: 503 }) : Response.json({ plans: data });
 }
 
@@ -48,7 +48,7 @@ export async function PATCH(request: Request) {
   const parsed = actionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !parsed.data.plan.id) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 });
   const { plan, action } = parsed.data;
-  const { data: current, error: currentError } = await session.admin.from("internet_plans").select("id,status").eq("id", plan.id).maybeSingle();
+  const { data: current, error: currentError } = await session.admin.from("internet_plans").select("id,status,deleted_at").eq("id", plan.id).maybeSingle();
   if (currentError || !current) return Response.json({ error: "No encontramos el plan." }, { status: 404 });
   const status = current.status as InternetPlanStatus;
   if (action === "save") {
@@ -59,7 +59,7 @@ export async function PATCH(request: Request) {
   }
   if (action === "publish") {
     if (status !== "draft") return Response.json({ error: "Solo un borrador puede publicarse explícitamente." }, { status: 409 });
-    if (!canPublishInternetPlan({ name: plan.name, audience: plan.audience, technology: plan.technology ?? null, priceAmount: plan.priceAmount ?? null, currency: plan.currency ?? null })) return Response.json({ error: "Completá nombre, segmento y una tecnología comercial válida (FTTH o Internet inalámbrico) antes de publicar. El precio puede quedar pendiente." }, { status: 400 });
+    if (!canPublishInternetPlan({ name: plan.name, audience: plan.audience, technology: plan.technology ?? null, priceAmount: plan.priceAmount ?? null, currency: plan.currency ?? null })) return Response.json({ error: "Completá nombre, segmento y una tecnología comercial válida (Fibra óptica, ADSL o Internet inalámbrico) antes de publicar." }, { status: 400 });
     const { data, error } = await session.admin.from("internet_plans").update({ ...values(plan), status: "published", published_at: new Date().toISOString() }).eq("id", plan.id).eq("status", "draft").select(columns).single();
     if (error || !data) return Response.json({ error: "No pudimos publicar el plan." }, { status: 503 });
     return Response.json({ plan: data, auditRecorded: await audit(session, data.id, "published") });
@@ -68,4 +68,27 @@ export async function PATCH(request: Request) {
   const { data, error } = await session.admin.from("internet_plans").update({ status: "archived", published_at: null }).eq("id", plan.id).neq("status", "archived").select(columns).single();
   if (error || !data) return Response.json({ error: "No pudimos archivar el plan." }, { status: 503 });
   return Response.json({ plan: data, auditRecorded: await audit(session, data.id, "archived") });
+}
+
+const deleteSchema = z.object({ id: z.string().uuid() });
+
+/** Retains commercial history and only removes non-live plans from active catalogs. */
+export async function DELETE(request: Request) {
+  const session = await requireNewsAdmin();
+  if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
+  if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  const parsed = deleteSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Plan inválido." }, { status: 400 });
+
+  const { data: current, error: currentError } = await session.admin
+    .from("internet_plans").select("id,status,deleted_at").eq("id", parsed.data.id).maybeSingle();
+  if (currentError || !current) return Response.json({ error: "No encontramos el plan." }, { status: 404 });
+  if (current.deleted_at) return Response.json({ plan: current, unchanged: true });
+  if (current.status === "published") return Response.json({ error: "Archivá el plan antes de eliminarlo." }, { status: 409 });
+
+  const { data, error } = await session.admin.from("internet_plans")
+    .update({ status: "archived", published_at: null, deleted_at: new Date().toISOString(), deleted_by: session.email })
+    .eq("id", current.id).is("deleted_at", null).select(columns).single();
+  if (error || !data) return Response.json({ error: "No pudimos eliminar el plan." }, { status: 503 });
+  return Response.json({ plan: data, auditRecorded: await audit(session, data.id, "deleted") });
 }

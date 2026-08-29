@@ -9,6 +9,7 @@ export function InternetCommercialIntro({ plans, isDemo = false }: { plans: Publ
   const hasPlans = shouldShowGeneralInternetCatalog(plans);
   const technologies = [
     { key: "fiber", label: "Fibra óptica", matches: (technology: string | null) => technology === "FTTH" },
+    { key: "adsl", label: "ADSL", matches: (technology: string | null) => technology === "ADSL" },
     { key: "wireless", label: "Internet inalámbrico", matches: (technology: string | null) => /inal[aá]mbric|wireless/i.test(technology || "") },
   ].map((technology) => {
     const speeds = plans.filter((plan) => technology.matches(plan.technology)).map((plan) => plan.speed_down_mbps).filter((speed): speed is number => speed !== null);
@@ -25,7 +26,7 @@ export function InternetCommercialIntro({ plans, isDemo = false }: { plans: Publ
       <InternetPlanCatalog plans={plans} isDemo={isDemo} />
     </section>}
     <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Dos formas de conectarte</span><h2 id="internet-technologies-title">Conocé las alternativas de Internet COOPSAR.</h2></div><p>Elegí la forma de conectarte que querés conocer.</p></div>
+      <div className="internet-sales-heading"><div><span className="eyebrow">Formas de conectarte</span><h2 id="internet-technologies-title">Conocé las alternativas de Internet COOPSAR.</h2></div><p>Elegí la forma de conectarte que querés conocer.</p></div>
       <div className="internet-technology-options internet-sales-technology-options">
         {technologies.map((technology) => <article key={technology.key}><span>{technology.label}</span><h3>{technology.label}</h3><p>{technology.description}</p></article>)}
       </div>

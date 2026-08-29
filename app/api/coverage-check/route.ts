@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const margin = configuredCoverageMargin();
   const [{ data: addressRows, error: addressError }, { data: planRows, error: planError }] = await Promise.all([
     supabase.from("service_address_coverage").select("street_number,plan_name,technology,coverage_status").eq("street_normalized", streetNormalized).gte("street_number", parsed.data.number - margin).lte("street_number", parsed.data.number + margin).limit(100),
-    supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,status,published_at").eq("status", "published").lte("published_at", new Date().toISOString()),
+    supabase.from("internet_plans").select("id,name,slug,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,status,published_at").eq("status", "published").is("deleted_at", null).lte("published_at", new Date().toISOString()),
   ]);
   if (addressError || planError) {
     console.error("Coverage lookup failed", addressError?.code ?? planError?.code);

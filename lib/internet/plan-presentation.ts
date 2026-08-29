@@ -2,6 +2,7 @@ const commercialNames: Record<string, string> = {
   "plan-hogar-50-mb": "Hogar 50",
   "plan-hogar-100-mb": "Hogar 100",
   "inalambrico-20-mb": "Inalámbrico 20",
+  "plan-adsl-5-megas": "ADSL 5",
   "ftth-comercial-y-educacional-50-mb": "Comercial 50",
   "plan-comercial-100-mb-simetrico": "Comercial 100/100",
 };
@@ -33,7 +34,7 @@ export function getInternetPlanPresentation(plan: InternetPlanPresentationInput)
   return {
     displayName: commercialNames[plan.slug] || plan.name,
     audienceLabel: plan.audience === "home" ? "Hogar" : plan.audience === "business" ? "Comercial" : null,
-    technologyLabel: plan.technology === "FTTH" ? "Fibra óptica" : /inal[aá]mbric/i.test(plan.technology || "") ? "Internet inalámbrico" : plan.technology || "Internet",
+    technologyLabel: plan.technology === "FTTH" ? "Fibra óptica" : plan.technology === "ADSL" ? "ADSL" : /inal[aá]mbric/i.test(plan.technology || "") ? "Internet inalámbrico" : plan.technology || "Internet",
     speedLabel: download,
     secondaryLabel: upload || (plan.installation_price === 0 ? "Instalación sin costo" : plan.installation_notes || null),
   };

@@ -10,7 +10,9 @@ describe("Internet commercial product content", () => {
     expect(markup).toContain("Elegí la conexión que estás buscando.");
     expect(markup).toContain("Para mi hogar");
     expect(markup).toContain("Fibra óptica");
+    expect(markup).toContain("ADSL");
     expect(markup).toContain("Internet inalámbrico");
+    expect(markup).toContain("Formas de conectarte");
     expect(markup).not.toContain("Nuestros planes de Internet.");
   });
 

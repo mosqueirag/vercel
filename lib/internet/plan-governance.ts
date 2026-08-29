@@ -12,12 +12,12 @@ export type InternetPlanCommercialFields = {
 
 /**
  * Commercial publication uses the same technology normalizer as coverage.
- * ADSL remains a legacy technical label until a human confirms it is part of
- * the current public offer; only FTTH and WIRELESS are currently publishable.
+ * Commercial technology is normalized at the server boundary. Publication
+ * remains explicit and is never inferred from coverage alone.
  */
 export function canonicalCommercialTechnology(value: string | null | undefined) {
   const technology = canonicalTechnology(value);
-  return technology === "FTTH" || technology === "WIRELESS" ? technology : null;
+  return technology === "FTTH" || technology === "ADSL" || technology === "WIRELESS" ? technology : null;
 }
 
 /** Keeps publication rules server-side and independent from the admin form. */

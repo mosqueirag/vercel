@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(56);
+select plan(61);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -25,9 +25,10 @@ insert into public.help_articles (slug, title, category, content, status, publis
 insert into public.faqs (question, answer, category, status, published_at) values
   ('¿Pregunta pública?', 'Respuesta', 'Test', 'published', now()),
   ('¿Pregunta borrador?', 'Respuesta', 'Test', 'draft', null);
-insert into public.internet_plans (slug, name, audience, status, published_at) values
-  ('plan-publico-test', 'Plan público', 'home', 'published', now()),
-  ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null);
+insert into public.internet_plans (slug, name, audience, status, published_at, deleted_at) values
+  ('plan-publico-test', 'Plan público', 'home', 'published', now(), null),
+  ('plan-retirado-publico-test', 'Plan retirado público', 'home', 'published', now(), now()),
+  ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null, null);
 insert into public.internet_plans (slug, name, audience, status)
 values ('plan-incompleto-test', 'Plan incompleto', null, 'draft');
 insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
@@ -138,6 +139,18 @@ select lives_ok(
   $$ insert into public.internet_plan_admin_audit (plan_id, action, actor_email)
      select id, 'created', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-publico-test' $$,
   'service role can record an Internet plan administrative audit event'
+);
+select has_column('public', 'internet_plans', 'deleted_at', 'plans retain a soft-delete timestamp');
+select has_column('public', 'internet_plans', 'deleted_by', 'plans retain the deleting administrator');
+select lives_ok(
+  $$ insert into public.internet_plan_admin_audit (plan_id, action, actor_email)
+     select id, 'deleted', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-borrador-test' $$,
+  'service role can record a soft-delete plan audit event'
+);
+select is(
+  (select count(*)::integer from public.internet_plan_admin_audit where action = 'deleted'),
+  1,
+  'soft-delete audit action is constrained and retained privately'
 );
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,

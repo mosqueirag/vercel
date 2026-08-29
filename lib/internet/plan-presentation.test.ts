@@ -13,4 +13,8 @@ describe("getInternetPlanPresentation", () => {
   it("falls back to the managed plan name when the slug is not in the presentation map", () => {
     expect(getInternetPlanPresentation({ slug: "future-plan", name: "Plan futuro", audience: "", technology: "WIRELESS", speed_down_mbps: null, speed_up_mbps: null, installation_price: null, installation_notes: null }).displayName).toBe("Plan futuro");
   });
+
+  it("presents the approved ADSL catalog entry with its commercial label", () => {
+    expect(getInternetPlanPresentation({ slug: "plan-adsl-5-megas", name: "Plan ADSL 5 Megas", audience: "home", technology: "ADSL", speed_down_mbps: 5, speed_up_mbps: null, installation_price: null, installation_notes: null })).toMatchObject({ displayName: "ADSL 5", technologyLabel: "ADSL", speedLabel: "5 Mbps" });
+  });
 });

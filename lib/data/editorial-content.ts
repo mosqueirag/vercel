@@ -30,7 +30,7 @@ export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
     supabase.from("services").select("id,name,description,status"),
     supabase.from("help_articles").select("id,title,summary,content,status"),
     supabase.from("faqs").select("id,question,answer,status"),
-    supabase.from("internet_plans").select("id,name,description,conditions,installation_notes,status"),
+    supabase.from("internet_plans").select("id,name,description,conditions,installation_notes,status").is("deleted_at", null),
     supabase.from("public_contact_channels").select("id,label,public_value,purpose,status"),
     supabase.from("content_import_provenance").select("entity_type,entity_id,source_slug"),
     supabase.from("content_import_validation_queue").select("status,source_slugs,reason,priority"),

@@ -100,3 +100,7 @@ Sepelio separa la urgencia (guardia publicada) de la información y de la gesti�
 ## Fase 4G.3.2 — Documentación privada de DNI
 
 Pendiente de validación en staging: frente y dorso obligatorios del DNI del titular, carga directa por URLs firmadas al Storage privado, verificación atómica antes de crear la solicitud y acceso administrativo temporal auditado. No se definirá ni aplicará política de retención para Production sin decisión humana explícita.
+
+## 4G.2.8 — Limpieza de catálogo y soporte ADSL
+
+Pendiente de validación humana final: el catálogo consolidará los duplicados aprobados de Hogar 50, Inalámbrico 20 y ADSL 5 mediante soft delete auditable. ADSL se incorpora como alternativa comercial administrable, sin publicación automática. Hogar 100 queda fuera de este alcance hasta una decisión comercial humana.
