@@ -8,7 +8,7 @@ const { from, requireNewsAdmin, isSameOrigin } = vi.hoisted(() => ({
 
 vi.mock("../../../../../lib/admin-auth", () => ({ requireNewsAdmin, isSameOrigin }));
 
-import { DELETE, GET } from "./route";
+import { DELETE, GET, PATCH } from "./route";
 
 const planId = "6b7db2a3-15dc-44d2-a639-0bf795fca7d6";
 
@@ -83,5 +83,16 @@ describe("Internet plan soft deletion", () => {
     const response = await GET();
     expect(response.status).toBe(200);
     expect(list.is).toHaveBeenCalledWith("deleted_at", null);
+  });
+
+  it("does not allow a soft-deleted plan to be edited again", async () => {
+    const missing = planBuilder({ data: null, error: null });
+    from.mockReturnValue(missing);
+    const response = await PATCH(new Request("https://coopsar.test/api/admin/internet/plans", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "save", plan: { id: planId, slug: "plan-test", name: "Plan test", audience: "home", benefits: [] } }),
+    }));
+    expect(response.status).toBe(404);
+    expect(missing.is).toHaveBeenCalledWith("deleted_at", null);
   });
 });

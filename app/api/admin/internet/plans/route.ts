@@ -48,7 +48,7 @@ export async function PATCH(request: Request) {
   const parsed = actionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !parsed.data.plan.id) return Response.json({ error: "Revisá los datos del plan." }, { status: 400 });
   const { plan, action } = parsed.data;
-  const { data: current, error: currentError } = await session.admin.from("internet_plans").select("id,status,deleted_at").eq("id", plan.id).maybeSingle();
+  const { data: current, error: currentError } = await session.admin.from("internet_plans").select("id,status,deleted_at").eq("id", plan.id).is("deleted_at", null).maybeSingle();
   if (currentError || !current) return Response.json({ error: "No encontramos el plan." }, { status: 404 });
   const status = current.status as InternetPlanStatus;
   if (action === "save") {
