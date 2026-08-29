@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     if (!requestRow) return Response.json({ error: "No encontramos la solicitud." }, { status: 404 });
     const [{ data: members, error: membersError }, { data: audit, error: auditError }, { data: documents, error: documentsError }] = await Promise.all([
       session.admin.from("funeral_family_update_members").select("id,full_name,dni,birth_date,relationship").eq("request_id", id).order("created_at"),
-      session.admin.from("funeral_family_update_audit").select("id,action,old_status,new_status,actor_email,created_at").eq("request_id", id).order("created_at", { ascending: false }),
+      session.admin.from("funeral_family_update_audit").select("id,action,old_status,new_status,document_id,document_type,actor_email,created_at").eq("request_id", id).order("created_at", { ascending: false }),
       session.admin.from("funeral_family_update_documents").select("id,document_type,created_at").eq("request_id", id).order("created_at"),
     ]);
     if (membersError || auditError || documentsError) return Response.json({ error: "No pudimos cargar el detalle de la solicitud." }, { status: 503 });

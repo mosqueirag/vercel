@@ -26,7 +26,11 @@ describe("POST /api/admin/sepelio/planillas/documents", () => {
     const response = await POST(request);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ signedUrl: "https://signed.example/document", expiresIn: 90 });
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ action: "document_viewed" }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "document_viewed",
+      document_id: "11111111-1111-4111-8111-111111111111",
+      document_type: "holder_dni_front",
+    }));
   });
 
   it("does not reveal whether a document exists to an unauthenticated caller", async () => {

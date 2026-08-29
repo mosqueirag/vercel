@@ -1,10 +1,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(13);
 
 select ok((select public = false from storage.buckets where id = 'funeral-private-documents'), 'DNI bucket is private');
 select is((select file_size_limit from storage.buckets where id = 'funeral-private-documents'), 8388608::bigint, 'DNI bucket caps files at 8 MB');
 select is((select array_to_string(allowed_mime_types, ',') from storage.buckets where id = 'funeral-private-documents'), 'image/jpeg,image/png,image/webp', 'DNI bucket allows only image files');
+select has_column('public', 'funeral_family_update_audit', 'document_id', 'document view audits identify the private document metadata row');
+select has_column('public', 'funeral_family_update_audit', 'document_type', 'document view audits identify the private document type');
 
 set local role anon;
 select throws_ok($$ select count(*) from public.funeral_document_upload_sessions $$, '42501', 'permission denied for table funeral_document_upload_sessions', 'anon cannot read private upload sessions');
