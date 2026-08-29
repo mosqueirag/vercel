@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(61);
+select plan(60);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
