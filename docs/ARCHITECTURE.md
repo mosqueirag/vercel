@@ -71,6 +71,8 @@ El esquema reproducible consta de 13 migraciones canónicas, sincronizadas con `
 ## Fase 4G.3.1 — solicitudes familiares privadas
 
 `funeral_family_update_requests`, `funeral_family_update_members` y `funeral_family_update_audit` son **server only**. Sólo la API server-side invoca el RPC atómico de creación y sólo el Centro de Gestión autorizado consulta el detalle; no se conceden políticas de navegador ni se registra PII en analítica.
+
+La documentación obligatoria del DNI del titular se carga directamente desde el navegador mediante URLs firmadas de un único uso hacia el bucket privado `funeral-private-documents`. El servidor genera paths opacos y sesiones de carga de 15 minutos; el POST final sólo acepta el `uploadId` y el RPC atómico verifica frente, dorso, MIME y tamaño antes de crear la solicitud. La metadata de documentos, sesiones y objetos son **server only**. El CRM obtiene URLs de lectura temporales de 90 segundos exclusivamente mediante una route protegida y registra `document_viewed`; nunca expone paths, imágenes o documentación en el listado. La retención queda `pending human decision` antes de Production.
 # Administración de planes Internet
 
 `/admin/internet/planes` usa Google OAuth + `requireNewsAdmin()` y una route handler server-side. El sitio público usa `lib/data/public-content.ts`; cobertura consume la misma proyección publicada y filtra compatibilidad por tecnología. La publicación valida con el mismo normalizador técnico usado por cobertura y restringe la oferta comercial a `FTTH`/`WIRELESS`; `ADSL` se conserva como legado. El registro administrativo propuesto `internet_plan_admin_audit` es server-only y permanece pendiente de aplicación autorizada.

@@ -15,6 +15,7 @@ export const funeralMemberSchema = z.object({
 });
 
 export const funeralFamilyUpdateSchema = z.object({
+  uploadId: z.string().uuid(),
   memberNumber: z.string().trim().min(1).max(80),
   holderFullName: z.string().trim().min(3).max(120),
   holderDni: dni,
