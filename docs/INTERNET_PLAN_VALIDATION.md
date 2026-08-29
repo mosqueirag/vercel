@@ -79,3 +79,9 @@ Un responsable comercial de COOPSAR debe completar esta matriz, resolver los gru
 ## Simulación comercial de staging (4G.2.7)
 
 Los valores demo habilitan una revisión UX/CRO antes de la confirmación comercial humana. Sólo pueden mostrarse en staging, con estado draft y una allowlist de slugs. No deben publicarse, actualizarse ni tratarse como oferta oficial hasta completar la validación comercial.
+
+## Segmentación operativa de staging (4G.2.8.4)
+
+La experiencia de Internet filtra el catálogo de staging por segmento de manera estricta: **Hogar** sólo muestra registros `audience = home` y **Comercio** sólo `audience = business`. **Empresa** no reutiliza esos borradores: inicia una consulta comercial sin prometer velocidades, SLA, IP fija ni una oferta enterprise inexistente.
+
+El registro `ftth-comercial-y-educacional-50-mb` se clasifica como `business` sólo para la simulación de staging: conserva estado `draft`, precio, velocidad y condiciones sin cambios y continúa sujeto a confirmación humana antes de cualquier publicación. La Guardia de Comunicaciones es soporte y nunca se usa como canal de ventas; el panel Empresa sólo puede usar un canal `commercial_sales` publicado o, en su ausencia, el WhatsApp `general_contact` con el copy “Hablar con COOPSAR”.

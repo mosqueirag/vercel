@@ -1,5 +1,9 @@
 # Roadmap posterior al cierre de Fase 2
 
+## 4G.2.8.4 — experiencia interactiva de oferta de Internet
+
+La sección pública de tecnologías pasa de tarjetas estáticas a un único widget accesible y derivado del catálogo. La selección Hogar/Comercio filtra segmentos reales y Empresa tiene un recorrido consultivo separado hasta que exista una oferta enterprise administrable. La clasificación comercial de staging continúa en `draft`; no autoriza publicación ni cambios de precio.
+
 ## 4G.3 — Experiencia específica de Sepelio
 
 Pendiente de revisión visual: `/sepelio` prioriza la guardia publicada, ofrece orientación contextual con la única instancia global de COOPIA y oculta FAQ cuando no hay contenido publicado relevante. No incorpora formularios sensibles, beneficios no confirmados ni una fuente paralela de contactos.

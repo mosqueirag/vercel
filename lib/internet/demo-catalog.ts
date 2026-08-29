@@ -3,28 +3,27 @@ import type { InternetAudience } from "./audience-selection";
 
 export type CatalogAudience = InternetAudience | null;
 
-function audiencePriority(plan: PublicInternetPlan, audience: CatalogAudience) {
-  if (!audience) return 0;
+export function filterInternetCatalogByAudience(plans: readonly PublicInternetPlan[], audience: CatalogAudience) {
+  if (audience === "empresa") return [];
+  if (!audience) return [];
   const expectedAudience = audience === "hogar" ? "home" : "business";
-  if (plan.audience === expectedAudience) return 0;
-  if (!plan.audience) return 1;
-  return 2;
+  return plans.filter((plan) => plan.audience === expectedAudience);
 }
 
 /**
  * The staging catalogue may help compare draft products, but it never decides
- * technical coverage. Audience only changes the presentation order.
+ * technical coverage. Audience decides the public commercial category.
  */
 export function prioritizeInternetCatalogPlans(plans: readonly PublicInternetPlan[], audience: CatalogAudience) {
-  const ordered = [...plans].sort((left, right) => audiencePriority(left, audience) - audiencePriority(right, audience));
-  if (!audience) return { heading: "Planes de referencia", detail: null, preferred: ordered, alternatives: [] as PublicInternetPlan[] };
+  if (!audience) return { heading: "Elegí cómo vas a usar Internet", detail: "Así te mostramos las opciones correspondientes.", preferred: [] as PublicInternetPlan[], alternatives: [] as PublicInternetPlan[] };
+  if (audience === "empresa") return { heading: "Internet para empresas", detail: "Consultá alternativas según la ubicación y las necesidades de conectividad de tu empresa.", preferred: [] as PublicInternetPlan[], alternatives: [] as PublicInternetPlan[] };
 
-  const heading = audience === "hogar" ? "Planes para tu hogar" : audience === "comercio" ? "Planes para tu actividad comercial" : "Opciones para consultar para tu empresa";
-  const detail = audience === "empresa" ? "La oferta final se confirma con el equipo comercial." : null;
+  const heading = audience === "hogar" ? "Planes para tu hogar" : "Planes para tu comercio";
+  const detail = null;
   return {
     heading,
     detail,
-    preferred: ordered.filter((plan) => audiencePriority(plan, audience) < 2),
-    alternatives: ordered.filter((plan) => audiencePriority(plan, audience) === 2),
+    preferred: filterInternetCatalogByAudience(plans, audience),
+    alternatives: [] as PublicInternetPlan[],
   };
 }

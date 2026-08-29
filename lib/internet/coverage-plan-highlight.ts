@@ -45,3 +45,20 @@ export function pickReferencePlanForCoverage(
   const candidates = plans.filter((plan) => normalizedTechnologies.includes(normalizedTechnology(plan.technology)));
   return candidates.find((plan) => audienceMatches(plan, audience)) ?? candidates[0] ?? null;
 }
+
+export function pickPlanForCoverageAudience(
+  plans: readonly PublicInternetPlan[],
+  detail: InternetCoveragePlanDetail,
+  audience: InternetAudience | null,
+  isDemo: boolean,
+) {
+  if (!audience || audience === "empresa") return null;
+  const visiblePlans = plans.filter((plan) => audienceMatches(plan, audience));
+  const available = detail.commercialAvailability
+    ? visiblePlans.find((plan) => detail.availablePlanIds.includes(plan.id)) ?? null
+    : null;
+  if (available) return { plan: available, kind: "available" as const };
+  if (!isDemo) return null;
+  const reference = pickReferencePlanForCoverage(visiblePlans, detail.technologies, audience);
+  return reference ? { plan: reference, kind: "reference" as const } : null;
+}
