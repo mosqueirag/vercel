@@ -3,7 +3,7 @@ create extension if not exists pgtap with schema extensions;
 select plan(11);
 
 select ok((select public = false from storage.buckets where id = 'funeral-private-documents'), 'DNI bucket is private');
-select is((select file_size_limit from storage.buckets where id = 'funeral-private-documents'), 8388608, 'DNI bucket caps files at 8 MB');
+select is((select file_size_limit from storage.buckets where id = 'funeral-private-documents'), 8388608::bigint, 'DNI bucket caps files at 8 MB');
 select is((select array_to_string(allowed_mime_types, ',') from storage.buckets where id = 'funeral-private-documents'), 'image/jpeg,image/png,image/webp', 'DNI bucket allows only image files');
 
 set local role anon;
