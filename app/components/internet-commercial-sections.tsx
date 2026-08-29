@@ -5,8 +5,7 @@ import { InternetAudienceSelection } from "./internet-audience-selection";
 import { InternetCoopiaAction } from "./internet-coopia-action";
 import { InternetPlanCatalog } from "./internet-plan-catalog";
 
-export function InternetCommercialIntro({ plans, isDemo = false }: { plans: PublicInternetPlan[]; isDemo?: boolean }) {
-  const hasPlans = shouldShowGeneralInternetCatalog(plans);
+function technologyCards(plans: PublicInternetPlan[]) {
   const technologies = [
     { key: "fiber", label: "Fibra óptica", matches: (technology: string | null) => technology === "FTTH" },
     { key: "adsl", label: "ADSL", matches: (technology: string | null) => technology === "ADSL" },
@@ -16,22 +15,40 @@ export function InternetCommercialIntro({ plans, isDemo = false }: { plans: Publ
     const highestSpeed = speeds.length ? Math.max(...speeds) : null;
     return { ...technology, description: highestSpeed ? `Opciones de hasta ${highestSpeed} Mbps para consultar según tu domicilio.` : "La disponibilidad se confirma al consultar tu dirección." };
   });
+  return technologies;
+}
+
+export function InternetAudienceSection() {
+  return <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
+    <div className="internet-sales-heading"><div><span className="eyebrow">Elegí para quién es</span><h2 id="internet-product-title">¿Cómo vas a usar Internet?</h2></div><p>Usamos esta elección para ordenar las opciones que vas a ver.</p></div>
+    <InternetAudienceSelection />
+  </section>;
+}
+
+export function InternetPlansSection({ plans, isDemo = false }: { plans: PublicInternetPlan[]; isDemo?: boolean }) {
+  if (!shouldShowGeneralInternetCatalog(plans)) return null;
+  return <section className="internet-sales-section internet-sales-offer" id="planes" aria-labelledby="internet-options-title">
+    <div className="internet-sales-heading"><div><span className="eyebrow">Planes de referencia</span><h2 id="internet-options-title">Opciones para tu conexión.</h2></div></div>
+    <InternetPlanCatalog plans={plans} isDemo={isDemo} />
+  </section>;
+}
+
+export function InternetTechnologiesSection({ plans }: { plans: PublicInternetPlan[] }) {
+  const technologies = technologyCards(plans);
+  return <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
+    <div className="internet-sales-heading"><div><span className="eyebrow">Formas de conectarte</span><h2 id="internet-technologies-title">Tecnologías que podemos evaluar.</h2></div><p>La disponibilidad final se confirma al consultar tu domicilio.</p></div>
+    <div className="internet-technology-options internet-sales-technology-options">
+      {technologies.map((technology) => <article key={technology.key}><span>{technology.label}</span><p>{technology.description}</p></article>)}
+    </div>
+  </section>;
+}
+
+/** Preserves the legacy composed entry point for static consumers and tests. */
+export function InternetCommercialIntro({ plans, isDemo = false }: { plans: PublicInternetPlan[]; isDemo?: boolean }) {
   return <>
-    <section className="internet-sales-section internet-sales-product" aria-labelledby="internet-product-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Internet COOPSAR</span><h2 id="internet-product-title">Elegí la conexión que estás buscando.</h2></div><p>Seleccioná la opción que describe tu necesidad.</p></div>
-      <InternetAudienceSelection />
-    </section>
-    {hasPlans && <section className="internet-sales-section internet-sales-offer" id="planes" aria-labelledby="internet-options-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Planes de Internet</span><h2 id="internet-options-title">Nuestros planes de Internet.</h2></div></div>
-      <InternetPlanCatalog plans={plans} isDemo={isDemo} />
-    </section>}
-    <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
-      <div className="internet-sales-heading"><div><span className="eyebrow">Formas de conectarte</span><h2 id="internet-technologies-title">Conocé las alternativas de Internet COOPSAR.</h2></div><p>Elegí la forma de conectarte que querés conocer.</p></div>
-      <div className="internet-technology-options internet-sales-technology-options">
-        {technologies.map((technology) => <article key={technology.key}><span>{technology.label}</span><h3>{technology.label}</h3><p>{technology.description}</p></article>)}
-      </div>
-      <p className="internet-technology-disclaimer">La disponibilidad de cada tecnología se confirma al consultar tu dirección.</p>
-    </section>
+    <InternetAudienceSection />
+    <InternetPlansSection plans={plans} isDemo={isDemo} />
+    <InternetTechnologiesSection plans={plans} />
   </>;
 }
 

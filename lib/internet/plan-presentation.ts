@@ -1,10 +1,10 @@
 const commercialNames: Record<string, string> = {
-  "plan-hogar-50-mb": "Hogar 50",
-  "plan-hogar-100-mb": "Hogar 100",
-  "inalambrico-20-mb": "Inalámbrico 20",
-  "plan-adsl-5-megas": "ADSL 5",
-  "ftth-comercial-y-educacional-50-mb": "Comercial 50",
-  "plan-comercial-100-mb-simetrico": "Comercial 100/100",
+  "plan-hogar-50-mb": "Plan Hogar",
+  "plan-hogar-100-mb": "Plan Hogar",
+  "inalambrico-20-mb": "Plan Inalámbrico",
+  "plan-adsl-5-megas": "Plan ADSL",
+  "ftth-comercial-y-educacional-50-mb": "Plan Comercial",
+  "plan-comercial-100-mb-simetrico": "Plan Comercial Simétrico",
 };
 
 export type InternetPlanPresentation = {
@@ -36,6 +36,7 @@ export function getInternetPlanPresentation(plan: InternetPlanPresentationInput)
     audienceLabel: plan.audience === "home" ? "Hogar" : plan.audience === "business" ? "Comercial" : null,
     technologyLabel: plan.technology === "FTTH" ? "Fibra óptica" : plan.technology === "ADSL" ? "ADSL" : /inal[aá]mbric/i.test(plan.technology || "") ? "Internet inalámbrico" : plan.technology || "Internet",
     speedLabel: download,
-    secondaryLabel: upload || (plan.installation_price === 0 ? "Instalación sin costo" : plan.installation_notes || null),
+    // Internal migration notes stay in the managed record; they are not commercial copy.
+    secondaryLabel: upload || (plan.installation_price === 0 ? "Instalación sin costo" : null),
   };
 }
