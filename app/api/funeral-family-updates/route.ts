@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { funeralFamilyUpdateSchema } from "../../../lib/funeral-family-update";
+import { funeralDocumentsBucket } from "../../../lib/funeral-documents";
 import { isJourneyId, isSessionId } from "../../../lib/journey/ids";
 import { recordJourneyEvent } from "../../../lib/journey/recorder";
 import { consumeRateLimit, secureFingerprint } from "../../../lib/security/rate-limit";
@@ -16,18 +17,22 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseAdmin();
   if (!supabase) return Response.json({ error: "El canal de registro no está disponible." }, { status: 503 });
   const requestNumber = `SEP-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-  const { data, error } = await supabase.rpc("create_funeral_family_update_request", {
-    p_request_number: requestNumber, p_journey_id: value.journeyId || "", p_session_id: value.sessionId || "", p_member_number: value.memberNumber,
+  const { data, error } = await supabase.rpc("create_funeral_family_update_with_documents", {
+    p_upload_id: value.uploadId, p_request_number: requestNumber, p_journey_id: value.journeyId || "", p_session_id: value.sessionId || "", p_member_number: value.memberNumber,
     p_holder_full_name: value.holderFullName, p_holder_dni: value.holderDni, p_phone: value.phone, p_email: value.email || "", p_consent: value.consent,
     p_source: "sepelio_web", p_deduplication_key: fingerprint,
     p_members: value.members.map((member) => ({ full_name: member.fullName, dni: member.dni, birth_date: member.birthDate, relationship: member.relationship })),
   });
   if (error) {
     console.error("Funeral family update storage failed", error.code);
-    return Response.json({ error: "No pudimos registrar la actualización. Intentá nuevamente." }, { status: error.code === "23505" ? 409 : 503 });
+    return Response.json({ error: error.code === "22023" ? "Completá las dos imágenes del DNI antes de enviar." : "No pudimos registrar la actualización. Intentá nuevamente." }, { status: error.code === "22023" ? 400 : error.code === "23505" ? 409 : 503 });
   }
   const row = Array.isArray(data) ? data[0] : data;
   const created = row?.created !== false;
+  if (!created && row?.cleanup_required) {
+    const { data: upload } = await supabase.from("funeral_document_upload_sessions").select("front_path,back_path").eq("id", value.uploadId).maybeSingle();
+    if (upload) await supabase.storage.from(funeralDocumentsBucket).remove([upload.front_path, upload.back_path]);
+  }
   if (value.journeyId && value.sessionId && isJourneyId(value.journeyId) && isSessionId(value.sessionId)) {
     await recordJourneyEvent({ journeyId: value.journeyId, sessionId: value.sessionId, page: "/sepelio/actualizar-grupo-familiar", service: "funeral", eventType: "form_completed", action: "funeral_family_update", result: created ? "stored" : "duplicate", metadata: { member_count: value.members.length, source: "sepelio_web" } });
   }

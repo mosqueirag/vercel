@@ -54,3 +54,7 @@ Los planes y FAQ draft pueden utilizarse para una simulación comercial sólo en
 ## 4G.3.1 — Gestión familiar con revisión humana
 
 La solicitud de actualización familiar se modela como un trámite privado y no como una afirmación de cobertura, asociación o elegibilidad. Un contacto `funeral/emergency` sólo se utiliza si está publicado en `public_contact_channels`; nunca se recupera un número histórico como fallback. Las referencias recuperadas del WordPress anterior se etiquetan como candidatas de staging y no se consultan en runtime productivo.
+
+## 4G.3.2 — DNI privado, obligatorio y sin tránsito por Vercel
+
+El titular debe cargar frente y dorso del DNI para completar la actualización familiar. Los binarios no viajan por el route handler final ni se codifican como base64: el backend emite URLs firmadas de carga para paths opacos de un bucket Storage privado y después valida ambos objetos en una transacción antes de persistir la solicitud. El navegador no puede listar ni leer documentos, y el personal autorizado sólo recibe una URL temporal con auditoría `document_viewed`. No hay OCR, IA documental, enlaces públicos ni retención automática; la política de retención se decide antes de Production.

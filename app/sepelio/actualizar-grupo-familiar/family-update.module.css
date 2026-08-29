@@ -15,8 +15,9 @@
 .railSteps li::before { content: counter(next-steps); counter-increment: next-steps; display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #fff; color: #087752; font-size: 13px; font-weight: 800; }
 
 .form, .success { width: 100%; box-sizing: border-box; padding: clamp(24px, 3.5vw, 42px); border: 1px solid #d7e1da; border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(12,59,43,.045); }
-.steps { display: flex; max-width: 620px; gap: 10px; margin: 0 0 28px; padding: 0; list-style: none; }
-.steps li { display: flex; flex: 1; align-items: center; gap: 7px; color: #65746d; font-size: 14px; font-weight: 750; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 720px; gap: 10px; margin: 0 0 28px; padding: 0; list-style: none; }
+.steps li { display: flex; align-items: center; gap: 7px; min-width: 0; color: #65746d; font-size: 14px; font-weight: 750; }
+.steps li > span:first-child { display: grid; width: 22px; height: 22px; flex: 0 0 22px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; }
 .steps li:not(:last-child)::after { content: ""; height: 1px; flex: 1; background: #dce6df; }
 .steps li.active { color: #087752; }
 .steps li.active::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #c9f139; }
@@ -26,6 +27,8 @@
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .grid label, .form > label, .member label { display: grid; gap: 7px; font-size: 14px; font-weight: 700; }
 .grid input, .grid select { min-height: 46px; padding: 10px 12px; border: 1px solid #cfdcd3; border-radius: 10px; background: #fff; color: #102c23; font: inherit; }
+.grid input[aria-invalid="true"], .grid select[aria-invalid="true"], .document input[aria-invalid="true"], .consent input[aria-invalid="true"] { border-color: #bb392c; box-shadow: 0 0 0 3px rgba(187,57,44,.12); }
+.fieldError { color: #8d2a21; font-size: 13px; font-weight: 650; line-height: 1.35; }
 .wide { grid-column: 1 / -1; }
 .wide span { font-weight: 450; }
 .member { margin: 16px 0; padding: 18px; border: 1px solid #d7e1da; border-radius: 16px; background: #fbfcfa; }
@@ -33,6 +36,16 @@
 .memberHeading button, .addMember, .back { border: 1px solid #0b7255; border-radius: 999px; background: transparent; color: #075f47; font: inherit; font-weight: 750; cursor: pointer; }
 .memberHeading button, .addMember { padding: 8px 12px; }
 .addMember { margin-top: 8px; }
+.documents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.documentCard { display: grid; grid-template-rows: auto minmax(122px, 1fr) auto auto auto; gap: 10px; min-height: 290px; padding: 18px; border: 1px solid #d7e1da; border-radius: 16px; background: #fbfcfa; color: #29443b; }
+.documentEmpty { display: grid; min-height: 130px; place-items: center; border-radius: 11px; background: #eef4ef; color: #52645d; font-size: 14px; text-align: center; }
+.documentPreview { width: 100%; height: 136px; border-radius: 11px; object-fit: cover; }
+.documentStatus, .documentHint { color: #52645d; font-size: 14px; line-height: 1.45; }
+.documentPicker { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid #0b7255; border-radius: 999px; color: #075f47; font-size: 14px; font-weight: 800; cursor: pointer; }
+.documentPicker:hover { background: #eef8f1; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.visuallyHidden:focus + .documentPreview, .visuallyHidden:focus + .documentEmpty { outline: 3px solid #0b7255; outline-offset: 3px; }
+.documentHint { margin: 16px 0 0 !important; }
 .summary { margin: 0 0 20px; padding: 18px; border-radius: 14px; background: #eef4ef; }
 .summary p { margin: 6px 0 !important; }
 .consent { display: flex; gap: 10px; align-items: flex-start; color: #29443b; font-weight: 600; }
@@ -60,10 +73,13 @@
   .rail { grid-template-columns: 1fr; gap: 14px; }
   .railCard { padding: 20px; }
   .form, .success { padding: 22px; border-radius: 18px; }
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-  .steps li { justify-content: center; font-size: 11px; }
+  .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .steps li { justify-content: center; gap: 4px; font-size: 10px; text-align: center; }
+  .steps li > span:first-child { width: 19px; height: 19px; flex-basis: 19px; font-size: 10px; }
+  .stepLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .steps li:not(:last-child)::after { display: none; }
   .grid { grid-template-columns: 1fr; }
+  .documents { grid-template-columns: 1fr; }
   .wide { grid-column: auto; }
   .actions { flex-direction: column-reverse; }
   .actions button { width: 100%; justify-content: center; }

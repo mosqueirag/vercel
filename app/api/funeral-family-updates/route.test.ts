@@ -15,8 +15,9 @@ vi.mock("../../../lib/supabase", () => ({ createSupabaseAdmin: () => ({ rpc }) }
 import { POST } from "./route";
 
 const payload = {
-  memberNumber: "TEST-0001", holderFullName: "Titular Sintético", holderDni: "12345678", phone: "0000000000", email: "",
+  memberNumber: "TEST-0001", holderFullName: "Titular Sintético", holderDni: "12345678", phone: "0000000000", email: "titular@example.com",
   consent: true, journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78",
+  uploadId: "11111111-1111-4111-8111-111111111111",
   members: [{ fullName: "Integrante Sintético", dni: "87654321", birthDate: "2000-01-01", relationship: "other" }],
 };
 
@@ -36,5 +37,25 @@ describe("POST /api/funeral-family-updates", () => {
     const response = await POST(new NextRequest("https://coopsar.test/api/funeral-family-updates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }));
     expect(response.status).toBe(503);
     expect((await response.json()).error).not.toMatch(/guardia/i);
+  });
+
+  it("requires the private DNI upload session before creating a request", async () => {
+    const withoutUpload = { ...payload, uploadId: undefined };
+    const response = await POST(new NextRequest("https://coopsar.test/api/funeral-family-updates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(withoutUpload) }));
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, "", "correo-invalido"])("rejects an absent, empty, or invalid email without calling the RPC", async (email) => {
+    const response = await POST(new NextRequest("https://coopsar.test/api/funeral-family-updates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...payload, email }) }));
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects an incomplete private upload without exposing document details", async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: "22023" } });
+    const response = await POST(new NextRequest("https://coopsar.test/api/funeral-family-updates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }));
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(await response.json())).not.toMatch(/path|storage|token/i);
   });
 });

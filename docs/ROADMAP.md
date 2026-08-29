@@ -96,3 +96,7 @@ Se simplificó el relato de producto antes de cobertura para eliminar la repetic
 ## Fase 4G.3.1 — Sepelio: contenido y actualización de grupo familiar
 
 Sepelio separa la urgencia (guardia publicada) de la información y de la gestión privada. La actualización de grupo familiar crea una solicitud privada con trazabilidad y revisión humana; no confirma altas, bajas, cobertura ni condiciones contractuales. El contenido histórico de COOPSAR es candidato sólo en staging y requiere validación humana antes de publicación.
+
+## Fase 4G.3.2 — Documentación privada de DNI
+
+Pendiente de validación en staging: frente y dorso obligatorios del DNI del titular, carga directa por URLs firmadas al Storage privado, verificación atómica antes de crear la solicitud y acceso administrativo temporal auditado. No se definirá ni aplicará política de retención para Production sin decisión humana explícita.

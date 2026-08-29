@@ -18,12 +18,13 @@ export async function GET(request: Request) {
     const { data: requestRow, error } = await session.admin.from("funeral_family_update_requests").select(detailColumns).eq("id", id).maybeSingle();
     if (error) return Response.json({ error: "No pudimos cargar la solicitud." }, { status: 503 });
     if (!requestRow) return Response.json({ error: "No encontramos la solicitud." }, { status: 404 });
-    const [{ data: members, error: membersError }, { data: audit, error: auditError }] = await Promise.all([
+    const [{ data: members, error: membersError }, { data: audit, error: auditError }, { data: documents, error: documentsError }] = await Promise.all([
       session.admin.from("funeral_family_update_members").select("id,full_name,dni,birth_date,relationship").eq("request_id", id).order("created_at"),
-      session.admin.from("funeral_family_update_audit").select("id,action,old_status,new_status,actor_email,created_at").eq("request_id", id).order("created_at", { ascending: false }),
+      session.admin.from("funeral_family_update_audit").select("id,action,old_status,new_status,document_id,document_type,actor_email,created_at").eq("request_id", id).order("created_at", { ascending: false }),
+      session.admin.from("funeral_family_update_documents").select("id,document_type,created_at").eq("request_id", id).order("created_at"),
     ]);
-    if (membersError || auditError) return Response.json({ error: "No pudimos cargar el detalle de la solicitud." }, { status: 503 });
-    return Response.json({ request: requestRow, members: members || [], audit: audit || [] });
+    if (membersError || auditError || documentsError) return Response.json({ error: "No pudimos cargar el detalle de la solicitud." }, { status: 503 });
+    return Response.json({ request: requestRow, members: members || [], audit: audit || [], documents: documents || [] });
   }
   const status = new URL(request.url).searchParams.get("status");
   const search = safeSearch(new URL(request.url).searchParams.get("q"));
@@ -37,7 +38,12 @@ export async function GET(request: Request) {
     session.admin.from("funeral_family_update_requests").select("id", { count: "exact", head: true }).eq("status", "in_review"),
   ]);
   if (error || totalError || newError || reviewError) return Response.json({ error: "No pudimos cargar las solicitudes." }, { status: 503 });
-  const requests = (data || []).map((row) => ({ id: row.id, requestNumber: row.request_number, memberNumber: row.member_number, holderName: row.holder_full_name, dni: maskDni(row.holder_dni), phone: maskPhone(row.phone), status: row.status, createdAt: row.created_at }));
+  const ids = (data || []).map((row) => row.id);
+  const { data: documentRows, error: documentsError } = ids.length ? await session.admin.from("funeral_family_update_documents").select("request_id,document_type").in("request_id", ids) : { data: [], error: null };
+  if (documentsError) return Response.json({ error: "No pudimos cargar la documentación de las solicitudes." }, { status: 503 });
+  const documentTypes = new Map<string, Set<string>>();
+  (documentRows || []).forEach((document) => { const set = documentTypes.get(document.request_id) || new Set<string>(); set.add(document.document_type); documentTypes.set(document.request_id, set); });
+  const requests = (data || []).map((row) => ({ id: row.id, requestNumber: row.request_number, memberNumber: row.member_number, holderName: row.holder_full_name, dni: maskDni(row.holder_dni), phone: maskPhone(row.phone), status: row.status, createdAt: row.created_at, documentsComplete: documentTypes.get(row.id)?.size === 2 }));
   return Response.json({ requests, metrics: { total: total || 0, new: newCount || 0, inReview: reviewCount || 0 } });
 }
 
