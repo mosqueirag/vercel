@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.signOut();
     return NextResponse.redirect(new URL("/admin?error=unauthorized", request.url));
   }
-  const response = NextResponse.redirect(new URL("/admin/noticias", request.url));
+  const response = NextResponse.redirect(new URL("/admin/gestion", request.url));
   pending.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
   return response;
 }
