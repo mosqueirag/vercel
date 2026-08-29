@@ -60,11 +60,10 @@ export function validateMembersStep(members: MemberFields[]): FuneralStepErrors 
   return errors;
 }
 
-export function validateDocumentsStep(frontUploaded: boolean, backUploaded: boolean, selected: boolean): FuneralStepErrors {
+export function validateDocumentsStep(frontSelected: boolean, backSelected: boolean): FuneralStepErrors {
   const errors: FuneralStepErrors = {};
-  if (!frontUploaded) errors.front = "Cargá el frente del DNI.";
-  if (!backUploaded) errors.back = "Cargá el dorso del DNI.";
-  if (selected && (!frontUploaded || !backUploaded)) errors.documents = "Cargá la documentación antes de continuar.";
+  if (!frontSelected) errors.front = "Cargá el frente del DNI.";
+  if (!backSelected) errors.back = "Cargá el dorso del DNI.";
   return errors;
 }
 

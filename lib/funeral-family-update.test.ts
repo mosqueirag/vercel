@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { funeralFamilyUpdateSchema, funeralRelationshipLabel, validateHolderStep, validateMembersStep } from "./funeral-family-update";
+import { funeralFamilyUpdateSchema, funeralRelationshipLabel, validateDocumentsStep, validateHolderStep, validateMembersStep } from "./funeral-family-update";
 
 describe("funeral relationship presentation", () => {
   it("uses human Spanish labels without changing stored values", () => {
@@ -36,5 +36,12 @@ describe("family update step validation", () => {
     expect(funeralFamilyUpdateSchema.safeParse({ ...value, email: "invalido" }).success).toBe(false);
     expect(funeralFamilyUpdateSchema.safeParse({ ...value, members: [{ ...value.members[0], birthDate: "2999-01-01" }] }).success).toBe(false);
     expect(funeralFamilyUpdateSchema.safeParse(value).success).toBe(true);
+  });
+
+  it("shows only the missing DNI side in the documentation step", () => {
+    expect(validateDocumentsStep(false, false)).toEqual({ front: "Cargá el frente del DNI.", back: "Cargá el dorso del DNI." });
+    expect(validateDocumentsStep(true, false)).toEqual({ back: "Cargá el dorso del DNI." });
+    expect(validateDocumentsStep(false, true)).toEqual({ front: "Cargá el frente del DNI." });
+    expect(validateDocumentsStep(true, true)).toEqual({});
   });
 });
