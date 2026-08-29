@@ -104,3 +104,7 @@ Pendiente de validación en staging: frente y dorso obligatorios del DNI del tit
 ## 4G.2.8 — Limpieza de catálogo y soporte ADSL
 
 Pendiente de validación humana final: el catálogo consolidará los duplicados aprobados de Hogar 50, Inalámbrico 20 y ADSL 5 mediante soft delete auditable. ADSL se incorpora como alternativa comercial administrable, sin publicación automática. Hogar 100 queda fuera de este alcance hasta una decisión comercial humana.
+
+## 4G.2.8.1 — Corrección de canónicos de catálogo
+
+La migración correctiva restablece exclusivamente los canónicos aprobados de Hogar 50 e Inalámbrico 20 y retira sus dos variantes legacy con soft delete auditable. No publica planes, no altera ADSL 5 ni toma decisión sobre Hogar 100.
