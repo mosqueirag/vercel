@@ -1,5 +1,9 @@
 # Roadmap posterior al cierre de Fase 2
 
+## 4G.2.8.4 — experiencia interactiva de oferta de Internet
+
+La sección pública de tecnologías pasa de tarjetas estáticas a un único widget accesible y derivado del catálogo. La selección Hogar/Comercio filtra segmentos reales y Empresa tiene un recorrido consultivo separado hasta que exista una oferta enterprise administrable. La clasificación comercial de staging continúa en `draft`; no autoriza publicación ni cambios de precio.
+
 ## 4G.3 — Experiencia específica de Sepelio
 
 Pendiente de revisión visual: `/sepelio` prioriza la guardia publicada, ofrece orientación contextual con la única instancia global de COOPIA y oculta FAQ cuando no hay contenido publicado relevante. No incorpora formularios sensibles, beneficios no confirmados ni una fuente paralela de contactos.
@@ -100,3 +104,11 @@ Sepelio separa la urgencia (guardia publicada) de la información y de la gesti�
 ## Fase 4G.3.2 — Documentación privada de DNI
 
 Pendiente de validación en staging: frente y dorso obligatorios del DNI del titular, carga directa por URLs firmadas al Storage privado, verificación atómica antes de crear la solicitud y acceso administrativo temporal auditado. No se definirá ni aplicará política de retención para Production sin decisión humana explícita.
+
+## 4G.2.8 — Limpieza de catálogo y soporte ADSL
+
+Pendiente de validación humana final: el catálogo consolidará los duplicados aprobados de Hogar 50, Inalámbrico 20 y ADSL 5 mediante soft delete auditable. ADSL se incorpora como alternativa comercial administrable, sin publicación automática. Hogar 100 queda fuera de este alcance hasta una decisión comercial humana.
+
+## 4G.2.8.1 — Corrección de canónicos de catálogo
+
+La migración correctiva restablece exclusivamente los canónicos aprobados de Hogar 50 e Inalámbrico 20 y retira sus dos variantes legacy con soft delete auditable. No publica planes, no altera ADSL 5 ni toma decisión sobre Hogar 100.

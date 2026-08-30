@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { InternetCommercialAfterCoverage, InternetCommercialIntro } from "../components/internet-commercial-sections";
-import { InternetCoopiaAction } from "../components/internet-coopia-action";
+import { InternetAudienceSection, InternetCommercialAfterCoverage, InternetPlansSection, InternetTechnologiesSection } from "../components/internet-commercial-sections";
 import { InternetCenter } from "../components/internet-center";
 import { Contact, Footer, Header } from "../ui";
 import { getPublishedSitePage } from "../../lib/data/site-pages";
 import { getPublishedInternetFaqs, getPublishedInternetPlans, getStagingInternetDemoFaqs, getStagingInternetDemoPlans } from "../../lib/data/public-content";
-import { internetCanonicalPath, internetSalesHeroAction } from "../../lib/internet/public-experience";
+import { internetCanonicalPath } from "../../lib/internet/public-experience";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -23,7 +22,6 @@ export default async function InternetPage() {
   const visibleFaqs = faqs.length > 0 ? faqs : demoFaqs;
   const title = published?.title || "Conectate a lo que importa.";
   const intro = plans.length > 0 ? "Conocé nuestras opciones de Internet y elegí cómo querés continuar." : "Alternativas de conectividad para tu hogar, comercio o empresa.";
-  const heroAction = internetSalesHeroAction(catalogPlans.length > 0);
 
   return <main>
     <Header />
@@ -35,13 +33,15 @@ export default async function InternetPage() {
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="internet-page-actions">
-          <Link className="primary" href={heroAction.href}>{heroAction.label} <span aria-hidden="true">→</span></Link>
-          <InternetCoopiaAction>Ya soy cliente</InternetCoopiaAction>
+          <Link className="primary" href="#contratar">Consultar disponibilidad <span aria-hidden="true">→</span></Link>
+          {catalogPlans.length > 0 && <Link href="#planes">Ver planes</Link>}
         </div>
       </div>
     </section>
-    <InternetCommercialIntro plans={catalogPlans} isDemo={catalogIsDemo} />
     <InternetCenter variant="page" />
+    <InternetAudienceSection />
+    <InternetPlansSection plans={catalogPlans} isDemo={catalogIsDemo} />
+    <InternetTechnologiesSection />
     <InternetCommercialAfterCoverage faqs={visibleFaqs} />
     <Contact />
     <Footer />

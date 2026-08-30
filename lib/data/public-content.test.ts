@@ -23,6 +23,7 @@ describe("public contact query observability", () => {
       "plan-hogar-50-mb",
       "plan-hogar-100-mb",
       "inalambrico-20-mb",
+      "plan-adsl-5-megas",
       "ftth-comercial-y-educacional-50-mb",
       "plan-comercial-100-mb-simetrico",
     ]);

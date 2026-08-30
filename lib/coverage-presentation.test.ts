@@ -7,7 +7,7 @@ describe("coverage presentation", () => {
   });
 
   it("keeps nearby coverage as a technical validation", () => {
-    expect(coveragePresentation({ coverageSource: "nearby_address", coverageStatus: "nearby", technologies: ["FTTH"], commercialAvailability: false })).toMatchObject({ title: "Validación técnica requerida" });
+    expect(coveragePresentation({ coverageSource: "nearby_address", coverageStatus: "nearby", technologies: ["FTTH"], commercialAvailability: false })).toMatchObject({ eyebrow: null, title: "Validación técnica requerida" });
   });
 
   it("only presents an unavailable result as no confirmed coverage", () => {

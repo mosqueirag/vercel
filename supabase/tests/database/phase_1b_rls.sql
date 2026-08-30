@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(56);
+select plan(68);
 
 -- Fixtures are inserted as the database owner and rolled back at the end.
 insert into public.news_admins (email) values ('admin-test@coopsar.local');
@@ -25,11 +25,20 @@ insert into public.help_articles (slug, title, category, content, status, publis
 insert into public.faqs (question, answer, category, status, published_at) values
   ('¿Pregunta pública?', 'Respuesta', 'Test', 'published', now()),
   ('¿Pregunta borrador?', 'Respuesta', 'Test', 'draft', null);
-insert into public.internet_plans (slug, name, audience, status, published_at) values
-  ('plan-publico-test', 'Plan público', 'home', 'published', now()),
-  ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null);
+insert into public.internet_plans (slug, name, audience, status, published_at, deleted_at) values
+  ('plan-publico-test', 'Plan público', 'home', 'published', now(), null),
+  ('plan-retirado-publico-test', 'Plan retirado público', 'home', 'published', now(), now()),
+  ('plan-borrador-test', 'Plan borrador', 'home', 'draft', null, null);
 insert into public.internet_plans (slug, name, audience, status)
 values ('plan-incompleto-test', 'Plan incompleto', null, 'draft');
+insert into public.internet_plans (slug, name, audience, technology, speed_down_mbps, price_amount, currency, status, published_at, deleted_at)
+values
+  ('plan-hogar-50-mb', 'PLAN HOGAR 50 MB', 'home', 'FTTH', 50, 32279.41, 'ARS', 'draft', null, null),
+  ('hogar-50-megas-legacy', 'Plan Hogar 50 Megas', 'home', 'FTTH', 50, 29589, 'ARS', 'archived', null, now()),
+  ('inalambrico-20-mb', 'INALAMBRICO 20 MB', 'home', 'WIRELESS', 20, 27480.55, 'ARS', 'draft', null, null),
+  ('inalambrico-20-megas-legacy', 'Plan Inalámbrico 20 Megas', 'home', 'WIRELESS', 20, 25819, 'ARS', 'archived', null, now()),
+  ('plan-adsl-5-megas', 'Plan ADSL 5 Megas', 'home', 'ADSL', 5, 17402, 'ARS', 'draft', null, null),
+  ('adsl', 'ADSL', null, 'ADSL', null, 18984.90, 'ARS', 'archived', null, now());
 insert into public.coverage_zones (service_id, zone_name, availability, status, published_at) values
   ('10000000-0000-0000-0000-000000000001', 'Zona pública test', 'available', 'published', now()),
   ('10000000-0000-0000-0000-000000000001', 'Zona borrador test', 'unconfirmed', 'draft', null);
@@ -139,6 +148,30 @@ select lives_ok(
      select id, 'created', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-publico-test' $$,
   'service role can record an Internet plan administrative audit event'
 );
+select has_column('public', 'internet_plans', 'deleted_at', 'plans retain a soft-delete timestamp');
+select has_column('public', 'internet_plans', 'deleted_by', 'plans retain the deleting administrator');
+select lives_ok(
+  $$ insert into public.internet_plan_admin_audit (plan_id, action, actor_email)
+     select id, 'deleted', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-borrador-test' $$,
+  'service role can record a soft-delete plan audit event'
+);
+select is(
+  (select count(*)::integer from public.internet_plan_admin_audit where action = 'deleted'),
+  1,
+  'soft-delete audit action is constrained and retained privately'
+);
+select lives_ok(
+  $$ insert into public.internet_plan_admin_audit (plan_id, action, actor_email)
+     select id, 'restored', 'admin-test@coopsar.local' from public.internet_plans where slug = 'plan-hogar-50-mb' $$,
+  'service role can retain a corrective plan restoration audit event'
+);
+select is((select deleted_at is null from public.internet_plans where slug = 'plan-hogar-50-mb'), true, 'canonical Hogar 50 remains active');
+select is((select deleted_at is not null from public.internet_plans where slug = 'hogar-50-megas-legacy'), true, 'legacy Hogar 50 remains soft deleted');
+select is((select deleted_at is null from public.internet_plans where slug = 'inalambrico-20-mb'), true, 'canonical Inalámbrico 20 remains active');
+select is((select audience from public.internet_plans where slug = 'inalambrico-20-mb'), 'home', 'canonical Inalámbrico 20 has home audience');
+select is((select deleted_at is not null from public.internet_plans where slug = 'inalambrico-20-megas-legacy'), true, 'legacy Inalámbrico 20 remains soft deleted');
+select is((select deleted_at is null from public.internet_plans where slug = 'plan-adsl-5-megas'), true, 'canonical ADSL 5 remains active');
+select is((select deleted_at is not null from public.internet_plans where slug = 'adsl'), true, 'generic ADSL remains soft deleted');
 select throws_ok(
   $$ insert into public.internet_plans (slug, name, audience, status) values ('plan-publicacion-incompleta-test', 'Plan no publicable', null, 'published') $$,
   '23514',

@@ -50,7 +50,7 @@ Para cada plan que se quiera publicar, COOPSAR debe confirmar explícitamente:
 
 1. Nombre comercial final y `slug`.
 2. Segmento: Hogar, Comercio, Empresa o Todos.
-3. Tecnología comercial: sólo **FTTH** o **WIRELESS/Internet inalámbrico** son actualmente normalizables y publicables.
+3. Tecnología comercial: **FTTH**, **ADSL** o **WIRELESS/Internet inalámbrico** son normalizables y pueden publicarse únicamente después de una validación humana explícita.
 4. Velocidad de bajada y, si corresponde, subida.
 5. Precio mensual vigente y moneda, o que el precio queda deliberadamente pendiente de publicación.
 6. Precio/condiciones de instalación, si corresponden.
@@ -61,11 +61,10 @@ Los campos de precio, instalación, beneficios y condiciones pueden permanecer v
 
 ## Taxonomía y controles existentes
 
-- **FTTH** y **WIRELESS / Internet inalámbrico**: tecnologías que el control actual puede normalizar como candidatas a publicar, siempre que un humano confirme los datos comerciales.
-- **ADSL**: etiqueta histórica; queda bloqueada para publicación hasta confirmación comercial explícita.
+- **FTTH**, **ADSL** y **WIRELESS / Internet inalámbrico**: tecnologías que el control actual puede normalizar como candidatas a publicar, siempre que un humano confirme los datos comerciales.
 - **TEST**, fixture o tecnología desconocida: no publicable.
 - El Centro de Gestión permite editar borradores, publicar de forma explícita y archivar. Los estados publicados/archivados no se editan en vivo.
-- `internet_plan_admin_audit` existe como auditoría privada para las acciones `created`, `updated`, `published` y `archived`; no contiene solicitudes comerciales ni PII de clientes.
+- `internet_plan_admin_audit` existe como auditoría privada para las acciones `created`, `updated`, `published`, `archived` y `deleted`; la eliminación es soft delete y no contiene solicitudes comerciales ni PII de clientes.
 
 ## Comportamiento público verificado en código
 
@@ -80,3 +79,19 @@ Un responsable comercial de COOPSAR debe completar esta matriz, resolver los gru
 ## Simulación comercial de staging (4G.2.7)
 
 Los valores demo habilitan una revisión UX/CRO antes de la confirmación comercial humana. Sólo pueden mostrarse en staging, con estado draft y una allowlist de slugs. No deben publicarse, actualizarse ni tratarse como oferta oficial hasta completar la validación comercial.
+
+## Segmentación operativa de staging (4G.2.8.4)
+
+La experiencia de Internet filtra el catálogo de staging por segmento de manera estricta: **Hogar** sólo muestra registros `audience = home` y **Comercio** sólo `audience = business`. **Empresa** no reutiliza esos borradores: inicia una consulta comercial sin prometer velocidades, SLA, IP fija ni una oferta enterprise inexistente.
+
+El registro `ftth-comercial-y-educacional-50-mb` se clasifica como `business` sólo para la simulación de staging: conserva estado `draft`, precio, velocidad y condiciones sin cambios y continúa sujeto a confirmación humana antes de cualquier publicación. La Guardia de Comunicaciones es soporte y nunca se usa como canal de ventas; el panel Empresa sólo puede usar un canal `commercial_sales` publicado o, en su ausencia, el WhatsApp `general_contact` con el copy “Hablar con COOPSAR”.
+
+## Catálogo condicionado por cobertura (4G.2.8.5)
+
+Cuando el usuario ya consultó su domicilio, el catálogo combina la audiencia
+elegida con las tecnologías devueltas por el resolver técnico. Un resultado
+FTTH no muestra ADSL ni Internet inalámbrico; una tecnología vacía, `unknown`
+o `unavailable` no muestra ninguna oferta como compatible. Los planes con
+`technology = null` quedan fuera hasta una validación humana de su tecnología.
+Esta regla es de presentación: no modifica la cobertura técnica, precios,
+estados ni la oferta comercial publicada.

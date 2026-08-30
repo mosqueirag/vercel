@@ -43,4 +43,26 @@ describe("sanitizePublicCoopiaMetadata", () => {
     expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "internet_audience_selected", result: "empresa", service: "internet" }));
     expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/calle|altura|phone|email/i);
   });
+
+  it("records a coverage recommendation with only safe plan metadata", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "internet_plan_recommended", page: "/internet", service: "internet", result: "0c4b8c7a-1234-4bcd-8f90-123456789012", metadata: { plan_id: "0c4b8c7a-1234-4bcd-8f90-123456789012", technology: "ADSL", coverage_status: "available", commercial_availability: false } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "internet_plan_recommended", metadata: { plan_id: "0c4b8c7a-1234-4bcd-8f90-123456789012", technology: "ADSL", coverage_status: "available", commercial_availability: false } }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/calle|altura|email|phone/i);
+  });
+
+  it("records enterprise interest with aggregate context only", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "enterprise_internet_interest", page: "/internet", service: "internet", result: "empresa", metadata: { source: "enterprise_panel", technology: "FTTH", coverage_status: "available", street: "España", number: "451" } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "enterprise_internet_interest", metadata: { source: "enterprise_panel", technology: "FTTH", coverage_status: "available" } }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/España|451|street|number/i);
+  });
 });

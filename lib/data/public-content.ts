@@ -15,6 +15,7 @@ export const stagingInternetDemoPlanSlugs = [
   "plan-hogar-50-mb",
   "plan-hogar-100-mb",
   "inalambrico-20-mb",
+  "plan-adsl-5-megas",
   "ftth-comercial-y-educacional-50-mb",
   "plan-comercial-100-mb-simetrico",
 ] as const;
@@ -48,7 +49,7 @@ export async function getPublishedInternetPlans(): Promise<PublicInternetPlan[]>
   if (!supabase) return [];
   const { data, error } = await supabase.from("internet_plans")
     .select("id,slug,name,description,audience,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,installation_price,installation_notes,benefits,conditions")
-    .eq("status", "published").lte("published_at", now()).order("sort_order");
+    .eq("status", "published").is("deleted_at", null).lte("published_at", now()).order("sort_order");
   if (error) { console.error("Published plans query failed", error.code); return []; }
   return (data ?? []).map((plan) => ({ ...plan, benefits: Array.isArray(plan.benefits) ? plan.benefits.filter((item): item is string => typeof item === "string") : [] }));
 }
@@ -99,7 +100,7 @@ export async function getStagingInternetDemoPlans(): Promise<PublicInternetPlan[
   if (!supabase) return [];
   const { data, error } = await supabase.from("internet_plans")
     .select("id,slug,name,description,audience,technology,speed_down_mbps,speed_up_mbps,price_amount,currency,installation_price,installation_notes,benefits,conditions")
-    .eq("status", "draft")
+    .eq("status", "draft").is("deleted_at", null)
     .in("slug", [...stagingInternetDemoPlanSlugs])
     .order("sort_order");
   if (error) { console.error("Staging demo plans query failed", error.code); return []; }

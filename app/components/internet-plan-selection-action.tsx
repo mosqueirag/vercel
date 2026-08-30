@@ -4,7 +4,7 @@ import type { PublicInternetPlan } from "../../lib/data/public-content";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { createPlanSelectedEvent, createPlanSelectionDetail, selectInternetPlanEvent } from "../../lib/internet/plan-selection";
 
-export function InternetPlanSelectionAction({ plan, onSelected }: { plan: Pick<PublicInternetPlan, "id" | "slug" | "name" | "speed_down_mbps" | "speed_up_mbps" | "price_amount" | "currency">; onSelected?: () => void }) {
+export function InternetPlanSelectionAction({ plan, onSelected, label = "Quiero este plan" }: { plan: Pick<PublicInternetPlan, "id" | "slug" | "name" | "speed_down_mbps" | "speed_up_mbps" | "price_amount" | "currency">; onSelected?: () => void; label?: string }) {
   function selectPlan() {
     const journeyId = sessionStorage.getItem("coopsar-journey-id") || createJourneyId();
     const sessionId = sessionStorage.getItem("coopsar-session-id") || createSessionId();
@@ -18,5 +18,5 @@ export function InternetPlanSelectionAction({ plan, onSelected }: { plan: Pick<P
     document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   }
 
-  return <button type="button" className="primary internet-plan-choice" onClick={selectPlan}>Quiero este plan <span aria-hidden="true">→</span></button>;
+  return <button type="button" className="primary internet-plan-choice" onClick={selectPlan}>{label} <span aria-hidden="true">→</span></button>;
 }
