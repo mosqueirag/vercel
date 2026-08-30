@@ -11,11 +11,6 @@ export function resolveEnterpriseSalesWhatsApp(contacts: PublicContact[]) {
   return general ? { contact: general, label: "Hablar con COOPSAR" } : null;
 }
 
-function scrollToCoverage() {
-  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-}
-
 export function InternetEnterprisePanel() {
   const contacts = usePublicContacts();
   const [coverage, setCoverage] = useState<InternetCoveragePlanDetail | null>(null);
@@ -27,12 +22,12 @@ export function InternetEnterprisePanel() {
     return () => window.removeEventListener(internetCoveragePlanEvent, listener);
   }, []);
 
-  function track(eventType: "enterprise_internet_interest" | "enterprise_whatsapp_click") {
+  function track() {
     const journeyId = sessionStorage.getItem("coopsar-journey-id");
     const sessionId = sessionStorage.getItem("coopsar-session-id");
     if (!journeyId || !sessionId) return;
     const technology = coverage?.technologies.find((item) => item === "FTTH" || item === "ADSL" || item === "WIRELESS") ?? null;
-    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ journeyId, sessionId, eventType, page: "/internet", service: "internet", result: "empresa", metadata: { source: "enterprise_panel", coverage_status: coverage?.coverageStatus, technology } }) });
+    void fetch("/api/journey/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ journeyId, sessionId, eventType: "enterprise_whatsapp_click", page: "/internet", service: "internet", result: "empresa", metadata: { source: "enterprise_panel", coverage_status: coverage?.coverageStatus, technology } }) });
   }
 
   const href = salesChannel ? `https://wa.me/${salesChannel.contact.value.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quiero consultar Internet para mi empresa.")}` : null;
@@ -40,8 +35,8 @@ export function InternetEnterprisePanel() {
 
   return <section className="internet-enterprise-panel" aria-labelledby="internet-enterprise-title">
     <span className="eyebrow eyebrow-light">Soluciones para empresas</span><h3 id="internet-enterprise-title">Internet para empresas</h3>
-    <p>Consultá cobertura y alternativas según la ubicación y las necesidades de conectividad de tu empresa.</p>
+    <p>Consultá alternativas y velocidades según las necesidades de conectividad de tu empresa.</p>
     {detectedTechnology && <p className="internet-enterprise-coverage"><strong>Tecnología detectada:</strong> {detectedTechnology}</p>}
-    <div className="internet-enterprise-actions"><button type="button" className="button-light" onClick={() => { track("enterprise_internet_interest"); scrollToCoverage(); }}>Consultar disponibilidad <span aria-hidden="true">→</span></button>{salesChannel && href && <a href={href} onClick={() => track("enterprise_whatsapp_click")}>{salesChannel.label} <span aria-hidden="true">→</span></a>}</div>
+    {salesChannel && href && <div className="internet-enterprise-actions"><a href={href} onClick={track}>{salesChannel.label} <span aria-hidden="true">→</span></a></div>}
   </section>;
 }

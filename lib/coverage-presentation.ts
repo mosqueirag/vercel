@@ -39,7 +39,7 @@ export function coveragePresentation(coverage: CoveragePresentationInput | null)
     return { eyebrow: "Zona habilitada — sujeto a validación técnica", title: "Internet disponible en tu zona", showTechnologies: true };
   }
   if (coverage?.coverageStatus === "nearby" || coverage?.coverageStatus === "planned") {
-    return { eyebrow: "Validación requerida", title: "Validación técnica requerida", showTechnologies: true };
+    return { eyebrow: null, title: "Validación técnica requerida", showTechnologies: true };
   }
   if (coverage?.coverageStatus === "unavailable" || coverage?.coverageStatus === "unknown") {
     return { eyebrow: "Información de cobertura", title: "Sin cobertura confirmada", showTechnologies: false };

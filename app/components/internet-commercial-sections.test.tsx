@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { InternetCommercialIntro } from "./internet-commercial-sections";
 import { InternetPlanCatalog } from "./internet-plan-catalog";
-import { resolveEnterpriseSalesWhatsApp } from "./internet-enterprise-panel";
+import { InternetEnterprisePanel, resolveEnterpriseSalesWhatsApp } from "./internet-enterprise-panel";
 
 describe("Internet commercial product content", () => {
   it("keeps product, audience, and technology content visible with zero published plans", () => {
@@ -15,6 +15,7 @@ describe("Internet commercial product content", () => {
     expect(markup).toContain("Internet inalámbrico");
     expect(markup).toContain("Formas de conectarte");
     expect((markup.match(/role="tab"/g) ?? []).length).toBe(3);
+    expect(markup).not.toMatch(/Mbps|Velocidades en catálogo|Consultar mi domicilio/);
     expect(markup).not.toContain("Nuestros planes de Internet.");
   });
 
@@ -46,5 +47,10 @@ describe("Internet commercial product content", () => {
     expect(resolveEnterpriseSalesWhatsApp([guard, general])).toEqual({ contact: general, label: "Hablar con COOPSAR" });
     const commercial = { id: "commercial", service: "commercial", channelType: "whatsapp", purpose: "commercial_sales", label: "Ventas", value: "5492222222222" };
     expect(resolveEnterpriseSalesWhatsApp([general, commercial])?.label).toBe("Hablar con Comercial");
+  });
+
+  it("keeps the enterprise journey focused on published sales contact without a second coverage CTA", () => {
+    const markup = renderToStaticMarkup(<InternetEnterprisePanel />);
+    expect(markup).not.toContain("Consultar disponibilidad");
   });
 });

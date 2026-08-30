@@ -1,6 +1,7 @@
 import type { PublicInternetPlan } from "../data/public-content";
 import type { InternetAudience } from "./audience-selection";
 import type { PublicCoverageResult } from "./coverage-handoff";
+import { filterPlansForCoverageAndAudience, normalizeInternetTechnology } from "./demo-catalog";
 
 /**
  * This browser-only event carries the server-authoritative coverage result to
@@ -28,22 +29,16 @@ function audienceMatches(plan: PublicInternetPlan, audience: InternetAudience | 
   return audience === "hogar" ? plan.audience === "home" : plan.audience === "business";
 }
 
-function normalizedTechnology(technology: string | null) {
-  const value = (technology || "").toUpperCase();
-  if (value === "FTTH" || value === "ADSL" || value === "WIRELESS") return value;
-  if (/INAL.MBRIC/.test(value)) return "WIRELESS";
-  return value;
-}
-
 /** Staging-only presentation helper. It never changes technical coverage. */
 export function pickReferencePlanForCoverage(
   plans: readonly PublicInternetPlan[],
   technologies: readonly string[],
   audience: InternetAudience | null,
 ) {
-  const normalizedTechnologies = technologies.map((technology) => normalizedTechnology(technology));
-  const candidates = plans.filter((plan) => normalizedTechnologies.includes(normalizedTechnology(plan.technology)));
-  return candidates.find((plan) => audienceMatches(plan, audience)) ?? candidates[0] ?? null;
+  const normalizedTechnologies = technologies.map((technology) => normalizeInternetTechnology(technology));
+  const candidates = plans.filter((plan) => normalizedTechnologies.includes(normalizeInternetTechnology(plan.technology)));
+  if (audience) return candidates.find((plan) => audienceMatches(plan, audience)) ?? null;
+  return candidates[0] ?? null;
 }
 
 export function pickPlanForCoverageAudience(
@@ -53,7 +48,7 @@ export function pickPlanForCoverageAudience(
   isDemo: boolean,
 ) {
   if (!audience || audience === "empresa") return null;
-  const visiblePlans = plans.filter((plan) => audienceMatches(plan, audience));
+  const visiblePlans = filterPlansForCoverageAndAudience(plans, audience, detail);
   const available = detail.commercialAvailability
     ? visiblePlans.find((plan) => detail.availablePlanIds.includes(plan.id)) ?? null
     : null;

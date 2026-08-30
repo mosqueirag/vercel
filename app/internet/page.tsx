@@ -41,7 +41,7 @@ export default async function InternetPage() {
     <InternetCenter variant="page" />
     <InternetAudienceSection />
     <InternetPlansSection plans={catalogPlans} isDemo={catalogIsDemo} />
-    <InternetTechnologiesSection plans={catalogPlans} />
+    <InternetTechnologiesSection />
     <InternetCommercialAfterCoverage faqs={visibleFaqs} />
     <Contact />
     <Footer />

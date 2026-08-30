@@ -40,7 +40,9 @@ export function InternetPlanCatalog({ plans, isDemo = false }: { plans: PublicIn
     return () => window.removeEventListener(internetCoveragePlanEvent, listener);
   }, []);
 
+  const { heading, detail, preferred } = useMemo(() => prioritizeInternetCatalogPlans(plans, audience, coverageDetail), [plans, audience, coverageDetail]);
   const coverageMatch = useMemo(() => coverageDetail ? pickPlanForCoverageAudience(plans, coverageDetail, audience, isDemo) : null, [audience, coverageDetail, isDemo, plans]);
+  const effectiveSelectedPlanId = preferred.some((plan) => plan.id === selectedPlanId) ? selectedPlanId : null;
 
   useEffect(() => {
     if (!coverageDetail || !coverageMatch) return;
@@ -56,12 +58,10 @@ export function InternetPlanCatalog({ plans, isDemo = false }: { plans: PublicIn
     }
   }, [audience, coverageDetail, coverageMatch]);
 
-  const { heading, detail, preferred } = useMemo(() => prioritizeInternetCatalogPlans(plans, audience), [plans, audience]);
-
   function card(plan: PublicInternetPlan) {
     const price = formatPrice(plan);
     const isHighlighted = coverageMatch?.plan.id === plan.id;
-    const isSelected = isHighlighted || selectedPlanId === plan.id;
+    const isSelected = isHighlighted || effectiveSelectedPlanId === plan.id;
     const isAvailable = coverageMatch?.kind === "available" && coverageDetail?.availablePlanIds.includes(plan.id);
     const presentation = getInternetPlanPresentation(plan);
     return <article className={`internet-sales-plan ${isSelected ? "is-selected" : ""} ${isHighlighted ? "is-coverage-available" : ""}`} key={plan.id}>
@@ -82,6 +82,6 @@ export function InternetPlanCatalog({ plans, isDemo = false }: { plans: PublicIn
   return <div className="internet-plan-catalog">
     {isDemo && <div className="internet-demo-notice"><strong>Simulación comercial</strong><span>Valores y condiciones en proceso de validación.</span></div>}
     <div className="internet-catalog-heading"><h3>{heading}</h3>{detail && <p>{detail}</p>}</div>
-    {audience === "empresa" ? <InternetEnterprisePanel /> : preferred.length > 0 ? <div className="internet-sales-plans">{preferred.map(card)}</div> : <div className="internet-catalog-empty" role="status"><p>{audience ? "Todavía no hay una oferta publicada para esta categoría." : "Elegí cómo vas a usar Internet para ver las opciones correspondientes."}</p></div>}
+    {audience === "empresa" ? <InternetEnterprisePanel /> : preferred.length > 0 ? <div className="internet-sales-plans">{preferred.map(card)}</div> : <div className="internet-catalog-empty" role="status"><p>{coverageDetail && (coverageDetail.coverageStatus === "unavailable" || coverageDetail.coverageStatus === "unknown" || coverageDetail.technologies.length === 0) ? "No tenemos una tecnología confirmada para este domicilio." : audience ? "Todavía no hay una oferta publicada para esta categoría." : "Elegí cómo vas a usar Internet para ver las opciones correspondientes."}</p></div>}
   </div>;
 }

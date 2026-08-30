@@ -85,3 +85,13 @@ Los valores demo habilitan una revisión UX/CRO antes de la confirmación comerc
 La experiencia de Internet filtra el catálogo de staging por segmento de manera estricta: **Hogar** sólo muestra registros `audience = home` y **Comercio** sólo `audience = business`. **Empresa** no reutiliza esos borradores: inicia una consulta comercial sin prometer velocidades, SLA, IP fija ni una oferta enterprise inexistente.
 
 El registro `ftth-comercial-y-educacional-50-mb` se clasifica como `business` sólo para la simulación de staging: conserva estado `draft`, precio, velocidad y condiciones sin cambios y continúa sujeto a confirmación humana antes de cualquier publicación. La Guardia de Comunicaciones es soporte y nunca se usa como canal de ventas; el panel Empresa sólo puede usar un canal `commercial_sales` publicado o, en su ausencia, el WhatsApp `general_contact` con el copy “Hablar con COOPSAR”.
+
+## Catálogo condicionado por cobertura (4G.2.8.5)
+
+Cuando el usuario ya consultó su domicilio, el catálogo combina la audiencia
+elegida con las tecnologías devueltas por el resolver técnico. Un resultado
+FTTH no muestra ADSL ni Internet inalámbrico; una tecnología vacía, `unknown`
+o `unavailable` no muestra ninguna oferta como compatible. Los planes con
+`technology = null` quedan fuera hasta una validación humana de su tecnología.
+Esta regla es de presentación: no modifica la cobertura técnica, precios,
+estados ni la oferta comercial publicada.

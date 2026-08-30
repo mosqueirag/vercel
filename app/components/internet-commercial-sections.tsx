@@ -19,10 +19,10 @@ export function InternetPlansSection({ plans, isDemo = false }: { plans: PublicI
   </section>;
 }
 
-export function InternetTechnologiesSection({ plans }: { plans: PublicInternetPlan[] }) {
+export function InternetTechnologiesSection() {
   return <section className="internet-sales-section internet-sales-technologies" aria-labelledby="internet-technologies-title">
     <div className="internet-sales-heading"><div><span className="eyebrow">Formas de conectarte</span><h2 id="internet-technologies-title">Tecnologías que podemos evaluar.</h2></div><p>La disponibilidad final se confirma al consultar tu domicilio.</p></div>
-    <InternetTechnologyWidget plans={plans} />
+    <InternetTechnologyWidget />
   </section>;
 }
 
@@ -31,7 +31,7 @@ export function InternetCommercialIntro({ plans, isDemo = false }: { plans: Publ
   return <>
     <InternetAudienceSection />
     <InternetPlansSection plans={plans} isDemo={isDemo} />
-    <InternetTechnologiesSection plans={plans} />
+    <InternetTechnologiesSection />
   </>;
 }
 

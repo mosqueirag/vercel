@@ -23,6 +23,12 @@ describe("coverage plan highlighting", () => {
     expect(pickPlanForCoverageAudience(plans, detail, "empresa", true)).toBeNull();
   });
 
+  it("does not retain an incompatible selection after coverage changes technology", () => {
+    const detail = { coverageStatus: "available" as const, commercialAvailability: true, technologies: ["FTTH"], availablePlanIds: ["ftth-home"], preferredPlanId: "ftth-home" };
+    expect(pickPlanForCoverageAudience(plans, detail, "hogar", true)?.plan.id).toBe("ftth-home");
+    expect(pickPlanForCoverageAudience(plans, { ...detail, technologies: ["ADSL"], availablePlanIds: ["adsl-home"] }, "hogar", true)?.plan.id).toBe("adsl-home");
+  });
+
   it("creates a coverage event without address or contact fields", () => {
     const detail = createInternetCoveragePlanDetail({ coverageStatus: "available", coverageSource: "exact_address", technology: "FTTH", technologies: ["FTTH"], commercialAvailability: true, plans: [plans[0]], nextAction: "installation", message: "ok", zoneMatch: false });
     expect(detail).toEqual({ coverageStatus: "available", commercialAvailability: true, technologies: ["FTTH"], availablePlanIds: ["ftth-home"], preferredPlanId: "ftth-home" });

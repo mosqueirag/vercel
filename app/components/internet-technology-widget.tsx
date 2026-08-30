@@ -1,18 +1,12 @@
 "use client";
 
 import { useId, useState, type KeyboardEvent } from "react";
-import type { PublicInternetPlan } from "../../lib/data/public-content";
 import { getInternetTechnologyPresentation, internetTechnologies, type InternetTechnologyId } from "../../lib/internet/technology-presentation";
 
-function scrollToCoverage() {
-  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-}
-
-export function InternetTechnologyWidget({ plans }: { plans: PublicInternetPlan[] }) {
+export function InternetTechnologyWidget() {
   const [selected, setSelected] = useState<InternetTechnologyId>("FTTH");
   const tabListId = useId();
-  const detail = getInternetTechnologyPresentation(plans, selected);
+  const detail = getInternetTechnologyPresentation(selected);
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, technology: InternetTechnologyId) {
     const currentIndex = internetTechnologies.findIndex((item) => item.id === technology);
@@ -40,13 +34,10 @@ export function InternetTechnologyWidget({ plans }: { plans: PublicInternetPlan[
         onKeyDown={(event) => onKeyDown(event, technology.id)}
       >{technology.label}</button>)}
     </div>
-    <section id={`${tabListId}-panel`} role="tabpanel" aria-live="polite" className="internet-technology-detail">
+    <section id={`${tabListId}-panel`} role="tabpanel" aria-live="polite" className={`internet-technology-detail is-${detail.visual}`}>
+      <div className="internet-technology-visual" aria-hidden="true"><span /><i /><b /></div>
       <div><span className="eyebrow">{detail.label}</span><h3>{detail.heading}</h3><p>{detail.description}</p></div>
-      <div className="internet-technology-facts">
-        <p><strong>Velocidades en catálogo</strong>{detail.speeds.length ? <span>{detail.speeds.map((speed) => `${speed} Mbps`).join(" · ")}</span> : <span>Disponibilidad a confirmar.</span>}</p>
-        <p><strong>Disponibilidad</strong><span>Se confirma al consultar tu domicilio.</span></p>
-      </div>
-      <button type="button" className="primary" onClick={scrollToCoverage}>Consultar mi domicilio <span aria-hidden="true">→</span></button>
+      <ul className="internet-technology-facts">{detail.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
     </section>
   </div>;
 }
