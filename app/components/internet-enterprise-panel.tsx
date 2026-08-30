@@ -37,6 +37,6 @@ export function InternetEnterprisePanel() {
     <span className="eyebrow eyebrow-light">Soluciones para empresas</span><h3 id="internet-enterprise-title">Internet para empresas</h3>
     <p>Consultá alternativas y velocidades según las necesidades de conectividad de tu empresa.</p>
     {detectedTechnology && <p className="internet-enterprise-coverage"><strong>Tecnología detectada:</strong> {detectedTechnology}</p>}
-    {salesChannel && href && <div className="internet-enterprise-actions"><a href={href} onClick={track}>{salesChannel.label} <span aria-hidden="true">→</span></a></div>}
+    {salesChannel && href && <div className="internet-enterprise-actions"><a className="public-action-button" href={href} onClick={track}>{salesChannel.label} <span aria-hidden="true">→</span></a></div>}
   </section>;
 }

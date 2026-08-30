@@ -33,8 +33,8 @@ export default async function InternetPage() {
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="internet-page-actions">
-          <Link className="primary" href="#contratar">Consultar disponibilidad <span aria-hidden="true">→</span></Link>
-          {catalogPlans.length > 0 && <Link href="#planes">Ver planes</Link>}
+          <Link className="primary public-action-button" href="#contratar">Consultar disponibilidad <span aria-hidden="true">→</span></Link>
+          {catalogPlans.length > 0 && <Link className="public-action-button" href="#planes">Ver planes <span aria-hidden="true">→</span></Link>}
         </div>
       </div>
     </section>

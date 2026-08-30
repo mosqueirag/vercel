@@ -47,7 +47,7 @@ export function HomeQuickActions({ services }: { services: readonly ServiceStatu
     <div className="home-quick-actions-grid">
       {homeQuickActions.map((action) => {
         const href = resolveHomeQuickActionHref(action, contacts);
-        const className = `home-quick-action action-${action.id}${action.accent ? ` ${action.accent}` : ""}`;
+        const className = `home-quick-action public-action-card public-action-card--primary action-${action.id}${action.accent ? ` ${action.accent}` : ""}`;
         const content = <><span className="home-quick-action-icon" aria-hidden="true">{action.icon}</span><span className="home-quick-action-copy"><strong>{action.title}</strong><small>{action.description}</small>{action.id === "energy_outage" && energyStatus ? <em>{energyStatus}</em> : null}</span><span className="home-quick-action-arrow" aria-hidden="true">→</span></>;
         return isExternal(href)
           ? <a className={className} href={href} key={action.id} onClick={() => track(action, href)}>{content}</a>
