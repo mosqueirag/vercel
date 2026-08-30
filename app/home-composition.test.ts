@@ -31,4 +31,12 @@ describe("home composition", () => {
     expect(internetSource).toContain('href="#contratar"');
     expect(internetSource).toContain('id="contratar"');
   });
+
+  it("continues Home coverage in the Internet catalogue without a second coverage check", () => {
+    const internetSource = readFileSync(new URL("./components/internet-center.tsx", import.meta.url), "utf8");
+
+    expect(internetSource).toContain("saveInternetPlansHandoff(sessionStorage");
+    expect(internetSource).toContain('router.push("/internet#planes")');
+    expect(internetSource).toContain('document.querySelector("#planes")?.scrollIntoView');
+  });
 });

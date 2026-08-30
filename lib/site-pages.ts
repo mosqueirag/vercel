@@ -4,8 +4,8 @@ export const systemPageSlugs = ["energia", "internet", "fibra-optica", "telefoni
 export type SystemPageSlug = (typeof systemPageSlugs)[number];
 export const safePageHref = z.string().trim().max(500).refine((href) => {
   if (href.startsWith("/")) return !href.startsWith("//") && !href.includes("\\");
-  try { const url = new URL(href); return ["http:", "https:", "tel:"].includes(url.protocol); } catch { return false; }
-}, "El enlace debe ser una ruta interna o una URL http, https, tel o WhatsApp válida.");
+  try { const url = new URL(href); return ["https:", "tel:"].includes(url.protocol); } catch { return false; }
+}, "El enlace debe ser una ruta interna, HTTPS, teléfono o WhatsApp válida.");
 export const safePageImageUrl = z.string().trim().max(2000).refine((url) => {
   if (url.startsWith("/images/")) return true;
   try { const parsed = new URL(url); return parsed.protocol === "https:" && ((parsed.hostname === "hfmasofcekigldbysryg.supabase.co" && parsed.pathname.startsWith("/storage/v1/object/public/news-images/")) || ((parsed.hostname === "www.coopsar.com.ar" || parsed.hostname === "coopsar.com.ar") && parsed.pathname.startsWith("/wp-content/uploads/"))); } catch { return false; }

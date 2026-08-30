@@ -16,7 +16,7 @@ function energyStatusCopy(services: readonly ServiceStatus[]) {
 }
 
 function isExternal(href: string) {
-  return href.startsWith("https://") || href.startsWith("http://");
+  return href.startsWith("https://");
 }
 
 export function HomeQuickActions({ services }: { services: readonly ServiceStatus[] }) {
