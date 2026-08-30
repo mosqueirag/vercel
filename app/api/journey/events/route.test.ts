@@ -65,4 +65,15 @@ describe("sanitizePublicCoopiaMetadata", () => {
     expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "enterprise_internet_interest", metadata: { source: "enterprise_panel", technology: "FTTH", coverage_status: "available" } }));
     expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/España|451|street|number/i);
   });
+
+  it("records a quick access click without accepting personal data", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "quick_access_click", page: "/", metadata: { action_id: "fiber_coverage", source: "home_quick_actions", destination_type: "internal", address: "Dato privado", phone: "0000000000", email: "persona@example.com" } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "quick_access_click", metadata: { action_id: "fiber_coverage", source: "home_quick_actions", destination_type: "internal" } }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/Dato privado|0000000000|persona@example.com|address|phone|email/i);
+  });
 });
