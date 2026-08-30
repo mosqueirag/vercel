@@ -116,3 +116,7 @@ Pendiente de validación humana final: el catálogo consolidará los duplicados 
 ## 4G.2.8.1 — Corrección de canónicos de catálogo
 
 La migración correctiva restablece exclusivamente los canónicos aprobados de Hogar 50 e Inalámbrico 20 y retira sus dos variantes legacy con soft delete auditable. No publica planes, no altera ADSL 5 ni toma decisión sobre Hogar 100.
+
+## 4G.4.1.3 — Jerarquía y conversión de Home
+
+La Home distingue ahora el propósito de cada bloque: COOPIA resuelve la necesidad, el panel adaptativo sólo continúa cuando agrega valor, los accesos directos navegan y la sección Internet presenta primero la experiencia comercial y luego la cobertura. Las secciones de noticias no se renderizan sin publicaciones; no se agregan noticias de demostración ni datos comerciales nuevos.

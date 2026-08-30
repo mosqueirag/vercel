@@ -761,6 +761,37 @@ body .internet-audience-grid button>*{position:relative;z-index:1}.section.cards
 
 /* Sepelio public styles now live with their routes in CSS Modules. */
 /* Sepelio administration remains an internal global workspace. */
+
+/* 4G.4.1.3 — Home is a linear decision journey, not a stack of repeated CTAs. */
+.home-quick-actions{padding-block:clamp(56px,4.8vw,72px)}
+.internet-hub:not(.internet-hub-page){padding-top:clamp(64px,5vw,76px);padding-bottom:clamp(58px,4.5vw,70px)}
+.internet-home-heading{align-items:flex-end;margin-bottom:30px}
+.internet-home-heading>div:first-child{max-width:620px}
+.internet-home-heading h2{max-width:650px}
+.internet-home-intro{display:grid;justify-items:start;gap:19px;max-width:480px}
+.internet-home-intro>p{max-width:460px;margin:0;color:var(--muted);line-height:1.65}
+.internet-home-actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+.internet-home-actions .primary{border:0;background:var(--green-950);color:#fff}
+.internet-home-actions .text-link{min-height:44px;display:inline-flex;align-items:center;gap:7px}
+.internet-hub:not(.internet-hub-page) .internet-photo{margin-top:0}
+.internet-hub:not(.internet-hub-page) .recommender{margin-top:38px}
+.status-section{padding-top:clamp(60px,4.5vw,70px);padding-bottom:clamp(64px,4.8vw,76px)}
+.status-section .section-heading{margin-bottom:30px}
+.efficient-energy{padding-block:clamp(72px,5.5vw,88px)}
+.news-section{padding-top:clamp(64px,5vw,76px);padding-bottom:clamp(72px,5.5vw,88px)}
+@media(max-width:620px){
+  .home-quick-actions{padding-block:48px}
+  .internet-hub:not(.internet-hub-page){padding:52px 20px}
+  .internet-home-heading{margin-bottom:25px}
+  .internet-home-actions{display:grid;width:100%;grid-template-columns:1fr;gap:11px}
+  .internet-home-actions .primary,.internet-home-actions .text-link{width:100%}
+  .internet-home-actions .text-link{justify-content:center}
+  .internet-hub:not(.internet-hub-page) .recommender{margin-top:28px}
+  .status-section{padding-block:52px}
+  .status-section .section-heading{margin-bottom:24px}
+  .efficient-energy{padding-block:58px}
+  .news-section{padding-block:54px}
+}
 .funeral-admin-layout{display:grid;grid-template-columns:minmax(310px,.9fr) minmax(400px,1.1fr);gap:20px}.funeral-admin-list,.funeral-admin-detail{padding:24px;border:1px solid #d7e1da;border-radius:18px;background:#fff}.funeral-admin-list h2,.funeral-admin-detail h2{margin-top:0}.funeral-admin-list ul,.funeral-admin-detail ul{margin:0;padding:0;list-style:none}.funeral-admin-list li+li{border-top:1px solid #e4ece6}.funeral-admin-list button{display:flex;justify-content:space-between;gap:16px;width:100%;padding:16px 0;border:0;background:transparent;text-align:left;cursor:pointer}.funeral-admin-list button span{display:grid;gap:5px}.funeral-admin-list button small{color:#52645d}.funeral-admin-list button em{font-style:normal;color:#087752;font-size:13px}.funeral-admin-detail dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.funeral-admin-detail dl div{padding:10px;border-radius:10px;background:#f3f6f3}.funeral-admin-detail dt{font-size:12px;color:#52645d}.funeral-admin-detail dd{margin:4px 0 0;font-weight:700;overflow-wrap:anywhere}.funeral-admin-detail>label{display:grid;gap:8px;margin:20px 0;font-weight:700}.funeral-admin-detail li{padding:8px 0;color:#52645d}.funeral-admin-detail h3{margin:24px 0 6px;font-size:16px}.funeral-admin .admin-metrics span{min-height:96px;padding:17px;border:1px solid var(--line);border-radius:14px;background:#fff;display:flex;flex-direction:column;justify-content:space-between;color:var(--muted);font-size:12px;font-weight:700}.admin-list-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.admin-list-heading form{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}.admin-list-heading label{display:grid;gap:4px;color:#52645d;font-size:11px;font-weight:800}.admin-list-heading input,.admin-list-heading select{min-height:36px;max-width:180px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff}.admin-list-heading button{min-height:36px;padding:0 10px;border:1px solid var(--green-700);border-radius:7px;background:#fff;color:var(--green-800);font-weight:800;cursor:pointer}@media(max-width:900px){.funeral-admin-layout{grid-template-columns:1fr;gap:28px}}@media(max-width:680px){.admin-list-heading{display:grid}.admin-list-heading form{justify-content:stretch}.admin-list-heading input,.admin-list-heading select{max-width:none}}@media(max-width:560px){.funeral-admin-detail dl{grid-template-columns:1fr}}
 
 /* 4G.2.5: offer-led Internet landing. Coverage remains the next sales step. */

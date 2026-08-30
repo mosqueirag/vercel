@@ -35,10 +35,10 @@ export default async function Home() {
         </article>
       </div>
     </section>
-    <section className="section news-section">
+    {news.length > 0 && <section className="section news-section">
       <div className="section-heading"><div><span className="eyebrow">Noticias y comunicados</span><h2>Información de COOPSAR</h2></div><Link className="text-link" href="/noticias">Ver todas →</Link></div>
       <NewsCards items={news} />
-    </section>
+    </section>}
     <Contact />
     <Footer />
   </main>;

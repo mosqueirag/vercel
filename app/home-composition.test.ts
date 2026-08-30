@@ -19,4 +19,16 @@ describe("home composition", () => {
     expect(homeSource).not.toContain("CoopiaProvider");
     expect(homeSource).not.toContain("Facturas y cuenta");
   });
+
+  it("does not reserve a news section when there are no published articles", () => {
+    expect(homeSource).toContain("news.length > 0 && <section className=\"section news-section\">");
+  });
+
+  it("keeps a direct commercial entry to Internet while preserving the coverage tool", () => {
+    const internetSource = readFileSync(new URL("./components/internet-center.tsx", import.meta.url), "utf8");
+
+    expect(internetSource).toContain('href="/internet"');
+    expect(internetSource).toContain('href="#contratar"');
+    expect(internetSource).toContain('id="contratar"');
+  });
 });

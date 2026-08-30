@@ -39,10 +39,10 @@ export function HomeQuickActions({ services }: { services: readonly ServiceStatu
     }).catch(() => undefined);
   }, [navigation.journeyId, navigation.sessionId]);
 
-  return <section className="home-quick-actions section" aria-labelledby="home-quick-actions-title">
+  return <section className="home-quick-actions section" id="tramites" aria-labelledby="home-quick-actions-title">
     <div className="section-heading home-quick-actions-heading">
-      <div><span className="eyebrow">Accesos directos</span><h2 id="home-quick-actions-title">Resolvé lo que necesitás</h2></div>
-      <p>Elegí una acción y llegá directamente al próximo paso.</p>
+      <div><span className="eyebrow">Accesos directos</span><h2 id="home-quick-actions-title">Elegí qué necesitás hacer</h2></div>
+      <p>Llegá directamente al próximo paso.</p>
     </div>
     <div className="home-quick-actions-grid">
       {homeQuickActions.map((action) => {

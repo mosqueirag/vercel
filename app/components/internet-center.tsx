@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createJourneyId, createSessionId } from "../../lib/journey/ids";
 import { requestTypeFromCoverage } from "../../lib/coverage-request-type";
@@ -128,7 +129,7 @@ export function InternetCenter({ variant = "home" }: { variant?: "home" | "page"
   const operationLabel = requestType() === "fiber_waitlist" ? "Solicitar aviso de cobertura" : requestType() === "coverage_validation" ? "Solicitar validación técnica" : "Continuar con la solicitud";
   const RecommenderHeading = variant === "page" ? "h2" : "h3";
   return <section className={`internet-hub ${variant === "page" ? "internet-hub-page" : ""}`} id="contratar">
-    {variant === "home" && <div className="section-heading"><div><span className="eyebrow">Internet</span><h2>Internet para estar<br />siempre conectado</h2></div><p>Consultá únicamente servicios y planes publicados por COOPSAR. La cobertura final siempre se confirma antes de contratar.</p></div>}
+    {variant === "home" && <div className="section-heading internet-home-heading"><div><span className="eyebrow">Internet</span><h2>Internet para tu hogar,<br />comercio o empresa</h2></div><div className="internet-home-intro"><p>Conocé nuestras alternativas de conexión y consultá qué servicio podemos ofrecer en tu domicilio.</p><div className="internet-home-actions"><Link className="primary public-action-button" href="/internet" onClick={() => track("internet_section_open", "home_internet_feature")}>Ver planes y tecnologías <span aria-hidden="true">→</span></Link><a className="text-link" href="#contratar">Consultar cobertura <span aria-hidden="true">↓</span></a></div></div></div>}
     {variant === "home" && <div className="internet-photo"><Image src="/images/coopsar-connectivity.png" alt="Técnico trabajando en infraestructura de conectividad en Sarmiento" fill sizes="(max-width: 900px) 100vw, 1200px" /></div>}
     <div className={`recommender recommender-step-${step}`}>
       <div className="recommender-copy"><span className="eyebrow eyebrow-light">Tu domicilio</span><RecommenderHeading>{variant === "page" ? "Veamos qué alternativa podemos instalar." : "Consultá el plan disponible en tu domicilio"}</RecommenderHeading>{variant === "page" && <p>Ingresá calle y altura. La confirmación final siempre requiere validación técnica.</p>}{variant === "home" && <><p>Buscamos servicios activos en la dirección indicada o en alturas cercanas de la misma calle.</p><div className="step-indicator"><span className={step >= 1 ? "active" : ""}>1</span><i /><span className={step >= 2 ? "active" : ""}>2</span><i /><span className={step >= 3 ? "active" : ""}>3</span></div></>}</div>
