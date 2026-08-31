@@ -5,6 +5,7 @@ import { AssistantCenter } from "./components/assistant-center";
 import { HomeAdaptivePanel } from "./components/home-adaptive-panel";
 import { HomeQuickActions } from "./components/home-quick-actions";
 import { InternetCenter } from "./components/internet-center";
+import { CoopOnlinePromo } from "./components/coop-online-promo";
 import { ServiceStatusPanel } from "./components/operations";
 import { Contact, Footer, Header, NewsCards } from "./ui";
 import { getPublicServiceStatuses } from "../lib/tools/service-status";
@@ -20,6 +21,7 @@ export default async function Home() {
     <HomeAdaptivePanel />
     <HomeQuickActions services={statuses} />
     <InternetCenter />
+    <CoopOnlinePromo />
     <ServiceStatusPanel services={statuses} />
     <section className="efficient-energy" aria-labelledby="efficient-energy-title">
       <div className="efficient-energy-image">

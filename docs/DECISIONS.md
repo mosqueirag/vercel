@@ -4,6 +4,10 @@
 
 Los accesos de la Home representan necesidades cotidianas y tienen destinos canónicos tipados, no una taxonomía interna. El pago resuelve el canal `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro. Energía, Internet, Fibra, titularidad y Sepelio no incluyen teléfonos ni datos personales; el tracking `quick_access_click` es best-effort y sólo registra identificadores agregados de acción y destino cuando ya existe una sesión de navegación.
 
+## 4G.4.1.6 — Canal digital COOP Online
+
+La URL oficial de Google Play de COOP Online se conserva en una única configuración pública tipada. Su promoción pertenece exclusivamente a superficies públicas: Home la presenta como canal digital complementario y el Footer la hace disponible en todas las rutas públicas. Cada clic registra solamente plataforma, origen y destino en `app_download_click`; no transporta información personal, contenido conversacional ni parámetros de URL.
+
 ## 4G.3 — Atención de Sepelio publicada y contextual
 
 La atención urgente del servicio de sepelio se resuelve primero mediante el canal publicado `funeral/emergency`; la página no duplica teléfonos ni condiciones contractuales. Las consultas no urgentes abren la única instancia global de COOPIA con contexto de Sepelio, y las FAQ se muestran únicamente cuando existen registros publicados y relevantes.

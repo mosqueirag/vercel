@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CONTACT } from "../lib/coopsar-data";
 import type { NewsArticle } from "../lib/news";
+import { CoopOnlineDownloadLink } from "./components/coop-online-download-link";
 import { usePublicContact } from "./components/public-contact-context";
 
 const menuGroups = [
@@ -104,5 +105,5 @@ export function Contact() {
 export function Footer() {
   const officeHours = usePublicContact("general", "office_hours")?.value;
   const officeAddress = usePublicContact("general", "office_address")?.value;
-  return <footer className="site-footer"><div className="footer-lead"><Brand /><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><b>Servicios</b><Link href="/energia">Energía</Link><Link href="/internet">Internet</Link><Link href="/telefonia">Telefonía</Link><Link href="/sepelio">Sepelio</Link></div><div><b>Ayuda</b><Link href="/centro-de-ayuda">Centro de ayuda</Link><Link href="/tramites">Trámites</Link><Link href="/cortes-programados">Estado de servicios</Link><Link href="/privacidad">Privacidad</Link></div><div><b>Atención</b><p>{officeHours || "Horario de atención no publicado."}</p><p>{officeAddress || CONTACT.office}</p></div><div className="footer-bottom"><small>© 2026 COOPSAR</small><small>Servicios esenciales, compromiso local.</small></div></footer>;
+  return <footer className="site-footer"><div className="footer-lead"><Brand /><p>Cooperativa de Provisión de Servicios Públicos de Sarmiento Ltda.</p></div><div><b>Servicios</b><Link href="/energia">Energía</Link><Link href="/internet">Internet</Link><Link href="/telefonia">Telefonía</Link><Link href="/sepelio">Sepelio</Link></div><div><b>Ayuda</b><Link href="/centro-de-ayuda">Centro de ayuda</Link><Link href="/tramites">Trámites</Link><Link href="/cortes-programados">Estado de servicios</Link><Link href="/privacidad">Privacidad</Link></div><div><b>Atención</b><p>{officeHours || "Horario de atención no publicado."}</p><p>{officeAddress || CONTACT.office}</p><CoopOnlineDownloadLink className="footer-app-link" source="footer_app">COOP Online <span aria-hidden="true">↗</span></CoopOnlineDownloadLink></div><div className="footer-bottom"><small>© 2026 COOPSAR</small><small>Servicios esenciales, compromiso local.</small></div></footer>;
 }

@@ -4,6 +4,10 @@
 
 La Home evoluciona de navegación por categorías internas a seis accesos fijos por necesidad: pago, energía, Internet, cobertura de fibra, titularidad y Sepelio. COOPIA conserva la orientación inteligente y `HomeAdaptivePanel` sigue siendo la continuación contextual posterior; los accesos no crean otra conversación ni reordenan la Home según historial. La siguiente evolución posible es **4G.4.2 — Home Adaptive Navigation**, basada sólo en señales agregadas y decisiones explícitas de producto.
 
+## Fase 4G.4.1.6 — COOP Online como canal digital público
+
+COOP Online se incorpora como acceso oficial a Google Play desde el Footer público y como promoción informativa posterior a Internet en Home. Complementa COOPIA, la Oficina Virtual y WhatsApp sin duplicar conversación, inventar funcionalidades de la aplicación ni modificar canales administrativos. El seguimiento de descarga es agregado, opcional y sin PII.
+
 ## 4G.2.8.4 — experiencia interactiva de oferta de Internet
 
 La sección pública de tecnologías pasa de tarjetas estáticas a un único widget accesible y derivado del catálogo. La selección Hogar/Comercio filtra segmentos reales y Empresa tiene un recorrido consultivo separado hasta que exista una oferta enterprise administrable. La clasificación comercial de staging continúa en `draft`; no autoriza publicación ni cambios de precio.
