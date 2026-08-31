@@ -31,7 +31,8 @@ export function resolveHomePriority(intent?: AssistantIntent, service?: Assistan
     case "fiber_signup":
       return { quickAction: "internet_interest", contextualPanel: "fiber_signup", section: "internet" };
     case "internet_signup":
-      return { quickAction: "internet_interest", contextualPanel: "fiber_signup", section: "internet" };
+      // Interest is the beginning of the journey, not a confirmed installation.
+      return { quickAction: "internet_interest", contextualPanel: "internet_signup", section: "internet" };
     case "fiber_coverage":
       return { quickAction: "internet_interest", contextualPanel: "fiber_coverage", section: "internet" };
     case "internet_plans":

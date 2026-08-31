@@ -6,6 +6,8 @@ describe("detectIntent", () => {
     expect(detectIntent("Quiero contratar fibra")).toMatchObject({ intent: "fiber_signup", service: "fiber", suggestedAction: "start_fiber_signup" });
   });
   it.each([
+    ["Estoy sin energía", "energy_problem"],
+    ["Tengo problemas con Internet", "internet_problem"],
     ["¿Llega fibra a Rivadavia 1250?", "fiber_coverage"],
     ["Quiero Internet", "internet_signup"],
     ["Necesito internet para mi negocio", "internet_signup"],
@@ -19,7 +21,9 @@ describe("detectIntent", () => {
     ["Quiero hacer un reclamo de Internet", "resolve_complaint"],
     ["Quiero hacer un reclamo", "resolve_complaint"],
     ["Quiero pagar una factura", "pay_invoice"],
+    ["Servicio de Sepelio", "funeral_service"],
     ["Necesito cambiar la titularidad", "ownership_change"],
+    ["Quiero un nuevo suministro", "new_supply"],
   ])("classifies %s", (message, intent) => expect(detectIntent(message).intent).toBe(intent));
   it("routes an explicit Internet complaint before the commercial Internet intent", () => {
     expect(detectIntent("Quiero hacer un reclamo de Internet")).toMatchObject({

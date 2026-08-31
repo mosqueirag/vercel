@@ -12,6 +12,10 @@ COOP Online se incorpora como acceso oficial a Google Play desde una tarjeta des
 
 La Home usa exclusivamente el contexto temporal ya clasificado por COOPIA para destacar una necesidad y su siguiente paso. La prioridad se calcula de forma determinística en cliente, dura sólo la sesión actual y no genera perfiles, cookies, persistencia entre sesiones ni nuevas llamadas IA. Sin señal suficiente, el orden aprobado permanece intacto; Internet de soporte no se convierte en una prioridad comercial.
 
+## Fase 4G.4.2.2 — Adaptive Home Quality Gate
+
+Lista para cierre humano: el recorrido determinístico separa soporte de Internet de la intención comercial, evita copy de instalación prematuro y conserva la consulta de cobertura como paso previo. Energía conserva una respuesta estructurada aun sin WhatsApp, Pago no duplica su panel y COOP Online no se prioriza ni personaliza. Antes de una eventual 4G.4.3 se requiere evidencia agregada del funnel; no se mueven ni ocultan secciones de Home.
+
 ## 4G.2.8.4 — experiencia interactiva de oferta de Internet
 
 La sección pública de tecnologías pasa de tarjetas estáticas a un único widget accesible y derivado del catálogo. La selección Hogar/Comercio filtra segmentos reales y Empresa tiene un recorrido consultivo separado hasta que exista una oferta enterprise administrable. La clasificación comercial de staging continúa en `draft`; no autoriza publicación ni cambios de precio.

@@ -17,6 +17,12 @@ describe("Home priority", () => {
     expect(ids("funeral_service", "funeral")[0]).toBe("funeral_service");
   });
 
+  it("uses the right continuation for Internet interest, fiber interest and coverage", () => {
+    expect(resolveHomePriority("internet_signup", "internet").contextualPanel).toBe("internet_signup");
+    expect(resolveHomePriority("fiber_signup", "fiber").contextualPanel).toBe("fiber_signup");
+    expect(resolveHomePriority("fiber_coverage", "fiber").contextualPanel).toBe("fiber_coverage");
+  });
+
   it("keeps Internet support out of the commercial priority and preserves its support continuation", () => {
     const priority = resolveHomePriority("internet_problem", "internet");
     expect(priority.quickAction).toBeUndefined();
@@ -28,6 +34,16 @@ describe("Home priority", () => {
     expect(resolveHomePriority("ownership_change", "general").quickAction).toBeUndefined();
     expect(ids("energy_problem", "energy")[0]).toBe("energy_outage");
     expect(ids("internet_signup", "internet")[0]).toBe("internet_interest");
+    expect(resolveHomePriority("internet_problem", "internet").quickAction).toBeUndefined();
+    expect(resolveHomePriority("new_supply", "energy").contextualPanel).toBeUndefined();
+  });
+
+  it("does not retain a stale priority after an intent changes in the same journey", () => {
+    expect(resolveHomePriority("energy_problem", "energy").quickAction).toBe("energy_outage");
+    expect(resolveHomePriority("internet_signup", "internet").quickAction).toBe("internet_interest");
+    const support = resolveHomePriority("internet_problem", "internet");
+    expect(support.quickAction).toBeUndefined();
+    expect(support.contextualPanel).toBe("internet_problem");
   });
 
   it("keeps analytics aggregate and free of personal data", () => {
