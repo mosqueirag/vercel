@@ -17,7 +17,7 @@ describe("COOP Online public promotion", () => {
     expect(html).toContain(PUBLIC_LINKS.coopOnlineAndroid.replace("&", "&amp;"));
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
-    expect(html).toContain("Gestioná tus servicios desde el celular.");
+    expect(html).toContain("Todo COOPSAR, también en tu celular.");
     expect(html).not.toMatch(/pagá|factura|reclamo|cobertura/i);
   });
 
