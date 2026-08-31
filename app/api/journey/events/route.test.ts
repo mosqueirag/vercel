@@ -77,6 +77,20 @@ describe("sanitizePublicCoopiaMetadata", () => {
     expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/Dato privado|0000000000|persona@example.com|address|phone|email/i);
   });
 
+  it("records a procedure selection with only its aggregate identifier and resolution path", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "procedure_selected", page: "/tramites", intent: "ownership_change", service: "general", metadata: { procedure_id: "ownership_change", resolution_type: "coopia", source: "procedures_center", email: "persona@example.com", address: "Dato privado" } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventType: "procedure_selected",
+      metadata: { procedure_id: "ownership_change", resolution_type: "coopia", source: "procedures_center" },
+    }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/persona@example.com|Dato privado|email|address/i);
+  });
+
   it("records a COOP Online download with safe aggregate metadata only", async () => {
     const request = new NextRequest("https://coopsar.test/api/journey/events", {
       method: "POST",

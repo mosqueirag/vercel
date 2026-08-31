@@ -1,5 +1,9 @@
 # Roadmap posterior al cierre de Fase 2
 
+## Fase 4G.5 — Centro inteligente de trámites
+
+`/tramites` reúne las gestiones públicas comprobadas bajo el recorrido `necesidad → intención → siguiente paso`: titularidad, nuevo suministro, factura digital, pagos, telefonía, Sepelio, actualización del grupo familiar y orientación humana. Cada tarjeta conserva una única resolución verificable y reutiliza COOPIA global, las rutas internas o contactos publicados; no agrega asistentes, formularios, datos comerciales ni procesos de reconexión no confirmados. Pendiente: QA humana visual y funcional del Preview antes de cualquier integración.
+
 ## Fase 4G.4.1.8 — Quick Actions priorizadas + COOP Online
 
 La Home prioriza cuatro necesidades principales: pago, energía, Internet y Sepelio. Internet concentra la entrada comercial y de cobertura sin duplicar Fibra en otro acceso. COOPIA conserva la orientación inteligente y `HomeAdaptivePanel` sigue siendo la continuación contextual posterior; los accesos no crean otra conversación ni reordenan la Home según historial. COOP Online se presenta como tarjeta destacada dentro del mismo grid y como canal de Atención, sin bloque autónomo ni promoción en Footer.

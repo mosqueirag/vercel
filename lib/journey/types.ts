@@ -12,7 +12,7 @@ export const journeyEventTypes = [
   "whatsapp_opened", "payment_portal_opened", "journey_completed", "journey_abandoned", "navigation_recommended",
   "complaint_intent_detected", "complaint_route_resolved", "complaint_whatsapp_opened",
   "commercial_inbox_viewed", "lead_viewed", "lead_contact_opened", "lead_status_changed", "fiber_demand_viewed",
-  "navigation_executed", "contextual_component_rendered", "action_clicked", "quick_access_click", "app_download_click", "home_priority_applied", "form_started", "form_completed",
+  "navigation_executed", "contextual_component_rendered", "action_clicked", "quick_access_click", "procedure_selected", "app_download_click", "home_priority_applied", "form_started", "form_completed",
   "coopia_global_opened", "coopia_global_closed", "coopia_question", "coopia_action_clicked", "coopia_feedback", "coopia_unresolved", "coopia_handoff",
   "coopia_page_context", "coopia_message_sent", "coopia_intent_detected", "coopia_service_detected", "coopia_action_shown", "coopia_result", "coopia_error",
   "coopia_turn", "coopia_deterministic_response", "coopia_llm_requested", "coopia_llm_response", "coopia_llm_unavailable", "coopia_rate_limited",
