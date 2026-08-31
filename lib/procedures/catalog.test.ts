@@ -8,6 +8,7 @@ describe("smart procedures catalog", () => {
       "new_supply",
       "digital_invoice",
       "payments",
+      "update_data",
       "phone_service",
       "funeral_service",
       "funeral_family_update",
@@ -18,7 +19,7 @@ describe("smart procedures catalog", () => {
     for (const procedure of procedures) {
       const hasResolution = procedure.resolutionType === "coopia"
         ? Boolean(procedure.prompt)
-        : procedure.id === "payments" || Boolean(procedure.href);
+        : ["payments", "update_data"].includes(procedure.id) || Boolean(procedure.href);
       expect(hasResolution).toBe(true);
       expect(JSON.stringify(procedure)).not.toMatch(/wa\.me|whatsapp:\/\//i);
     }

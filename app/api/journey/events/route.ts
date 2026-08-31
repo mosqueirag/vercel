@@ -37,7 +37,7 @@ const schema = z.object({
     commercial_availability: z.boolean().optional(),
     source: z.enum(["enterprise_panel", "home_quick_actions", "quick_actions_app", "contact_app", "navigation_context", "procedures_center"]).optional(),
     action_id: z.enum(["pay_bill", "energy_outage", "internet_interest", "fiber_coverage", "change_holder", "funeral_service", "all_procedures"]).optional(),
-    procedure_id: z.enum(["ownership_change", "new_supply", "digital_invoice", "payments", "phone_service", "funeral_service", "funeral_family_update", "human_handoff"]).optional(),
+    procedure_id: z.enum(["ownership_change", "new_supply", "digital_invoice", "payments", "update_data", "phone_service", "funeral_service", "funeral_family_update", "human_handoff"]).optional(),
     resolution_type: z.enum(["coopia", "official_link", "internal_route"]).optional(),
     priority_action: z.enum(["pay_bill", "energy_outage", "internet_interest", "funeral_service"]).optional(),
     destination_type: z.enum(["internal", "external", "contact"]).optional(),
