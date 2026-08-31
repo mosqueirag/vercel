@@ -1,5 +1,9 @@
 # Decisiones técnicas
 
+## 4G.5 — Centro inteligente de trámites
+
+`/tramites` es una superficie pública dedicada de decisión, no un catálogo genérico de enlaces ni un CMS paralelo. Su registro tipado sólo enumera capacidades ya implementadas: cada gestión abre la única conversación global de COOPIA, utiliza una ruta interna real o resuelve un canal publicado dinámicamente. Pagos consulta `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro; Sepelio usa sus rutas específicas. No se ofrece reconexión como trámite online hasta contar con un flujo operativo confirmado. El evento best-effort `procedure_selected` conserva únicamente procedimiento, intención, tipo de resolución y origen, sin texto libre ni PII.
+
 ## 4G.4.1 — Quick Actions por necesidad
 
 Los accesos de la Home representan necesidades cotidianas y tienen destinos canónicos tipados, no una taxonomía interna. El pago resuelve el canal `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro. Las cuatro prioridades son pago, energía, Internet y Sepelio; Internet absorbe la entrada de cobertura/fibra para evitar duplicidad. No incluyen teléfonos ni datos personales; el tracking `quick_access_click` es best-effort y sólo registra identificadores agregados de acción y destino cuando ya existe una sesión de navegación.
