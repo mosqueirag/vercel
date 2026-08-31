@@ -1,5 +1,9 @@
 # Roadmap posterior al cierre de Fase 2
 
+## Fase 4G.6 — Energy Operations Center
+
+Pendiente de QA humana: `/energia` prioriza estado oficial, acción inmediata, guardia publicada y gestiones reutilizables. Los cortes programados se consultan desde alertas publicadas y se distinguen de interrupciones imprevistas.
+
 ## Fase 4G.5 — Centro inteligente de trámites
 
 `/tramites` reúne las gestiones públicas comprobadas bajo el recorrido `necesidad → intención → siguiente paso`: titularidad, nuevo suministro, factura digital, pagos, telefonía, Sepelio, actualización del grupo familiar y orientación humana. Cada tarjeta conserva una única resolución verificable y reutiliza COOPIA global, las rutas internas o contactos publicados; no agrega asistentes, formularios, datos comerciales ni procesos de reconexión no confirmados. Pendiente: QA humana visual y funcional del Preview antes de cualquier integración.
