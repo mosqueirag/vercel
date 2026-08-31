@@ -87,4 +87,15 @@ describe("sanitizePublicCoopiaMetadata", () => {
     expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "app_download_click", metadata: { platform: "android", source: "quick_actions_app", destination: "google_play" } }));
     expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/persona@example.com|España|451|email|street/i);
   });
+
+  it("records a Home priority once with aggregate navigation context only", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "home_priority_applied", page: "/", intent: "internet_signup", service: "internet", metadata: { priority_action: "internet_interest", source: "navigation_context", message: "Quiero Internet", address: "España 451" } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "home_priority_applied", intent: "internet_signup", service: "internet", metadata: { priority_action: "internet_interest", source: "navigation_context" } }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/Quiero Internet|España|451|message|address/i);
+  });
 });

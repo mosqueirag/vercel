@@ -62,6 +62,15 @@ describe("resolveAssistantResult", () => {
     expect(result.actions).toContainEqual({ id: "OPEN_COMPLAINT_WHATSAPP", label: "Continuar tu reclamo por WhatsApp", href: "https://wa.me/5491111111111?text=Hola" });
     expect(result.complaintRoute).toEqual({ routingWindow: "after_hours", contactPurpose: "support", contactLabel: "Guardia de Comunicaciones" });
   });
+  it("keeps energy and Internet support actionable when a published WhatsApp channel is unavailable", async () => {
+    for (const message of ["No tengo luz", "No tengo Internet"]) {
+      const result = await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message, { status: "unknown", routingWindow: "after_hours", contactPurpose: "emergency", contactLabel: "Canal no disponible", whatsappUrl: null }));
+      expect(result.tool.status).toBe("completed");
+      expect(result.ui?.type).toBe("service_status");
+      expect(result.actions.some((action) => action.id === "OPEN_COMPLAINT_WHATSAPP")).toBe(false);
+      expect(result.actions.length).toBeGreaterThan(0);
+    }
+  });
   it("selects a trusted request type for the UI", async () => {
     const message = "Quiero una nueva conexión";
     expect(await resolveAssistantResult(detectIntent(message), "JRN-2026-A1B2C3D4", toolFor(message))).toMatchObject({ ui: { type: "service_request_form", data: { requestType: "new_supply" } }, requiresConfirmation: true });

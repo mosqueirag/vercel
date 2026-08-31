@@ -8,6 +8,7 @@ describe("routeCoopiaIntent", () => {
     ["no tengo luz", "energy_outage"],
     ["estoy sin energía", "energy_outage"],
     ["no tengo internet", "internet_issue"],
+    ["tengo problemas con Internet", "internet_issue"],
     ["quiero contratar internet", "internet_interest"],
     ["quiero fibra", "fiber_interest"],
     ["llega fibra a mi casa", "fiber_coverage"],

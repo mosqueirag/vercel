@@ -46,6 +46,26 @@ export function selectAssistantTool(detection: IntentDetection): ToolSelection {
   return selections[detection.intent] ?? { name: "requestHumanHandoff", kind: "write", requiresConfirmation: true };
 }
 
+/**
+ * Service status and the optional human handoff are independent capabilities.
+ * A missing published WhatsApp channel never invalidates an already-resolved
+ * operational status or its safe internal next steps.
+ */
+export function resolveServiceStatusTool(selection: ToolSelection, status: string, route: ReturnType<typeof resolveComplaintRoute>): ToolResolution {
+  return {
+    ...selection,
+    status: "completed",
+    data: {
+      status,
+      routingWindow: route.routingWindow,
+      contactPurpose: route.contactPurpose,
+      contactLabel: route.contactLabel,
+      whatsappUrl: route.whatsappUrl,
+      complaintMessage: route.message,
+    },
+  };
+}
+
 export async function resolveAssistantTool(detection: IntentDetection, context: JourneyContext): Promise<ToolResolution> {
   const selection = selectAssistantTool(detection);
   if (selection.kind === "write") return { ...selection, status: "ready" };
@@ -56,11 +76,11 @@ export async function resolveAssistantTool(detection: IntentDetection, context: 
   }
   if (selection.name === "getInternetServiceStatus") {
     const route = resolveComplaintRoute(detection.service as Extract<ComplaintService, "internet" | "fiber" | "phone">, new Date(), await getPublicContacts());
-    return { ...selection, status: route.whatsappUrl ? "completed" : "unavailable", data: { status: await getServiceStatus("internet", context), routingWindow: route.routingWindow, contactPurpose: route.contactPurpose, contactLabel: route.contactLabel, whatsappUrl: route.whatsappUrl, complaintMessage: route.message } };
+    return resolveServiceStatusTool(selection, await getServiceStatus("internet", context), route);
   }
   if (selection.name === "getEnergyServiceStatus") {
     const route = resolveComplaintRoute("energy", new Date(), await getPublicContacts());
-    return { ...selection, status: route.whatsappUrl ? "completed" : "unavailable", data: { status: await getServiceStatus("energy", context), routingWindow: route.routingWindow, contactPurpose: route.contactPurpose, contactLabel: route.contactLabel, whatsappUrl: route.whatsappUrl, complaintMessage: route.message } };
+    return resolveServiceStatusTool(selection, await getServiceStatus("energy", context), route);
   }
   if (selection.name === "getPaymentInformation") {
     const output = await getPaymentInformation.execute({}, context);
