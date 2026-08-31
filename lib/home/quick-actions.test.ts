@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { homeQuickActions, quickActionAnalyticsMetadata, resolveHomeQuickActionHref } from "./quick-actions";
 
 describe("home quick actions", () => {
-  it("defines exactly six direct needs with canonical destinations", () => {
-    expect(homeQuickActions).toHaveLength(6);
+  it("defines exactly four primary needs with canonical destinations", () => {
+    expect(homeQuickActions).toHaveLength(4);
     expect(homeQuickActions.find((action) => action.id === "internet_interest")?.href).toBe("/internet#contratar");
-    expect(homeQuickActions.find((action) => action.id === "fiber_coverage")?.href).toBe("/internet#contratar");
-    expect(homeQuickActions.find((action) => action.id === "fiber_coverage")?.href).not.toBe("/fibra-optica");
-    expect(homeQuickActions.find((action) => action.id === "change_holder")?.href).toBe("/tramites");
+    const actionIds = homeQuickActions.map((action) => action.id) as readonly string[];
+    expect(actionIds).not.toContain("fiber_coverage");
+    expect(actionIds).not.toContain("change_holder");
     expect(homeQuickActions.find((action) => action.id === "funeral_service")?.href).toBe("/sepelio");
   });
 

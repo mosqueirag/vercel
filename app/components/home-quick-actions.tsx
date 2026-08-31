@@ -6,6 +6,7 @@ import { homeQuickActions, quickActionAnalyticsMetadata, resolveHomeQuickActionH
 import type { PublicServiceStatus } from "../../lib/tools/service-status";
 import { useNavigationContext } from "./navigation-context";
 import { usePublicContacts } from "./public-contact-context";
+import { CoopOnlineQuickAction } from "./coop-online-promo";
 
 type ServiceStatus = { name: string; status: PublicServiceStatus; detail: string };
 
@@ -42,7 +43,7 @@ export function HomeQuickActions({ services }: { services: readonly ServiceStatu
   return <section className="home-quick-actions section" id="tramites" aria-labelledby="home-quick-actions-title">
     <div className="section-heading home-quick-actions-heading">
       <div><span className="eyebrow">Accesos directos</span><h2 id="home-quick-actions-title">Elegí qué necesitás hacer</h2></div>
-      <p>Llegá directamente al próximo paso.</p>
+      <Link className="home-quick-actions-all public-action-button" href="/tramites">Ver todos los trámites <span className="public-action-arrow" aria-hidden="true">→</span></Link>
     </div>
     <div className="home-quick-actions-grid">
       {homeQuickActions.map((action) => {
@@ -53,7 +54,7 @@ export function HomeQuickActions({ services }: { services: readonly ServiceStatu
           ? <a className={className} href={href} key={action.id} onClick={() => track(action, href)}>{content}</a>
           : <Link className={className} href={href} key={action.id} onClick={() => track(action, href)}>{content}</Link>;
       })}
+      <CoopOnlineQuickAction />
     </div>
-    <Link className="home-quick-actions-all" href="/tramites">Ver todos los trámites <span aria-hidden="true">→</span></Link>
   </section>;
 }

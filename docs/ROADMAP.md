@@ -1,12 +1,12 @@
 # Roadmap posterior al cierre de Fase 2
 
-## Fase 4G.4.1 — Home Quick Actions
+## Fase 4G.4.1.8 — Quick Actions priorizadas + COOP Online
 
-La Home evoluciona de navegación por categorías internas a seis accesos fijos por necesidad: pago, energía, Internet, cobertura de fibra, titularidad y Sepelio. COOPIA conserva la orientación inteligente y `HomeAdaptivePanel` sigue siendo la continuación contextual posterior; los accesos no crean otra conversación ni reordenan la Home según historial. La siguiente evolución posible es **4G.4.2 — Home Adaptive Navigation**, basada sólo en señales agregadas y decisiones explícitas de producto.
+La Home prioriza cuatro necesidades principales: pago, energía, Internet y Sepelio. Internet concentra la entrada comercial y de cobertura sin duplicar Fibra en otro acceso. COOPIA conserva la orientación inteligente y `HomeAdaptivePanel` sigue siendo la continuación contextual posterior; los accesos no crean otra conversación ni reordenan la Home según historial. COOP Online se presenta como tarjeta destacada dentro del mismo grid y como canal de Atención, sin bloque autónomo ni promoción en Footer.
 
 ## Fase 4G.4.1.6 — COOP Online como canal digital público
 
-COOP Online se incorpora como acceso oficial a Google Play desde el Footer público y como promoción informativa posterior a Internet en Home. Complementa COOPIA, la Oficina Virtual y WhatsApp sin duplicar conversación, inventar funcionalidades de la aplicación ni modificar canales administrativos. El seguimiento de descarga es agregado, opcional y sin PII.
+COOP Online se incorpora como acceso oficial a Google Play desde una tarjeta destacada del grid de accesos directos y un canal compacto de Atención. Complementa COOPIA, la Oficina Virtual y WhatsApp sin duplicar conversación, inventar funcionalidades de la aplicación ni modificar canales administrativos. El seguimiento de descarga es agregado, opcional y sin PII.
 
 ## 4G.2.8.4 — experiencia interactiva de oferta de Internet
 

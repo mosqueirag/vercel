@@ -2,11 +2,11 @@
 
 ## 4G.4.1 — Quick Actions por necesidad
 
-Los accesos de la Home representan necesidades cotidianas y tienen destinos canónicos tipados, no una taxonomía interna. El pago resuelve el canal `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro. Energía, Internet, Fibra, titularidad y Sepelio no incluyen teléfonos ni datos personales; el tracking `quick_access_click` es best-effort y sólo registra identificadores agregados de acción y destino cuando ya existe una sesión de navegación.
+Los accesos de la Home representan necesidades cotidianas y tienen destinos canónicos tipados, no una taxonomía interna. El pago resuelve el canal `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro. Las cuatro prioridades son pago, energía, Internet y Sepelio; Internet absorbe la entrada de cobertura/fibra para evitar duplicidad. No incluyen teléfonos ni datos personales; el tracking `quick_access_click` es best-effort y sólo registra identificadores agregados de acción y destino cuando ya existe una sesión de navegación.
 
 ## 4G.4.1.6 — Canal digital COOP Online
 
-La URL oficial de Google Play de COOP Online se conserva en una única configuración pública tipada. Su promoción pertenece exclusivamente a superficies públicas: Home la presenta como canal digital complementario y el Footer la hace disponible en todas las rutas públicas. Cada clic registra solamente plataforma, origen y destino en `app_download_click`; no transporta información personal, contenido conversacional ni parámetros de URL.
+La URL oficial de Google Play de COOP Online se conserva en una única configuración pública tipada. Su promoción pertenece exclusivamente a superficies públicas: Home la presenta como tarjeta destacada dentro del grid de acciones y como canal complementario de Atención, sin bloque autónomo ni promoción en Footer. Cada clic registra solamente plataforma, origen y destino en `app_download_click`; no transporta información personal, contenido conversacional ni parámetros de URL.
 
 ## 4G.3 — Atención de Sepelio publicada y contextual
 

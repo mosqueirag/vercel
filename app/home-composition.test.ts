@@ -8,12 +8,11 @@ describe("home composition", () => {
     const adaptivePanel = homeSource.indexOf("<HomeAdaptivePanel />");
     const quickActions = homeSource.indexOf("<HomeQuickActions");
     const internetCenter = homeSource.indexOf("<InternetCenter />");
-    const coopOnlinePromo = homeSource.indexOf("<CoopOnlinePromo />");
 
     expect(adaptivePanel).toBeGreaterThan(-1);
     expect(quickActions).toBeGreaterThan(adaptivePanel);
     expect(internetCenter).toBeGreaterThan(quickActions);
-    expect(coopOnlinePromo).toBeGreaterThan(internetCenter);
+    expect(homeSource).not.toContain("CoopOnlinePromo");
   });
 
   it("does not mount the legacy self-service taxonomy or a second chat on Home", () => {

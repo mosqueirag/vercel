@@ -35,7 +35,7 @@ const schema = z.object({
     technology: z.enum(["FTTH", "ADSL", "WIRELESS"]).nullable().optional(),
     coverage_status: z.enum(["available", "nearby", "planned", "unavailable", "unknown"]).optional(),
     commercial_availability: z.boolean().optional(),
-    source: z.enum(["enterprise_panel", "home_quick_actions", "home_app_promo", "footer_app"]).optional(),
+    source: z.enum(["enterprise_panel", "home_quick_actions", "quick_actions_app", "contact_app"]).optional(),
     action_id: z.enum(["pay_bill", "energy_outage", "internet_interest", "fiber_coverage", "change_holder", "funeral_service", "all_procedures"]).optional(),
     destination_type: z.enum(["internal", "external", "contact"]).optional(),
     platform: z.enum(["android"]).optional(),

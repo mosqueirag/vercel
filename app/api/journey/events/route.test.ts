@@ -80,11 +80,11 @@ describe("sanitizePublicCoopiaMetadata", () => {
   it("records a COOP Online download with safe aggregate metadata only", async () => {
     const request = new NextRequest("https://coopsar.test/api/journey/events", {
       method: "POST",
-      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "app_download_click", page: "/", metadata: { platform: "android", source: "home_app_promo", destination: "google_play", email: "persona@example.com", street: "España 451" } }),
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "app_download_click", page: "/", metadata: { platform: "android", source: "quick_actions_app", destination: "google_play", email: "persona@example.com", street: "España 451" } }),
       headers: { "content-type": "application/json" },
     });
     expect((await POST(request)).status).toBe(204);
-    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "app_download_click", metadata: { platform: "android", source: "home_app_promo", destination: "google_play" } }));
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "app_download_click", metadata: { platform: "android", source: "quick_actions_app", destination: "google_play" } }));
     expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/persona@example.com|España|451|email|street/i);
   });
 });

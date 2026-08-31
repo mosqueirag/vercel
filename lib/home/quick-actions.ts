@@ -1,4 +1,4 @@
-export type HomeQuickActionId = "pay_bill" | "energy_outage" | "internet_interest" | "fiber_coverage" | "change_holder" | "funeral_service";
+export type HomeQuickActionId = "pay_bill" | "energy_outage" | "internet_interest" | "funeral_service";
 
 export type HomeQuickAction = {
   id: HomeQuickActionId;
@@ -19,9 +19,7 @@ export type PublishedQuickActionContact = {
 export const homeQuickActions: readonly HomeQuickAction[] = [
   { id: "pay_bill", title: "Pagar mi factura", description: "Accedé a tu cuenta y facturas.", icon: "$", destinationType: "external", href: "/medios-de-pago" },
   { id: "energy_outage", title: "Estoy sin energía", description: "Consultá el estado y la atención disponible.", icon: "!", destinationType: "internal", href: "/energia" },
-  { id: "internet_interest", title: "Quiero Internet", description: "Conocé las opciones para tu conexión.", icon: "⌁", destinationType: "internal", href: "/internet#contratar", accent: "commercial" },
-  { id: "fiber_coverage", title: "¿Llega fibra a mi casa?", description: "Verificá la cobertura en tu domicilio.", icon: "⌖", destinationType: "internal", href: "/internet#contratar", accent: "commercial" },
-  { id: "change_holder", title: "Cambiar titularidad", description: "Encontrá los pasos para hacer la gestión.", icon: "↔", destinationType: "internal", href: "/tramites" },
+  { id: "internet_interest", title: "Quiero Internet", description: "Consultá cobertura y opciones para tu conexión.", icon: "⌁", destinationType: "internal", href: "/internet#contratar", accent: "commercial" },
   { id: "funeral_service", title: "Servicio de Sepelio", description: "Accedé a información y atención prioritaria.", icon: "✦", destinationType: "internal", href: "/sepelio" },
 ] as const;
 
