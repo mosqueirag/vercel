@@ -4,16 +4,13 @@ import Link from "next/link";
 import { useCoopia } from "../components/coopia-context";
 import { usePublicContact } from "../components/public-contact-context";
 import { procedures, type Procedure } from "../../lib/procedures/catalog";
-
-function isOfficialExternalUrl(value: string | undefined) {
-  try { return Boolean(value && new URL(value).protocol === "https:"); } catch { return false; }
-}
+import { isExternalProcedureHref, resolveProcedureHref } from "./procedure-links";
 
 function ProcedureCard({ procedure }: { procedure: Procedure }) {
   const coopia = useCoopia();
   const virtualOffice = usePublicContact("billing", "virtual_office")?.value;
-  const href = procedure.id === "payments" ? (isOfficialExternalUrl(virtualOffice) ? virtualOffice : "/medios-de-pago") : procedure.href;
-  const external = Boolean(href && href.startsWith("https://"));
+  const href = resolveProcedureHref(procedure, virtualOffice);
+  const external = isExternalProcedureHref(href);
 
   const trackSelection = () => {
     if (!coopia.journeyId || !coopia.sessionId) return;
