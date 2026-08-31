@@ -18,5 +18,5 @@ export function InternetPlanSelectionAction({ plan, onSelected, label = "Quiero 
     document.querySelector("#contratar")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   }
 
-  return <button type="button" className="primary internet-plan-choice" onClick={selectPlan}>{label} <span aria-hidden="true">→</span></button>;
+  return <button type="button" className="primary internet-plan-choice public-action-button" onClick={selectPlan}>{label} <span aria-hidden="true">→</span></button>;
 }

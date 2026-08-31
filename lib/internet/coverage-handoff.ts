@@ -139,6 +139,18 @@ export function saveInternetJourneyHandoff(storage: StorageLike, handoff: Intern
   storage.setItem(internetJourneyHandoffKey, JSON.stringify(handoff));
 }
 
+/** Saves a resolved Home journey before opening the Internet catalogue. */
+export function saveInternetPlansHandoff(storage: StorageLike, input: {
+  street: string;
+  number: string;
+  coverage: PublicCoverageResult;
+  createdAt?: number;
+}) {
+  const handoff = createInternetJourneyHandoff(input);
+  saveInternetJourneyHandoff(storage, handoff);
+  return handoff;
+}
+
 /** Consumes and removes the handoff, preventing accidental replay. */
 export function consumeInternetJourneyHandoff(storage: StorageLike, now = Date.now()): InternetJourneyHandoff | null {
   const serialized = storage.getItem(internetJourneyHandoffKey);

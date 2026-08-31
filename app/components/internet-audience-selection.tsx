@@ -22,9 +22,9 @@ export function InternetAudienceSelection() {
     window.dispatchEvent(new CustomEvent(internetAudienceSelectedEvent, { detail: { audience } }));
   }
 
-  return <div className="internet-audience-grid" aria-label="Elegí el tipo de consulta">
-    {choices.map((choice) => <button key={choice.audience} type="button" className={selected === choice.audience ? "selected" : ""} aria-pressed={selected === choice.audience} onClick={() => choose(choice.audience)}>
-      <strong>{choice.title}</strong><span>{choice.description}</span><b aria-hidden="true">→</b>
+  return <div className="internet-audience-grid" role="group" aria-label="Elegí el tipo de consulta">
+    {choices.map((choice) => <button key={choice.audience} type="button" className={`public-action-card public-action-card--primary${selected === choice.audience ? " selected" : ""}`} aria-pressed={selected === choice.audience} onClick={() => choose(choice.audience)}>
+      <strong>{choice.title}</strong><span>{choice.description}</span><i className="internet-audience-arrow" aria-hidden="true">→</i>
     </button>)}
   </div>;
 }

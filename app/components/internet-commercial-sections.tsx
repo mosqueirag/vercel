@@ -37,8 +37,8 @@ export function InternetCommercialIntro({ plans, isDemo = false }: { plans: Publ
 
 export function InternetCommercialAfterCoverage({ faqs }: { faqs: PublicFaq[] }) {
   return <>
-    <section className="internet-sales-section internet-sales-customer"><div><span className="eyebrow">Ya soy cliente</span><h2>¿Necesitás ayuda con tu servicio?</h2></div><InternetCoopiaAction className="primary">Abrir COOPIA</InternetCoopiaAction></section>
+    <section className="internet-sales-section internet-sales-customer"><div><span className="eyebrow">Ya soy cliente</span><h2>¿Necesitás ayuda con tu servicio?</h2></div><InternetCoopiaAction className="primary public-action-button">Abrir COOPIA</InternetCoopiaAction></section>
     {faqs.length > 0 && <section className="internet-sales-section internet-sales-faqs"><div className="internet-sales-heading"><div><span className="eyebrow">Preguntas frecuentes</span><h2>Preguntas sobre Internet</h2></div></div><div>{faqs.map((faq) => <details key={`${faq.category}-${faq.question}`}><summary>{faq.question}</summary><p>{faq.answer}</p></details>)}</div></section>}
-    <section className="internet-sales-final"><span className="eyebrow eyebrow-light">Internet COOPSAR</span><h2>Conocé qué opción podemos ofrecerte.</h2><Link href="#contratar" className="button-light">Consultar mi domicilio <span aria-hidden="true">→</span></Link></section>
+    <section className="internet-sales-final"><span className="eyebrow eyebrow-light">Internet COOPSAR</span><h2>Conocé qué opción podemos ofrecerte.</h2><Link href="#contratar" className="button-light public-action-button">Consultar mi domicilio <span aria-hidden="true">→</span></Link></section>
   </>;
 }

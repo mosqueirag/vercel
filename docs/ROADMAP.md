@@ -1,5 +1,13 @@
 # Roadmap posterior al cierre de Fase 2
 
+## Fase 4G.4.1.8 — Quick Actions priorizadas + COOP Online
+
+La Home prioriza cuatro necesidades principales: pago, energía, Internet y Sepelio. Internet concentra la entrada comercial y de cobertura sin duplicar Fibra en otro acceso. COOPIA conserva la orientación inteligente y `HomeAdaptivePanel` sigue siendo la continuación contextual posterior; los accesos no crean otra conversación ni reordenan la Home según historial. COOP Online se presenta como tarjeta destacada dentro del mismo grid y como canal de Atención, sin bloque autónomo ni promoción en Footer.
+
+## Fase 4G.4.1.6 — COOP Online como canal digital público
+
+COOP Online se incorpora como acceso oficial a Google Play desde una tarjeta destacada del grid de accesos directos y un canal compacto de Atención. Complementa COOPIA, la Oficina Virtual y WhatsApp sin duplicar conversación, inventar funcionalidades de la aplicación ni modificar canales administrativos. El seguimiento de descarga es agregado, opcional y sin PII.
+
 ## 4G.2.8.4 — experiencia interactiva de oferta de Internet
 
 La sección pública de tecnologías pasa de tarjetas estáticas a un único widget accesible y derivado del catálogo. La selección Hogar/Comercio filtra segmentos reales y Empresa tiene un recorrido consultivo separado hasta que exista una oferta enterprise administrable. La clasificación comercial de staging continúa en `draft`; no autoriza publicación ni cambios de precio.
@@ -112,3 +120,7 @@ Pendiente de validación humana final: el catálogo consolidará los duplicados 
 ## 4G.2.8.1 — Corrección de canónicos de catálogo
 
 La migración correctiva restablece exclusivamente los canónicos aprobados de Hogar 50 e Inalámbrico 20 y retira sus dos variantes legacy con soft delete auditable. No publica planes, no altera ADSL 5 ni toma decisión sobre Hogar 100.
+
+## 4G.4.1.3 — Jerarquía y conversión de Home
+
+La Home distingue ahora el propósito de cada bloque: COOPIA resuelve la necesidad, el panel adaptativo sólo continúa cuando agrega valor, los accesos directos navegan y la sección Internet presenta primero la experiencia comercial y luego la cobertura. Las secciones de noticias no se renderizan sin publicaciones; no se agregan noticias de demostración ni datos comerciales nuevos.

@@ -34,7 +34,7 @@ export function InternetTechnologyWidget() {
         onKeyDown={(event) => onKeyDown(event, technology.id)}
       >{technology.label}</button>)}
     </div>
-    <section id={`${tabListId}-panel`} role="tabpanel" aria-live="polite" className={`internet-technology-detail is-${detail.visual}`}>
+    <section key={selected} id={`${tabListId}-panel`} role="tabpanel" aria-live="polite" className={`internet-technology-detail is-${detail.visual}`}>
       <div className="internet-technology-visual" aria-hidden="true"><span /><i /><b /></div>
       <div><span className="eyebrow">{detail.label}</span><h3>{detail.heading}</h3><p>{detail.description}</p></div>
       <ul className="internet-technology-facts">{detail.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>

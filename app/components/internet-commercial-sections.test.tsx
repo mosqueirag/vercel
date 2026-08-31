@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { InternetCommercialIntro } from "./internet-commercial-sections";
+import { InternetAudienceSelection } from "./internet-audience-selection";
 import { InternetPlanCatalog } from "./internet-plan-catalog";
 import { InternetEnterprisePanel, resolveEnterpriseSalesWhatsApp } from "./internet-enterprise-panel";
 
@@ -52,5 +53,11 @@ describe("Internet commercial product content", () => {
   it("keeps the enterprise journey focused on published sales contact without a second coverage CTA", () => {
     const markup = renderToStaticMarkup(<InternetEnterprisePanel />);
     expect(markup).not.toContain("Consultar disponibilidad");
+  });
+
+  it("uses a dedicated arrow element for every audience card", () => {
+    const markup = renderToStaticMarkup(<InternetAudienceSelection />);
+    expect((markup.match(/internet-audience-arrow/g) ?? [])).toHaveLength(3);
+    expect(markup).not.toMatch(/<b(?:\s|>)/);
   });
 });

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CONTACT } from "../lib/coopsar-data";
 import type { NewsArticle } from "../lib/news";
+import { CoopOnlineDownloadLink } from "./components/coop-online-download-link";
 import { usePublicContact } from "./components/public-contact-context";
 
 const menuGroups = [
@@ -98,7 +99,7 @@ export function Contact() {
   const officialEnergyGuard = usePublicContact("energy", "emergency")?.value;
   const whatsapp = officialWhatsApp || CONTACT.whatsapp;
   const energyGuard = officialEnergyGuard || CONTACT.energyGuard;
-  return <section className="contact-band"><div><span className="eyebrow eyebrow-dark">Atención cercana</span><h2>Estamos para<br />acompañarte.</h2></div><a className="contact-item" href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}><span className="contact-icon">W</span><span><small>WhatsApp comercial</small><strong>{officialWhatsApp || CONTACT.whatsappDisplay}</strong></span><b>↗</b></a><a className="contact-item" href={`tel:${energyGuard.replace(/[^\d+]/g, "")}`}><span className="contact-icon">24</span><span><small>Guardia de energía</small><strong>{energyGuard}</strong></span><b>↗</b></a></section>;
+  return <section className="contact-band"><div><span className="eyebrow eyebrow-dark">Atención cercana</span><h2>Estamos para<br />acompañarte.</h2></div><a className="contact-item" href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}><span className="contact-icon">W</span><span><small>WhatsApp comercial</small><strong>{officialWhatsApp || CONTACT.whatsappDisplay}</strong></span><b>↗</b></a><a className="contact-item" href={`tel:${energyGuard.replace(/[^\d+]/g, "")}`}><span className="contact-icon">24</span><span><small>Guardia de energía</small><strong>{energyGuard}</strong></span><b>↗</b></a><CoopOnlineDownloadLink className="contact-item contact-app" source="contact_app"><span className="contact-icon" aria-hidden="true">▣</span><span><small>App COOPSAR</small><strong>COOP Online</strong></span><b aria-hidden="true">→</b></CoopOnlineDownloadLink></section>;
 }
 
 export function Footer() {

@@ -16,6 +16,14 @@ export function coverageTechnologyLabel(technology: string) {
   return technology;
 }
 
+/** Keep technical validation as the result title and use the body only for new context. */
+export function coverageContextMessage(coverage: CoveragePresentationInput | null, fallback: string) {
+  if (coverage?.coverageStatus === "nearby" || coverage?.coverageStatus === "planned") {
+    return "Encontramos información cercana o en planificación.";
+  }
+  return fallback;
+}
+
 /**
  * Presentation follows the resolver's technical coverage result. Commercial
  * availability only adds plan information; it never negates confirmed coverage.

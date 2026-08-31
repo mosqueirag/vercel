@@ -1,5 +1,13 @@
 # Decisiones técnicas
 
+## 4G.4.1 — Quick Actions por necesidad
+
+Los accesos de la Home representan necesidades cotidianas y tienen destinos canónicos tipados, no una taxonomía interna. El pago resuelve el canal `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro. Las cuatro prioridades son pago, energía, Internet y Sepelio; Internet absorbe la entrada de cobertura/fibra para evitar duplicidad. No incluyen teléfonos ni datos personales; el tracking `quick_access_click` es best-effort y sólo registra identificadores agregados de acción y destino cuando ya existe una sesión de navegación.
+
+## 4G.4.1.6 — Canal digital COOP Online
+
+La URL oficial de Google Play de COOP Online se conserva en una única configuración pública tipada. Su promoción pertenece exclusivamente a superficies públicas: Home la presenta como tarjeta destacada dentro del grid de acciones y como canal complementario de Atención, sin bloque autónomo ni promoción en Footer. Cada clic registra solamente plataforma, origen y destino en `app_download_click`; no transporta información personal, contenido conversacional ni parámetros de URL.
+
 ## 4G.3 — Atención de Sepelio publicada y contextual
 
 La atención urgente del servicio de sepelio se resuelve primero mediante el canal publicado `funeral/emergency`; la página no duplica teléfonos ni condiciones contractuales. Las consultas no urgentes abren la única instancia global de COOPIA con contexto de Sepelio, y las FAQ se muestran únicamente cuando existen registros publicados y relevantes.
@@ -47,6 +55,7 @@ La atención urgente del servicio de sepelio se resuelve primero mediante el can
 - Fase 4G.2.8: ADSL forma parte de la taxonomía comercial administrable junto a FTTH e Internet inalámbrico, pero sigue requiriendo validación y publicación humana explícitas. El retiro de un plan es un soft delete privado y auditado; nunca elimina historial ni aparece en lecturas públicas o demos de staging.
 - Fase 4G.2.8.1 corrige de forma aditiva una reconciliación invertida en Staging: `plan-hogar-50-mb` e `inalambrico-20-mb` son los canónicos restaurados; sus registros legacy se retiran mediante soft delete. La auditoría conserva el historial anterior y registra `restored` para la corrección. Hogar 100 queda fuera de este alcance.
 - Fase 4G.2.8.4 separa la audiencia comercial del tipo de conectividad: Hogar filtra `home`, Comercio filtra `business` y Empresa inicia una consulta comercial sin catálogo enterprise ni promesas no verificadas. El contacto de soporte de Internet nunca se reutiliza para ventas; la referencia a un borrador de staging sólo comunica una opción comercial a validar, no disponibilidad publicada.
+- Fase 4G.4.1.3: la Home mantiene un panel adaptativo sólo cuando agrega un siguiente paso distinto al resultado estructurado de COOPIA. Para `pay_invoice`, COOPIA conserva las acciones oficiales y la Home no repite Oficina Virtual ni medios de pago; los accesos directos continúan siendo navegación general y la sección Internet combina entrada comercial hacia `/internet` con una única herramienta de cobertura.
 # 2026-08-25 — 4G.2.3: publicación de planes explícita
 
 Se mantiene `internet_plans` como fuente comercial única. No se publica por guardar ni se permite editar en vivo una oferta publicada. La migración aditiva de auditoría queda preparada, sin aplicarse a Staging ni Producción desde esta rama.

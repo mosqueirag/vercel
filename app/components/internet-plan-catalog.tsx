@@ -79,9 +79,12 @@ export function InternetPlanCatalog({ plans, isDemo = false }: { plans: PublicIn
     </article>;
   }
 
+  const isEnterprise = audience === "empresa";
+  const planCount = Math.min(preferred.length, 3);
+
   return <div className="internet-plan-catalog">
     {isDemo && <div className="internet-demo-notice"><strong>Simulación comercial</strong><span>Valores y condiciones en proceso de validación.</span></div>}
-    <div className="internet-catalog-heading"><h3>{heading}</h3>{detail && <p>{detail}</p>}</div>
-    {audience === "empresa" ? <InternetEnterprisePanel /> : preferred.length > 0 ? <div className="internet-sales-plans">{preferred.map(card)}</div> : <div className="internet-catalog-empty" role="status"><p>{coverageDetail && (coverageDetail.coverageStatus === "unavailable" || coverageDetail.coverageStatus === "unknown" || coverageDetail.technologies.length === 0) ? "No tenemos una tecnología confirmada para este domicilio." : audience ? "Todavía no hay una oferta publicada para esta categoría." : "Elegí cómo vas a usar Internet para ver las opciones correspondientes."}</p></div>}
+    {!isEnterprise && <div className="internet-catalog-heading"><h3>{heading}</h3>{detail && <p>{detail}</p>}</div>}
+    {isEnterprise ? <InternetEnterprisePanel /> : preferred.length > 0 ? <div className={`internet-sales-plans plan-count-${planCount}`}>{preferred.map(card)}</div> : <div className="internet-catalog-empty" role="status"><p>{coverageDetail && (coverageDetail.coverageStatus === "unavailable" || coverageDetail.coverageStatus === "unknown" || coverageDetail.technologies.length === 0) ? "No tenemos una tecnología confirmada para este domicilio." : audience ? "Todavía no hay una oferta publicada para esta categoría." : "Elegí cómo vas a usar Internet para ver las opciones correspondientes."}</p></div>}
   </div>;
 }

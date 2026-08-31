@@ -7,6 +7,7 @@ describe("site page link validation", () => {
     expect(safePageHref.safeParse("/internet").success).toBe(true);
     expect(safePageHref.safeParse("https://wa.me/542974000000").success).toBe(true);
     expect(safePageHref.safeParse("tel:+542974000000").success).toBe(true);
+    expect(safePageHref.safeParse("http://untrusted.example").success).toBe(false);
   });
   it("rejects dangerous URLs", () => {
     expect(safePageHref.safeParse("javascript:alert(1)").success).toBe(false);

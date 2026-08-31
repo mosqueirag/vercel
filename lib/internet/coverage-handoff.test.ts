@@ -7,6 +7,7 @@ import {
   internetJourneyHandoffKey,
   internetJourneyHandoffTtlMs,
   saveInternetJourneyHandoff,
+  saveInternetPlansHandoff,
   type PublicCoverageResult,
 } from "./coverage-handoff";
 
@@ -47,6 +48,18 @@ describe("Internet coverage journey handoff", () => {
     expect(consumeInternetJourneyHandoff(session, now)).toEqual(handoff);
     expect(session.getItem(internetJourneyHandoffKey)).toBeNull();
     expect(consumeInternetJourneyHandoff(session, now)).toBeNull();
+  });
+
+  it("saves a Home plans handoff without putting the address in the destination URL", () => {
+    const session = storage();
+    const now = 1_700_000_000_000;
+    const handoff = saveInternetPlansHandoff(session, { street: "Calle de prueba", number: "123", coverage: coverage(), createdAt: now });
+
+    expect(handoff.destination).toBe("plans");
+    expect(internetJourneyCanonicalHref).toBe("/internet#contratar");
+    expect(internetJourneyCanonicalHref).not.toContain(handoff.street);
+    expect(internetJourneyCanonicalHref).not.toContain(handoff.number);
+    expect(consumeInternetJourneyHandoff(session, now)).toEqual(handoff);
   });
 
   it("routes no-plan results to waitlist or validation without a second coverage request", () => {
