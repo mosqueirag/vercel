@@ -12,5 +12,5 @@ export const metadata: Metadata = { title: "Energía | COOPSAR", description: "E
 export default async function EnergyPage() {
   const [page, operation, guard] = await Promise.all([getPublishedSitePage("energia"), getPublicServiceStatus("energy"), getPublicContact("energy", "emergency")]);
   const content = page ?? { eyebrow: "Energía", title: "Energía para la comunidad", intro: "Estado operativo, guardia y gestiones en un solo lugar." };
-  return <><Header /><main className="energy-page"><section className="energy-hero"><div><span className="eyebrow">{content.eyebrow}</span><h1>{content.title}</h1><p>{content.intro}</p></div><EnergyStatusPanel status={operation.status} alert={operation.alert} /></section><EnergyActions guard={guard} /></main><Footer /></>;
+  return <><Header /><main className="energy-page"><section className="energy-hero"><div><span className="eyebrow">{content.eyebrow}</span><h1>{content.title}</h1><p>{content.intro}</p></div><EnergyStatusPanel status={operation.status} alert={operation.alert} error={operation.error} /></section><EnergyActions guard={guard} /></main><Footer /></>;
 }

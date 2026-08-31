@@ -6,6 +6,7 @@
 - El estado operativo se lee exclusivamente de `service_alerts` publicados; el render público no emite analítica de herramientas de COOPIA.
 - La guardia es una capacidad opcional resuelta desde contactos publicados; no existe fallback telefónico hardcodeado.
 - Un corte programado (mantenimiento publicado) no se confunde con una interrupción imprevista.
+- Un error de lectura nunca se presenta como ausencia de alertas. `maintenance` no equivale por sí mismo a corte programado: `service_alerts` no dispone de tipo, categoría ni discriminador de programación. Evaluar un discriminador explícito queda como P2.
 
 ## 4G.5 — Centro inteligente de trámites
 
