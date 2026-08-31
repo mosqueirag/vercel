@@ -8,6 +8,10 @@ Los accesos de la Home representan necesidades cotidianas y tienen destinos can�
 
 La URL oficial de Google Play de COOP Online se conserva en una única configuración pública tipada. Su promoción pertenece exclusivamente a superficies públicas: Home la presenta como tarjeta destacada dentro del grid de acciones y como canal complementario de Atención, sin bloque autónomo ni promoción en Footer. Cada clic registra solamente plataforma, origen y destino en `app_download_click`; no transporta información personal, contenido conversacional ni parámetros de URL.
 
+## 4G.4.2 — Sin personalización persistente de Home
+
+La adaptación de Home se deriva solamente del `intent` y `service` temporales de `NavigationProvider`, ya existentes en `sessionStorage`. No hay cookies nuevas, perfil, historial cross-session, fingerprinting, endpoints de personalización ni otra llamada IA. El orden DOM se recalcula antes del render para coincidir con el orden visual; `home_priority_applied` es un evento agregado, sin PII y deduplicado por combinación de journey, intención y prioridad durante la sesión.
+
 ## 4G.3 — Atención de Sepelio publicada y contextual
 
 La atención urgente del servicio de sepelio se resuelve primero mediante el canal publicado `funeral/emergency`; la página no duplica teléfonos ni condiciones contractuales. Las consultas no urgentes abren la única instancia global de COOPIA con contexto de Sepelio, y las FAQ se muestran únicamente cuando existen registros publicados y relevantes.

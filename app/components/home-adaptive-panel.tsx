@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import type { AssistantIntent } from "../../lib/ai/intents";
+import { resolveHomePriority } from "../../lib/home/home-priority";
 import { useNavigationContext } from "./navigation-context";
 
 type Panel = { eyebrow: string; title: string; description: string; links: { label: string; href: string; detail: string; icon: string }[] };
@@ -16,7 +17,9 @@ export const homeAdaptivePanels: Partial<Record<AssistantIntent, Panel>> = {
 
 export function HomeAdaptivePanel() {
   const navigation = useNavigationContext();
-  const panel = navigation.intent ? homeAdaptivePanels[navigation.intent] : undefined;
+  const priority = resolveHomePriority(navigation.intent, navigation.service);
+  const panelIntent = priority.contextualPanel;
+  const panel = panelIntent ? homeAdaptivePanels[panelIntent] : undefined;
 
   useEffect(() => {
     if (!panel || !navigation.journeyId || !navigation.sessionId) return;
