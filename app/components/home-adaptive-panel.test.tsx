@@ -14,6 +14,8 @@ describe("HomeAdaptivePanel", () => {
   it("keeps adaptive continuations only for intents with a distinct next step", () => {
     expect(homeAdaptivePanels.pay_invoice).toBeUndefined();
     expect(homeAdaptivePanels.energy_problem?.links).toHaveLength(3);
+    expect(homeAdaptivePanels.energy_problem?.title).toBe("Revisá el estado del servicio");
+    expect(JSON.stringify(homeAdaptivePanels.energy_problem)).not.toContain("canales de guardia");
     expect(homeAdaptivePanels.internet_problem?.links).toHaveLength(3);
     expect(homeAdaptivePanels.fiber_coverage?.links).toHaveLength(2);
     expect(homeAdaptivePanels.fiber_signup?.links).toHaveLength(3);
