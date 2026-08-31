@@ -1,5 +1,12 @@
 # Decisiones técnicas
 
+## 4G.6 — Estado operativo de Energía
+
+- `unknown` nunca se presenta como servicio operativo: significa “Sin información operativa confirmada”.
+- El estado operativo se lee exclusivamente de `service_alerts` publicados; el render público no emite analítica de herramientas de COOPIA.
+- La guardia es una capacidad opcional resuelta desde contactos publicados; no existe fallback telefónico hardcodeado.
+- Un corte programado (mantenimiento publicado) no se confunde con una interrupción imprevista.
+
 ## 4G.5 — Centro inteligente de trámites
 
 `/tramites` es una superficie pública dedicada de decisión, no un catálogo genérico de enlaces ni un CMS paralelo. Su registro tipado sólo enumera capacidades ya implementadas: cada gestión abre la única conversación global de COOPIA, utiliza una ruta interna real o resuelve un canal publicado dinámicamente. Pagos consulta `billing/virtual_office` publicado y conserva `/medios-de-pago` como fallback seguro; Sepelio usa sus rutas específicas. No se ofrece reconexión como trámite online hasta contar con un flujo operativo confirmado. El evento best-effort `procedure_selected` conserva únicamente procedimiento, intención, tipo de resolución y origen, sin texto libre ni PII.
