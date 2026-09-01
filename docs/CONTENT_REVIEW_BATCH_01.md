@@ -2,9 +2,17 @@
 
 Entorno auditado: `coopsar-staging`. Fecha: 2026-08-31. Este documento no cambia contenido en la base de datos.
 
-## Gate de revisión
+## Cierre Smoke 01 editorial — resultado posterior
 
-Los cinco registros continúan `draft`; sus cinco propuestas vigentes están `generated`, son de riesgo `low`, no tienen `validation_flags`, no tienen una validación abierta asociada por provenance y sus `source_hash` fueron recalculados contra el contenido actual con resultado coincidente. No se hizo ninguna llamada IA ni escritura remota.
+**SMOKE 01 EDITORIAL = PASS.** La decisión humana para `Cómo estimar el consumo eléctrico de tu hogar` se completó mediante el workflow editorial autorizado: el artículo quedó `published`, con `published_at` definido y auditoría `published`; el copy final fue validado. No se publicó ningún otro elemento.
+
+Los cuatro ítems restantes de este Batch continúan `draft` / `needs_validation`. **COOPIA CONSUMER = PASS**: el artículo publicado entra por la proyección `help_articles` published-only, mientras que borradores y propuestas privadas no entran al contexto público.
+
+Dos pendientes quedan documentados sin cambio funcional: **WEB ARTICLE SURFACE = PENDING** (`/energia-estimar-consumo` devuelve 404 porque `[slug]` no sirve `help_articles`) y **PROPOSAL STATE CONSISTENCY = PENDING** (el candidato está `published`, pero la propuesta permanece `applied`, estado que significa aplicada al borrador).
+
+## Gate de revisión inicial — evidencia histórica
+
+Al inicio del Gate, los cinco registros estaban `draft`; sus cinco propuestas vigentes estaban `generated`, eran de riesgo `low`, no tenían `validation_flags`, no tenían una validación abierta asociada por provenance y sus `source_hash` fueron recalculados contra el contenido de ese momento con resultado coincidente. Esta evidencia antecede al cierre Smoke 01 documentado arriba.
 
 | # | Tipo | Título | Riesgo | Facts | Vigencia | Duplicado | Decisión |
 | ---: | --- | --- | --- | --- | --- | --- | --- |

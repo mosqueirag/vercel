@@ -4,6 +4,14 @@ Fecha de auditoría: 2026-08-31. Entorno consultado: `coopsar-staging` (`wwvqlby
 
 El contenido histórico importado es evidencia curada para revisión editorial. WordPress y su XML no participan en runtime. La publicación siempre requiere una decisión humana; ningún lote de IA publica ni altera registros `published`.
 
+## Cierre Smoke 01 editorial — staging
+
+**SMOKE 01 EDITORIAL = PASS.** `Cómo estimar el consumo eléctrico de tu hogar` fue publicado de manera individual y auditada tras revisión humana. Su `published_at` está definido y su copy final fue validado. No hubo publicación masiva: los otros cuatro contenidos del Batch 01 siguen `draft` / `needs_validation`; planes y contactos siguen fuera de este flujo.
+
+**COOPIA CONSUMER = PASS.** La proyección `getPublishedCuratedKnowledge()` incluye el artículo publicado y `getAssistantKnowledge()` lo incorpora a la base oficial. Borradores, propuestas, provenance y validaciones continúan fuera de la conversación pública.
+
+Persisten dos pendientes explícitos: **WEB ARTICLE SURFACE = PENDING**, porque `/energia-estimar-consumo` no resuelve `help_articles`; y **PROPOSAL STATE CONSISTENCY = PENDING**, porque el candidato está `published` mientras su propuesta continúa `applied`. Los conteos siguientes son la fotografía de auditoría original y no deben reinterpretarse como el estado posterior al Smoke 01.
+
 ## Inventario real de staging
 
 | Tipo | Total | Draft | Published | Archived | Con provenance |

@@ -4,6 +4,14 @@
 
 Inventario y primer batch editorial controlado de hasta cinco entidades históricas: sólo servicios, artículos de ayuda y FAQ `draft`, con provenance, validaciones y propuestas privadas. Sin publicación automática, sin planes/contactos y sin cambios de cobertura.
 
+### Cierre Smoke 01 — staging
+
+**SMOKE 01 EDITORIAL = PASS** y **COOPIA CONSUMER = PASS**: un artículo de ayuda aprobado se publicó de forma individual y entra a la base oficial a través de la proyección published-only. Los otros cuatro contenidos del Batch 01 continúan `draft` / `needs_validation`; no hay publicación masiva.
+
+### Próxima fase propuesta — 4G.7.1.7: superficie pública de artículos y consistencia editorial
+
+Resolver únicamente dos pendientes: una ruta published-only explícita para `help_articles` (por ejemplo `/ayuda/[slug]`, sin colisionar con `[slug]` de `site_pages` / `servicePages`) y la semántica entre candidato `published`, propuesta `applied` y auditoría `published`. No incluye llamadas IA, nuevos proveedores, publicación de otros borradores, cobertura ni datos oficiales vivos.
+
 ## Fase 4G.7.2 — Integración editorial de páginas CMS
 
 Definir el flujo para `site_pages` sin crear un CMS paralelo, preservando los contactos dinámicos y la regla de contenido público `published`.

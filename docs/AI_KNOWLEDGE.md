@@ -21,6 +21,13 @@ El WordPress anterior y su XML son evidencia de migración histórica, nunca una
 
 COOPIA pública consume exclusivamente `services`, `help_articles` y `faqs` con estado `published`; planes, contactos y alertas se resuelven por sus capas tipadas publicadas. Nunca recibe borradores, propuestas editoriales, provenance ni la cola de validación. La IA puede proponer mejoras para revisión humana, pero no aprueba, aplica ni publica. Los hechos protegidos (teléfonos, precios, URL, horarios, domicilios, velocidades y requisitos) conservan su validación explícita.
 
+## Smoke 01 editorial — staging
+
+- **SMOKE 01 EDITORIAL = PASS.** El artículo `Cómo estimar el consumo eléctrico de tu hogar` fue publicado mediante el workflow humano: tiene `published_at` definido y auditoría `published`.
+- **COOPIA CONSUMER = PASS.** `getPublishedCuratedKnowledge()` incorpora los `help_articles` publicados y `getAssistantKnowledge()` los integra a la base oficial. Los otros cuatro elementos de Batch 01 continúan `draft` / `needs_validation` y no se consumen.
+- **WEB ARTICLE SURFACE = PENDING.** `/energia-estimar-consumo` devuelve 404 porque la ruta pública `[slug]` resuelve `site_pages` / `servicePages`, no `help_articles`. No se debe exponer un borrador ni reutilizar una ruta ambigua para resolverlo.
+- **PROPOSAL STATE CONSISTENCY = PENDING.** El candidato publicado conserva la propuesta en `applied`: hoy los estados de `content_editorial_proposals` no incluyen `published`. La semántica de cierre del ciclo editorial requiere una decisión explícita antes de modificar modelo o workflow.
+
 ## Continuidad pública
 
 COOPIA acompaña la navegación pública durante una única sesión temporal. El contexto técnico de cada consulta incluye página, `journeyId`, `sessionId` y, cuando ya existe, intención y servicio. Esto aporta continuidad sin enviar contenido completo de las páginas al modelo. Las respuestas no resueltas y el feedback se registran solamente como métricas estructuradas, sin conservar el texto completo de la conversación.
