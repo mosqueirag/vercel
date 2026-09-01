@@ -18,6 +18,8 @@ El contenido histórico importado es evidencia curada para revisión editorial. 
 
 Hay 156 relaciones de provenance y 10 validaciones abiertas. Esas validaciones son de origen/importación; no se asume una relación uno a uno con cada entidad sin revisión humana.
 
+El inventario de borradores de las tres tablas editoriales es **63** (`9 services + 24 help_articles + 30 faqs`). El selector histórico existente utiliza solamente los 44 que tienen provenance histórico apto para ese flujo (`9 + 24 + 11`). Los 19 FAQ draft restantes permanecen fuera del lote hasta tener provenance histórico explícito; no se los fuerza ni se inventa procedencia.
+
 ## Estado de curaduría IA existente
 
 Existen 57 propuestas privadas: 15 de riesgo bajo, 30 medio, 10 alto y 2 restringidas. Por estado: 2 aplicadas, 1 aprobada, 13 generadas, 40 con validación requerida y 1 rechazada. No se usa este inventario como autorización para publicar.
