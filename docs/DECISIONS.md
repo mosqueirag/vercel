@@ -1,5 +1,12 @@
 # Decisiones técnicas
 
+## 4G.7.1 — Activación de contenido curado
+
+- El corpus histórico se mantiene separado de las fuentes vivas: WordPress/XML es únicamente evidencia de migración, no una consulta de runtime.
+- La IA propone; la revisión humana aplica y publica. Ningún lote puede publicar, reescribir `published` ni decidir hechos protegidos.
+- Web pública y COOPIA consumen las mismas proyecciones tipadas `published`; `provenance`, `validation_queue` y propuestas son privados.
+- `site_pages` es una fuente pública administrable pero aún no participa del pipeline editorial ni del contexto público de COOPIA. Es el gap explícito de 4G.7.2.
+
 ## 4G.6 — Estado operativo de Energía
 
 - `unknown` nunca se presenta como servicio operativo: significa “Sin información operativa confirmada”.

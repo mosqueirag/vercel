@@ -17,6 +17,10 @@ Mientras no exista un registro oficial publicado, COOPIA debe responder que la c
 
 El WordPress anterior y su XML son evidencia de migración histórica, nunca una fuente de verdad consultada en runtime. El paquete curado se importa a tablas tipadas como borrador; `lib/data/curated-content.ts` consulta explícitamente sólo registros publicados. El manifiesto de conocimiento sirve para mapear intenciones a contenido tipado, pero los datos vivos —planes, contactos, alertas y cobertura— continúan en sus fuentes administrables y publicadas.
 
+## Activación curada 4G.7.1
+
+COOPIA pública consume exclusivamente `services`, `help_articles` y `faqs` con estado `published`; planes, contactos y alertas se resuelven por sus capas tipadas publicadas. Nunca recibe borradores, propuestas editoriales, provenance ni la cola de validación. La IA puede proponer mejoras para revisión humana, pero no aprueba, aplica ni publica. Los hechos protegidos (teléfonos, precios, URL, horarios, domicilios, velocidades y requisitos) conservan su validación explícita.
+
 ## Continuidad pública
 
 COOPIA acompaña la navegación pública durante una única sesión temporal. El contexto técnico de cada consulta incluye página, `journeyId`, `sessionId` y, cuando ya existe, intención y servicio. Esto aporta continuidad sin enviar contenido completo de las páginas al modelo. Las respuestas no resueltas y el feedback se registran solamente como métricas estructuradas, sin conservar el texto completo de la conversación.

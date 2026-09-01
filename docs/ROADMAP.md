@@ -1,5 +1,17 @@
 # Roadmap posterior al cierre de Fase 2
 
+## Fase 4G.7.1 — Activación de contenido curado
+
+Inventario y primer batch editorial controlado de hasta cinco entidades históricas: sólo servicios, artículos de ayuda y FAQ `draft`, con provenance, validaciones y propuestas privadas. Sin publicación automática, sin planes/contactos y sin cambios de cobertura.
+
+## Fase 4G.7.2 — Integración editorial de páginas CMS
+
+Definir el flujo para `site_pages` sin crear un CMS paralelo, preservando los contactos dinámicos y la regla de contenido público `published`.
+
+## Fase 4G.7.3 — Gobierno de publicación y stale content
+
+Definir el mantenimiento editorial de cambios de fuente, propuestas stale, auditoría y recuperación, antes de ampliar el corpus o automatizar decisiones.
+
 ## Fase 4G.6 — Energy Operations Center
 
 Pendiente de QA humana: `/energia` prioriza estado oficial, acción inmediata, guardia publicada y gestiones reutilizables. Los cortes programados se consultan desde alertas publicadas y se distinguen de interrupciones imprevistas.
