@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(29);
 
 insert into public.help_articles (id, slug, title, category, summary, content, status, published_at)
 values (
@@ -95,6 +95,37 @@ select is((select count(*)::integer from public.content_editorial_proposal_audit
 select is((select status from public.content_editorial_proposals where id = '22222222-2222-2222-2222-222222222222'), 'applied', 'proposal remains applied');
 select is((select status from public.help_articles where id = '11111111-1111-1111-1111-111111111111'), 'draft', 'article remains draft');
 select ok((select published_at is null from public.help_articles where id = '11111111-1111-1111-1111-111111111111'), 'article remains unpublished');
+
+create temporary table editorial_human_edit_snapshot as
+select
+  ha.updated_at as article_updated_at,
+  cep.updated_at as proposal_updated_at
+from public.help_articles ha
+join public.content_editorial_proposals cep on cep.entity_id = ha.id
+where cep.id = '22222222-2222-2222-2222-222222222222';
+
+select lives_ok(
+  $$ select public.apply_editorial_human_edit(
+    '22222222-2222-2222-2222-222222222222'::uuid,
+    'editor@coopsar.test',
+    'T11', 'S1', 'C1', 'same-before-hash', 'same-after-hash'
+  ) $$,
+  'no-op human edit is accepted without writing'
+);
+select is((select updated_at::text from public.help_articles where id = '11111111-1111-1111-1111-111111111111'), (select article_updated_at::text from editorial_human_edit_snapshot), 'no-op preserves article updated_at');
+select is((select updated_at::text from public.content_editorial_proposals where id = '22222222-2222-2222-2222-222222222222'), (select proposal_updated_at::text from editorial_human_edit_snapshot), 'no-op preserves proposal updated_at');
+select is((select count(*)::integer from public.content_editorial_proposal_audit where proposal_id = '22222222-2222-2222-2222-222222222222' and action = 'human_edited'), 1, 'no-op does not insert another audit');
+select lives_ok(
+  $$ select public.apply_editorial_human_edit(
+    '22222222-2222-2222-2222-222222222222'::uuid,
+    'editor@coopsar.test',
+    'T11', 'S2', 'C2', 'partial-before-hash', 'partial-after-hash'
+  ) $$,
+  'real partial human edit is persisted'
+);
+select is((select summary from public.help_articles where id = '11111111-1111-1111-1111-111111111111'), 'S2', 'partial edit updates only supplied summary');
+select is((select content from public.help_articles where id = '11111111-1111-1111-1111-111111111111'), 'C2', 'partial edit updates only supplied content');
+select is((select (metadata -> 'changed_fields')::text from public.content_editorial_proposal_audit where proposal_id = '22222222-2222-2222-2222-222222222222' and metadata ->> 'before_hash' = 'partial-before-hash'), '["summary", "content"]', 'audit lists only fields that changed');
 select throws_ok(
   $$ select public.apply_editorial_human_edit(
     '33333333-3333-3333-3333-333333333333'::uuid,

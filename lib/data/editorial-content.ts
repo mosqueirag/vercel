@@ -17,6 +17,7 @@ export type EditorialCandidate = {
   validationPriority?: "P0" | "P1" | "P2" | "P3";
   sourceSlugs: string[];
   historicalCorpus: boolean;
+  editableDraft?: { title: string; summary: string; content: string };
 };
 
 type RawCandidate = { id: string; status: EditorialCandidate["status"] };
@@ -41,16 +42,16 @@ export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
     const previous = provenanceById.get(row.entity_id) ?? { count: 0, sourceSlugs: [], historical: false };
     provenanceById.set(row.entity_id, { count: previous.count + 1, sourceSlugs: row.source_slug ? [...previous.sourceSlugs, row.source_slug] : previous.sourceSlugs, historical: previous.historical || isHistoricalEditorialEntityType(row.entity_type) });
   }
-  const map = (rows: RawCandidate[] | null, entityType: EditorialEntityType, values: (row: Record<string, unknown>) => { title: string; text: string }) =>
+  const map = (rows: RawCandidate[] | null, entityType: EditorialEntityType, values: (row: Record<string, unknown>) => { title: string; text: string; editableDraft?: EditorialCandidate["editableDraft"] }) =>
     (rows ?? []).map((row) => {
       const value = values(row as Record<string, unknown>);
       const provenanceEntry = provenanceById.get(row.id) ?? { count: 0, sourceSlugs: [], historical: false };
       const validation = validationForSourceSlugs(provenanceEntry.sourceSlugs, queue.data ?? []);
-      return { id: row.id, entityType, title: value.title, originalText: value.text, status: row.status, provenanceCount: provenanceEntry.count, validationPending: validation.pending, validationReason: validation.reason, validationPriority: validation.priority, sourceSlugs: provenanceEntry.sourceSlugs, historicalCorpus: provenanceEntry.historical && isHistoricalEditorialEntityType(entityType) };
+      return { id: row.id, entityType, title: value.title, originalText: value.text, status: row.status, provenanceCount: provenanceEntry.count, validationPending: validation.pending, validationReason: validation.reason, validationPriority: validation.priority, sourceSlugs: provenanceEntry.sourceSlugs, historicalCorpus: provenanceEntry.historical && isHistoricalEditorialEntityType(entityType), ...(value.editableDraft ? { editableDraft: value.editableDraft } : {}) };
     });
   return [
     ...map(services.data, "service", (row) => ({ title: asText(row.name), text: joinText(row.name, row.description) })),
-    ...map(articles.data, "help_article", (row) => ({ title: asText(row.title), text: joinText(row.title, row.summary, row.content) })),
+    ...map(articles.data, "help_article", (row) => ({ title: asText(row.title), text: joinText(row.title, row.summary, row.content), editableDraft: { title: asText(row.title), summary: asText(row.summary), content: asText(row.content) } })),
     ...map(faqs.data, "faq", (row) => ({ title: asText(row.question), text: joinText(row.question, row.answer) })),
     ...map(plans.data, "internet_plan", (row) => ({ title: asText(row.name), text: joinText(row.name, row.description, row.conditions, row.installation_notes) })),
     ...map(contacts.data, "contact_channel", (row) => ({ title: asText(row.label), text: joinText(row.label, row.public_value, row.purpose) })),

@@ -7,7 +7,7 @@ import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch
 import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
 import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../../../../lib/editorial/generation-integrity";
 import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
-import { humanEditHash, validateHumanEdit } from "../../../../lib/editorial/human-edit";
+import { humanEditHash, sameHumanEdit, validateHumanEdit } from "../../../../lib/editorial/human-edit";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -29,7 +29,7 @@ export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
   const [candidates, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getEditorialProposals()]);
-  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus })), proposals });
+  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}) })), proposals });
 }
 
 export async function POST(request: Request) {
@@ -101,11 +101,13 @@ export async function PATCH(request: Request) {
     if (!edit || !candidate || candidate.entityType !== "help_article" || candidate.status !== "draft") return Response.json({ error: "La corrección humana requiere un artículo aplicado sobre un borrador." }, { status: 409 });
     const { data: article, error: articleError } = await session.admin.from("help_articles").select("title,summary,content").eq("id", candidate.id).eq("status", "draft").maybeSingle();
     if (articleError || !article) return Response.json({ error: "El artículo ya no es un borrador editable." }, { status: 409 });
-    const { error: rpcError } = await session.admin.rpc("apply_editorial_human_edit", { p_proposal_id: proposal.id, p_actor_email: session.email, p_title: edit.title, p_summary: edit.summary, p_content: edit.content, p_before_hash: humanEditHash(article), p_after_hash: humanEditHash(edit) });
+    const before = { title: article.title, summary: article.summary ?? "", content: article.content };
+    if (sameHumanEdit(before, edit)) return Response.json({ proposal, humanEdited: false, unchanged: true, draft: before });
+    const { error: rpcError } = await session.admin.rpc("apply_editorial_human_edit", { p_proposal_id: proposal.id, p_actor_email: session.email, p_title: edit.title, p_summary: edit.summary, p_content: edit.content, p_before_hash: humanEditHash(before), p_after_hash: humanEditHash(edit) });
     if (rpcError) return Response.json({ error: "No pudimos guardar la corrección humana." }, { status: 503 });
     const { data, error: refreshedError } = await session.admin.from("content_editorial_proposals").select("*").eq("id", proposal.id).single();
     if (refreshedError) return Response.json({ error: "La corrección fue aplicada, pero no pudimos actualizar la revisión." }, { status: 503 });
-    return Response.json({ proposal: data, humanEdited: true });
+    return Response.json({ proposal: data, humanEdited: true, unchanged: false, draft: edit });
   }
   if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
   if (body.action === "published") {

@@ -26,6 +26,7 @@ type Candidate = EditorialReviewCandidate & {
   provenanceCount: number;
   validationReason?: string;
   validationPriority?: string;
+  editableDraft?: { title: string; summary: string; content: string };
 };
 type ProposalData = { rewritten_title?: string; rewritten_summary?: string; rewritten_content?: string; suggested_ctas?: string[]; suggested_coopia_intents?: string[]; editorial_notes?: string };
 type Proposal = EditorialReviewProposal & { entity_type: Candidate["entityType"]; detected_facts: Array<{ type: string; value: string }>; proposal: ProposalData; updated_at: string };
@@ -51,6 +52,8 @@ export default function EditorialContentPage() {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
   const [humanEdit, setHumanEdit] = useState({ title: "", summary: "", content: "" });
+  const [humanEditInitial, setHumanEditInitial] = useState({ title: "", summary: "", content: "" });
+  const [humanEditMessage, setHumanEditMessage] = useState("");
   const reviewPanelRef = useRef<HTMLElement>(null);
   const reviewTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -119,10 +122,15 @@ export default function EditorialContentPage() {
   };
   const selectProposal = (proposal: Proposal, trigger: HTMLButtonElement) => {
     reviewTriggerRef.current = trigger;
-    setHumanEdit({ title: proposal.proposal.rewritten_title || "", summary: proposal.proposal.rewritten_summary || "", content: proposal.proposal.rewritten_content || "" });
+    const candidate = candidates.find((row) => row.id === proposal.entity_id);
+    const draft = candidate?.editableDraft ?? { title: "", summary: "", content: "" };
+    setHumanEdit(draft);
+    setHumanEditInitial(draft);
+    setHumanEditMessage("");
     setSelectedProposal(proposal);
   };
-  const saveHumanEdit = async () => { if (!selectedProposal) return; setBusy(selectedProposal.id); setMessage(""); try { const response=await fetch("/api/admin/editorial-proposals",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({proposalId:selectedProposal.id,action:"human_edit",...humanEdit})}); const data=await response.json() as {error?:string}; setMessage(response.ok ? "Corrección humana guardada. El contenido continúa en borrador." : data.error || "No pudimos guardar la corrección."); if(response.ok) await load(); } finally { setBusy(null); } };
+  const humanEditDirty = humanEdit.title !== humanEditInitial.title || humanEdit.summary !== humanEditInitial.summary || humanEdit.content !== humanEditInitial.content;
+  const saveHumanEdit = async () => { if (!selectedProposal || !humanEditDirty) return; setBusy(selectedProposal.id); setHumanEditMessage(""); try { const response=await fetch("/api/admin/editorial-proposals",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({proposalId:selectedProposal.id,action:"human_edit",...humanEdit})}); const data=await response.json() as {error?:string; unchanged?:boolean; draft?: {title:string;summary:string;content:string}; proposal?: Proposal}; if(response.ok && data.draft) { setHumanEdit(data.draft); setHumanEditInitial(data.draft); if (data.proposal) setSelectedProposal(data.proposal); setHumanEditMessage(data.unchanged ? "No hay cambios para guardar." : "Corrección guardada. El contenido continúa en borrador."); await load(); } else setHumanEditMessage(data.error || "No pudimos guardar la corrección."); } catch { setHumanEditMessage("No pudimos guardar la corrección."); } finally { setBusy(null); } };
   const toggleCandidate = (candidateId: string) => setSelectedCandidateIds((current) => {
     const next = new Set(current);
     if (next.has(candidateId)) next.delete(candidateId); else next.add(candidateId);
@@ -233,7 +241,7 @@ export default function EditorialContentPage() {
     {bulkResult && <p className="admin-message" role="status">Resultado masivo: {bulkResult.approved} aprobadas · {bulkResult.applied} aplicadas · {bulkResult.stale} desactualizadas · {bulkResult.failed} fallidas · {bulkResult.skipped} omitidas.</p>}
     {message && <p className="admin-message" role="status">{message}</p>}
 
-    {selectedProposal && <section className="admin-card editorial-review" ref={reviewPanelRef} aria-labelledby="editorial-review-title"><div className="admin-review-heading"><h2 id="editorial-review-title" data-editorial-review-title tabIndex={-1}>Revisión humana</h2><button onClick={closeReview}>Cerrar revisión</button></div><p><strong>{selectedCandidate?.title}</strong> · Riesgo: {selectedProposal.risk_level} · Estado: {selectedProposal.status}</p>{selectedProposal.status === "applied" && selectedCandidate?.entityType === "help_article" && <fieldset><legend>Corrección humana antes de publicar</legend><label>Título<input value={humanEdit.title} onChange={e=>setHumanEdit({...humanEdit,title:e.target.value})}/></label><label>Resumen<textarea value={humanEdit.summary} onChange={e=>setHumanEdit({...humanEdit,summary:e.target.value})}/></label><label>Contenido<textarea value={humanEdit.content} onChange={e=>setHumanEdit({...humanEdit,content:e.target.value})}/></label><button className="primary" onClick={()=>void saveHumanEdit()} disabled={busy===selectedProposal.id}>Guardar corrección humana</button></fieldset>}<div className="admin-form-actions"><button onClick={() => void review("approved")} disabled={busy === selectedProposal.id}>Aprobar propuesta</button><button onClick={() => void review("rejected")} disabled={busy === selectedProposal.id}>Rechazar</button><button onClick={() => void review("needs_validation")} disabled={busy === selectedProposal.id}>Marcar para validar</button><button className="primary" onClick={() => void review("applied")} disabled={busy === selectedProposal.id || !canApplyEditorialProposal(selectedProposal.status)}>Aplicar al borrador</button><button className="primary" onClick={() => void review("published")} disabled={busy === selectedProposal.id || !publicationGate?.allowed}>Publicar en STAGING</button></div></section>}
+    {selectedProposal && <section className="admin-card editorial-review" ref={reviewPanelRef} aria-labelledby="editorial-review-title"><div className="admin-review-heading"><h2 id="editorial-review-title" data-editorial-review-title tabIndex={-1}>Revisión humana</h2><button onClick={closeReview}>Cerrar revisión</button></div><p><strong>{selectedCandidate?.title}</strong> · Riesgo: {selectedProposal.risk_level} · Estado: {selectedProposal.status}</p>{selectedProposal.status === "applied" && selectedCandidate?.entityType === "help_article" && <fieldset><legend>Corrección humana antes de publicar</legend><label>Título<input value={humanEdit.title} onChange={e=>setHumanEdit(current => ({...current,title:e.target.value}))}/></label><label>Resumen<textarea value={humanEdit.summary} onChange={e=>setHumanEdit(current => ({...current,summary:e.target.value}))}/></label><label>Contenido<textarea value={humanEdit.content} onChange={e=>setHumanEdit(current => ({...current,content:e.target.value}))}/></label><p role="status">{humanEditDirty ? "Cambios pendientes" : "Sin cambios"}</p>{humanEditMessage && <p className="admin-message" role="status">{humanEditMessage}</p>}<button className="primary" onClick={()=>void saveHumanEdit()} disabled={busy===selectedProposal.id || !humanEditDirty}>{busy===selectedProposal.id ? "Guardando…" : "Guardar corrección humana"}</button></fieldset>}<div className="admin-form-actions"><button onClick={() => void review("approved")} disabled={busy === selectedProposal.id}>Aprobar propuesta</button><button onClick={() => void review("rejected")} disabled={busy === selectedProposal.id}>Rechazar</button><button onClick={() => void review("needs_validation")} disabled={busy === selectedProposal.id}>Marcar para validar</button><button className="primary" onClick={() => void review("applied")} disabled={busy === selectedProposal.id || !canApplyEditorialProposal(selectedProposal.status)}>Aplicar al borrador</button><button className="primary" onClick={() => void review("published")} disabled={busy === selectedProposal.id || !publicationGate?.allowed}>Publicar en STAGING</button></div></section>}
 
     <div className="admin-card admin-table-wrap"><table><thead><tr><th><span className="sr-only">Seleccionar</span></th><th>Contenido</th><th>Tipo</th><th>Estado</th><th>Provenance</th><th>Propuesta</th><th /></tr></thead><tbody>{filtered.map((candidate) => {
       const proposal = proposalByCandidate.get(candidate.id);

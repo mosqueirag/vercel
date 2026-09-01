@@ -8,3 +8,11 @@ export function validateHumanEdit(value: Partial<HumanEdit> | null): HumanEdit |
   return { title, summary, content };
 }
 export function humanEditHash(value: HumanEdit) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }
+
+export function sameHumanEdit(before: HumanEdit, after: HumanEdit) {
+  return before.title === after.title && before.summary === after.summary && before.content === after.content;
+}
+
+export function changedHumanEditFields(before: HumanEdit, after: HumanEdit): Array<keyof HumanEdit> {
+  return (["title", "summary", "content"] as const).filter((field) => before[field] !== after[field]);
+}
