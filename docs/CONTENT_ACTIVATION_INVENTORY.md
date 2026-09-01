@@ -10,7 +10,7 @@ El contenido histórico importado es evidencia curada para revisión editorial. 
 
 **COOPIA CONSUMER = PASS.** La proyección `getPublishedCuratedKnowledge()` incluye el artículo publicado y `getAssistantKnowledge()` lo incorpora a la base oficial. Borradores, propuestas, provenance y validaciones continúan fuera de la conversación pública.
 
-Persisten dos pendientes explícitos: **WEB ARTICLE SURFACE = PENDING**, porque `/energia-estimar-consumo` no resuelve `help_articles`; y **PROPOSAL STATE CONSISTENCY = PENDING**, porque el candidato está `published` mientras su propuesta continúa `applied`. Los conteos siguientes son la fotografía de auditoría original y no deben reinterpretarse como el estado posterior al Smoke 01.
+4G.7.1.7 completa ambos pendientes: **WEB ARTICLE SURFACE = PASS** mediante `/centro-de-ayuda/[slug]`, que sólo lee artículos `published` con fecha efectiva; y **PROPOSAL STATE CONSISTENCY = PASS** porque `Publicado` se deriva de `target.status + audit(published)` mientras la propuesta mantiene `applied`. Los conteos siguientes son la fotografía de auditoría original y no deben reinterpretarse como el estado posterior al Smoke 01.
 
 ## Inventario real de staging
 

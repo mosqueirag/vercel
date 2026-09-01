@@ -25,8 +25,8 @@ COOPIA pública consume exclusivamente `services`, `help_articles` y `faqs` con 
 
 - **SMOKE 01 EDITORIAL = PASS.** El artículo `Cómo estimar el consumo eléctrico de tu hogar` fue publicado mediante el workflow humano: tiene `published_at` definido y auditoría `published`.
 - **COOPIA CONSUMER = PASS.** `getPublishedCuratedKnowledge()` incorpora los `help_articles` publicados y `getAssistantKnowledge()` los integra a la base oficial. Los otros cuatro elementos de Batch 01 continúan `draft` / `needs_validation` y no se consumen.
-- **WEB ARTICLE SURFACE = PENDING.** `/energia-estimar-consumo` devuelve 404 porque la ruta pública `[slug]` resuelve `site_pages` / `servicePages`, no `help_articles`. No se debe exponer un borrador ni reutilizar una ruta ambigua para resolverlo.
-- **PROPOSAL STATE CONSISTENCY = PENDING.** El candidato publicado conserva la propuesta en `applied`: hoy los estados de `content_editorial_proposals` no incluyen `published`. La semántica de cierre del ciclo editorial requiere una decisión explícita antes de modificar modelo o workflow.
+- **WEB ARTICLE SURFACE = PASS.** La ruta canónica published-only es `/centro-de-ayuda/[slug]`. No reutiliza `[slug]` ni expone borradores, fechas futuras, propuestas ni provenance.
+- **PROPOSAL STATE CONSISTENCY = PASS.** La publicación se deriva de `target.status` y de la auditoría `published`; `content_editorial_proposals.status` conserva `applied` para significar “aplicada al borrador”. No existe un segundo estado persistido `published`.
 
 ## Continuidad pública
 

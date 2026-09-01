@@ -8,9 +8,9 @@ Inventario y primer batch editorial controlado de hasta cinco entidades históri
 
 **SMOKE 01 EDITORIAL = PASS** y **COOPIA CONSUMER = PASS**: un artículo de ayuda aprobado se publicó de forma individual y entra a la base oficial a través de la proyección published-only. Los otros cuatro contenidos del Batch 01 continúan `draft` / `needs_validation`; no hay publicación masiva.
 
-### Próxima fase propuesta — 4G.7.1.7: superficie pública de artículos y consistencia editorial
+### 4G.7.1.7 — superficie pública de artículos y consistencia editorial
 
-Resolver únicamente dos pendientes: una ruta published-only explícita para `help_articles` (por ejemplo `/ayuda/[slug]`, sin colisionar con `[slug]` de `site_pages` / `servicePages`) y la semántica entre candidato `published`, propuesta `applied` y auditoría `published`. No incluye llamadas IA, nuevos proveedores, publicación de otros borradores, cobertura ni datos oficiales vivos.
+**CERRADA.** La ruta canónica published-only es `/centro-de-ayuda/[slug]`; no colisiona con `[slug]` de `site_pages` / `servicePages` y el índice de Centro de ayuda sólo muestra artículos efectivamente publicados. La publicación visual se deriva de candidato `published` y auditoría `published`; la propuesta conserva `applied` como lifecycle privado. No hubo llamadas IA, publicación adicional, cambios de cobertura ni datos oficiales vivos.
 
 ## Fase 4G.7.2 — Integración editorial de páginas CMS
 

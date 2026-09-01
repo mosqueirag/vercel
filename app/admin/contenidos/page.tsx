@@ -19,6 +19,7 @@ import {
   proposalActionLabel,
   reviewActionMessage,
 } from "../../../lib/editorial/review-interaction";
+import { resolveEditorialDisplayStatus } from "../../../lib/editorial/display-status";
 
 type Candidate = EditorialReviewCandidate & {
   title: string;
@@ -36,9 +37,10 @@ type BulkResult = { approved: number; applied: number; stale: number; failed: nu
 const labels: Record<Candidate["entityType"], string> = { service: "Servicio", help_article: "Artículo", faq: "FAQ", internet_plan: "Plan", contact_channel: "Contacto" };
 const emptyBulkResult: BulkResult = { approved: 0, applied: 0, stale: 0, failed: 0, skipped: 0 };
 
-function proposalStatusLabel(proposal: Proposal | undefined) {
-  if (!proposal) return "Pendiente";
-  return `${proposal.status}${proposal.validation_flags.length ? " · validar" : ""}`;
+function proposalStatusLabel(candidate: Candidate, proposal: Proposal | undefined) {
+  const status = resolveEditorialDisplayStatus(candidate.status, proposal?.status);
+  if (status === "pending") return "Pendiente";
+  return `${status === "published" ? "Publicado" : status}${status !== "published" && proposal?.validation_flags.length ? " · validar" : ""}`;
 }
 
 export default function EditorialContentPage() {
@@ -89,9 +91,8 @@ export default function EditorialContentPage() {
     };
   }, [selectedProposal]);
 
-  const activeCandidateIds = useMemo(() => new Set(candidates.filter((candidate) => candidate.status !== "published").map((candidate) => candidate.id)), [candidates]);
-  const activeProposals = useMemo(() => proposals.filter((proposal) => activeCandidateIds.has(proposal.entity_id)), [activeCandidateIds, proposals]);
-  const proposalByCandidate = useMemo(() => new Map(activeProposals.map((proposal) => [proposal.entity_id, proposal])), [activeProposals]);
+  const proposalByCandidate = useMemo(() => new Map(proposals.map((proposal) => [proposal.entity_id, proposal])), [proposals]);
+  const activeProposals = useMemo(() => proposals.filter((proposal) => candidates.some((candidate) => candidate.id === proposal.entity_id && candidate.status !== "published")), [candidates, proposals]);
   const readyCandidateIds = useMemo(
     () => new Set(candidates.filter((candidate) => isReadyToPublishEditorialCandidate(candidate, proposalByCandidate.get(candidate.id))).map((candidate) => candidate.id)),
     [candidates, proposalByCandidate],
@@ -100,7 +101,7 @@ export default function EditorialContentPage() {
     const proposal = proposalByCandidate.get(candidate.id);
     if (filter === "all") return true;
     if (filter === "ready") return readyCandidateIds.has(candidate.id);
-    return candidate.entityType === filter || proposal?.status === filter;
+    return candidate.entityType === filter || resolveEditorialDisplayStatus(candidate.status, proposal?.status) === filter;
   }), [candidates, filter, proposalByCandidate, readyCandidateIds]);
   const metrics = useMemo(() => ({
     corpus: candidates.length,
@@ -111,7 +112,7 @@ export default function EditorialContentPage() {
     needsValidation: activeProposals.filter((proposal) => proposal.status === "needs_validation").length,
     lowRisk: activeProposals.filter((proposal) => proposal.risk_level === "low").length,
     approved: activeProposals.filter((proposal) => proposal.status === "approved").length,
-    applied: activeProposals.filter((proposal) => proposal.status === "applied").length,
+    applied: candidates.filter((candidate) => resolveEditorialDisplayStatus(candidate.status, proposalByCandidate.get(candidate.id)?.status) === "applied").length,
     ready: readyCandidateIds.size,
     published: candidates.filter((candidate) => candidate.status === "published").length,
   }), [activeProposals, candidates, proposalByCandidate, readyCandidateIds]);
@@ -136,7 +137,7 @@ export default function EditorialContentPage() {
     if (next.has(candidateId)) next.delete(candidateId); else next.add(candidateId);
     return next;
   });
-  const selectVisible = () => setSelectedCandidateIds(new Set(filtered.filter((candidate) => proposalByCandidate.has(candidate.id)).map((candidate) => candidate.id)));
+  const selectVisible = () => setSelectedCandidateIds(new Set(filtered.filter((candidate) => candidate.status !== "published" && proposalByCandidate.has(candidate.id)).map((candidate) => candidate.id)));
   const selectLowRisk = () => setSelectedCandidateIds(new Set(selectLowRiskEditorialCandidates(filtered, proposalByCandidate)));
   const deselectAll = () => setSelectedCandidateIds(new Set());
 
@@ -237,17 +238,17 @@ export default function EditorialContentPage() {
     </header>
 
     <section className="admin-card" aria-label="Resumen editorial"><div className="admin-item"><strong>Corpus: {metrics.corpus}</strong><span>Pendientes revisión: {metrics.pendingReview}</span><span>Needs validation: {metrics.needsValidation}</span><span>Low risk: {metrics.lowRisk}</span><span>Approved: {metrics.approved}</span><span>Applied: {metrics.applied}</span><span>Ready to publish: {metrics.ready}</span><span>Published: {metrics.published}</span></div></section>
-    <div className="admin-card"><label>Filtrar contenido<select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">Todo el lote histórico</option><option value="ready">Listos para publicar</option><option value="generated">Listos para revisión</option><option value="needs_validation">Requieren validación</option><option value="approved">Aprobados</option><option value="applied">Aplicados al draft</option><option value="rejected">Rechazados</option><option value="stale">Desactualizados</option>{Object.entries(labels).filter(([value]) => ["service", "help_article", "faq"].includes(value)).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><p>Planes, contactos y otros borradores quedan fuera. Publicar habilita este contenido para COOPIA y requiere una acción humana explícita.</p><div className="admin-form-actions"><button onClick={selectVisible}>Seleccionar visibles</button><button onClick={selectLowRisk}>Seleccionar sólo bajo riesgo</button><button onClick={deselectAll}>Deseleccionar todo</button><span>{selectedCandidateIds.size} seleccionados</span><button disabled={!selectedCandidateIds.size || busy === "bulk-approved"} onClick={() => void bulkReview("approved")}>Aprobar seleccionados</button><button className="primary" disabled={!selectedCandidateIds.size || busy === "bulk-applied"} onClick={() => void bulkReview("applied")}>Aplicar seleccionados al borrador</button></div></div>
+    <div className="admin-card"><label>Filtrar contenido<select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">Todo el lote histórico</option><option value="ready">Listos para publicar</option><option value="generated">Listos para revisión</option><option value="needs_validation">Requieren validación</option><option value="approved">Aprobados</option><option value="applied">Aplicados al draft</option><option value="published">Publicados</option><option value="rejected">Rechazados</option><option value="stale">Desactualizados</option>{Object.entries(labels).filter(([value]) => ["service", "help_article", "faq"].includes(value)).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><p>Planes, contactos y otros borradores quedan fuera. Publicar habilita este contenido para COOPIA y requiere una acción humana explícita.</p><div className="admin-form-actions"><button onClick={selectVisible}>Seleccionar visibles</button><button onClick={selectLowRisk}>Seleccionar sólo bajo riesgo</button><button onClick={deselectAll}>Deseleccionar todo</button><span>{selectedCandidateIds.size} seleccionados</span><button disabled={!selectedCandidateIds.size || busy === "bulk-approved"} onClick={() => void bulkReview("approved")}>Aprobar seleccionados</button><button className="primary" disabled={!selectedCandidateIds.size || busy === "bulk-applied"} onClick={() => void bulkReview("applied")}>Aplicar seleccionados al borrador</button></div></div>
     {bulkResult && <p className="admin-message" role="status">Resultado masivo: {bulkResult.approved} aprobadas · {bulkResult.applied} aplicadas · {bulkResult.stale} desactualizadas · {bulkResult.failed} fallidas · {bulkResult.skipped} omitidas.</p>}
     {message && <p className="admin-message" role="status">{message}</p>}
 
-    {selectedProposal && <section className="admin-card editorial-review" ref={reviewPanelRef} aria-labelledby="editorial-review-title"><div className="admin-review-heading"><h2 id="editorial-review-title" data-editorial-review-title tabIndex={-1}>Revisión humana</h2><button onClick={closeReview}>Cerrar revisión</button></div><p><strong>{selectedCandidate?.title}</strong> · Riesgo: {selectedProposal.risk_level} · Estado: {selectedProposal.status}</p>{selectedProposal.status === "applied" && selectedCandidate?.entityType === "help_article" && <fieldset><legend>Corrección humana antes de publicar</legend><label>Título<input value={humanEdit.title} onChange={e=>setHumanEdit(current => ({...current,title:e.target.value}))}/></label><label>Resumen<textarea value={humanEdit.summary} onChange={e=>setHumanEdit(current => ({...current,summary:e.target.value}))}/></label><label>Contenido<textarea value={humanEdit.content} onChange={e=>setHumanEdit(current => ({...current,content:e.target.value}))}/></label><p role="status">{humanEditDirty ? "Cambios pendientes" : "Sin cambios"}</p>{humanEditMessage && <p className="admin-message" role="status">{humanEditMessage}</p>}<button className="primary" onClick={()=>void saveHumanEdit()} disabled={busy===selectedProposal.id || !humanEditDirty}>{busy===selectedProposal.id ? "Guardando…" : "Guardar corrección humana"}</button></fieldset>}<div className="admin-form-actions"><button onClick={() => void review("approved")} disabled={busy === selectedProposal.id}>Aprobar propuesta</button><button onClick={() => void review("rejected")} disabled={busy === selectedProposal.id}>Rechazar</button><button onClick={() => void review("needs_validation")} disabled={busy === selectedProposal.id}>Marcar para validar</button><button className="primary" onClick={() => void review("applied")} disabled={busy === selectedProposal.id || !canApplyEditorialProposal(selectedProposal.status)}>Aplicar al borrador</button><button className="primary" onClick={() => void review("published")} disabled={busy === selectedProposal.id || !publicationGate?.allowed}>Publicar en STAGING</button></div></section>}
+    {selectedProposal && <section className="admin-card editorial-review" ref={reviewPanelRef} aria-labelledby="editorial-review-title"><div className="admin-review-heading"><h2 id="editorial-review-title" data-editorial-review-title tabIndex={-1}>Revisión humana</h2><button onClick={closeReview}>Cerrar revisión</button></div><p><strong>{selectedCandidate?.title}</strong> · Riesgo: {selectedProposal.risk_level} · Estado: {selectedCandidate ? proposalStatusLabel(selectedCandidate, selectedProposal) : selectedProposal.status}</p>{selectedProposal.status === "applied" && selectedCandidate?.entityType === "help_article" && selectedCandidate.status === "draft" && <fieldset><legend>Corrección humana antes de publicar</legend><label>Título<input value={humanEdit.title} onChange={e=>setHumanEdit(current => ({...current,title:e.target.value}))}/></label><label>Resumen<textarea value={humanEdit.summary} onChange={e=>setHumanEdit(current => ({...current,summary:e.target.value}))}/></label><label>Contenido<textarea value={humanEdit.content} onChange={e=>setHumanEdit(current => ({...current,content:e.target.value}))}/></label><p role="status">{humanEditDirty ? "Cambios pendientes" : "Sin cambios"}</p>{humanEditMessage && <p className="admin-message" role="status">{humanEditMessage}</p>}<button className="primary" onClick={()=>void saveHumanEdit()} disabled={busy===selectedProposal.id || !humanEditDirty}>{busy===selectedProposal.id ? "Guardando…" : "Guardar corrección humana"}</button></fieldset>}<div className="admin-form-actions"><button onClick={() => void review("approved")} disabled={busy === selectedProposal.id || selectedCandidate?.status === "published"}>Aprobar propuesta</button><button onClick={() => void review("rejected")} disabled={busy === selectedProposal.id || selectedCandidate?.status === "published"}>Rechazar</button><button onClick={() => void review("needs_validation")} disabled={busy === selectedProposal.id || selectedCandidate?.status === "published"}>Marcar para validar</button><button className="primary" onClick={() => void review("applied")} disabled={busy === selectedProposal.id || selectedCandidate?.status === "published" || !canApplyEditorialProposal(selectedProposal.status)}>Aplicar al borrador</button><button className="primary" onClick={() => void review("published")} disabled={busy === selectedProposal.id || !publicationGate?.allowed}>Publicar en STAGING</button></div></section>}
 
     <div className="admin-card admin-table-wrap"><table><thead><tr><th><span className="sr-only">Seleccionar</span></th><th>Contenido</th><th>Tipo</th><th>Estado</th><th>Provenance</th><th>Propuesta</th><th /></tr></thead><tbody>{filtered.map((candidate) => {
       const proposal = proposalByCandidate.get(candidate.id);
       const canGenerate = canGenerateEditorialProposal(candidate.status);
-      const canSelect = proposal ? proposal.status !== "stale" : false;
-      return <tr key={candidate.id}><td><input type="checkbox" aria-label={`Seleccionar ${candidate.title}`} checked={selectedCandidateIds.has(candidate.id)} disabled={!canSelect} onChange={() => toggleCandidate(candidate.id)} /></td><td>{candidate.title}</td><td>{labels[candidate.entityType]}</td><td><span className={`admin-status ${candidate.status}`}>{candidate.status}</span></td><td>{candidate.validationPending ? `${candidate.validationPriority ?? "P"}: ${candidate.validationReason ?? "pendiente"}` : `${candidate.provenanceCount} fuente(s)`}</td><td>{proposalStatusLabel(proposal)}</td><td>{proposal && <button onClick={(event) => selectProposal(proposal, event.currentTarget)}>Revisar</button>} <button className="primary editorial-generate" disabled={busy === candidate.id || !canGenerate} aria-disabled={busy === candidate.id || !canGenerate} title={canGenerate ? undefined : "Los contenidos publicados no admiten propuestas."} onClick={() => void generate(candidate)}>{busy === candidate.id ? "Generando…" : proposalActionLabel(Boolean(proposal))}</button></td></tr>;
+      const canSelect = candidate.status !== "published" && proposal ? proposal.status !== "stale" : false;
+      return <tr key={candidate.id}><td><input type="checkbox" aria-label={`Seleccionar ${candidate.title}`} checked={selectedCandidateIds.has(candidate.id)} disabled={!canSelect} onChange={() => toggleCandidate(candidate.id)} /></td><td>{candidate.title}</td><td>{labels[candidate.entityType]}</td><td><span className={`admin-status ${candidate.status}`}>{candidate.status}</span></td><td>{candidate.validationPending ? `${candidate.validationPriority ?? "P"}: ${candidate.validationReason ?? "pendiente"}` : `${candidate.provenanceCount} fuente(s)`}</td><td>{proposalStatusLabel(candidate, proposal)}</td><td>{proposal && <button onClick={(event) => selectProposal(proposal, event.currentTarget)}>Revisar</button>} <button className="primary editorial-generate" disabled={busy === candidate.id || !canGenerate} aria-disabled={busy === candidate.id || !canGenerate} title={canGenerate ? undefined : "Los contenidos publicados no admiten propuestas."} onClick={() => void generate(candidate)}>{busy === candidate.id ? "Generando…" : proposalActionLabel(Boolean(proposal))}</button></td></tr>;
     })}</tbody></table>{filtered.length === 0 && <p>No hay contenidos para este filtro.</p>}</div>
   </section>;
 }

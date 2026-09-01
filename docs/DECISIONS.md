@@ -7,7 +7,8 @@
 - Web pública y COOPIA consumen las mismas proyecciones tipadas `published`; `provenance`, `validation_queue` y propuestas son privados.
 - `site_pages` es una fuente pública administrable pero aún no participa del pipeline editorial ni del contexto público de COOPIA. Es el gap explícito de 4G.7.2.
 - El Smoke 01 confirma que COOPIA consume un `help_article` publicado desde la proyección tipada. La publicación está auditada, no habilita publicación masiva y no cambia los otros cuatro registros del Batch 01, que permanecen en revisión.
-- La superficie web de artículos y el ciclo de vida de propuestas se mantienen separados: la ruta genérica `[slug]` no debe asumir `help_articles`, y `applied` hoy significa “aplicada al borrador”, no “publicada”. Antes de introducir un estado `published` en propuestas se deberá decidir si es estado persistido o una proyección derivada de candidato + auditoría.
+- La superficie web de artículos y el ciclo de vida de propuestas se mantienen separados: la ruta genérica `[slug]` no debe asumir `help_articles`, y `applied` significa “aplicada al borrador”, no “publicada”. La publicación se expresa como una proyección derivada de candidato + auditoría, no como un segundo estado de propuesta.
+- 4G.7.1.7 resuelve esa decisión sin migración: `/centro-de-ayuda/[slug]` lee exclusivamente `help_articles` publicados con fecha efectiva, y el estado visual `Publicado` se deriva de `target.status`. La fuente de verdad de publicación es `target.status + audit(published)`; la propuesta conserva su lifecycle privado y no duplica ese estado.
 
 ## 4G.6 — Estado operativo de Energía
 

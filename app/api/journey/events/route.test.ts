@@ -33,6 +33,17 @@ describe("sanitizePublicCoopiaMetadata", () => {
     expect(recordJourneyEvent.mock.calls[0][0]).not.toHaveProperty("service");
   });
 
+  it("records a help article view with only its public slug and category", async () => {
+    const request = new NextRequest("https://coopsar.test/api/journey/events", {
+      method: "POST",
+      body: JSON.stringify({ journeyId: "JRN-2026-AB12CD34", sessionId: "SES-AB12CD34EF56AB78", eventType: "help_article_view", page: "/centro-de-ayuda/energia-estimar-consumo", metadata: { slug: "energia-estimar-consumo", category: "Energía", email: "persona@example.com", address: "Dato privado" } }),
+      headers: { "content-type": "application/json" },
+    });
+    expect((await POST(request)).status).toBe(204);
+    expect(recordJourneyEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "help_article_view", metadata: { slug: "energia-estimar-consumo", category: "Energía" } }));
+    expect(JSON.stringify(recordJourneyEvent.mock.calls[0][0])).not.toMatch(/persona@example.com|Dato privado|email|address/i);
+  });
+
   it("accepts an audience choice without address or contact metadata", async () => {
     const request = new NextRequest("https://coopsar.test/api/journey/events", {
       method: "POST",
