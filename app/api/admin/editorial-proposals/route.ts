@@ -7,6 +7,7 @@ import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch
 import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
 import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../../../../lib/editorial/generation-integrity";
 import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
+import { humanEditHash, validateHumanEdit } from "../../../../lib/editorial/human-edit";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -89,11 +90,23 @@ export async function PATCH(request: Request) {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
   if (!isSameOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
-  const body = await request.json().catch(() => null) as { proposalId?: unknown; action?: unknown } | null;
-  if (!body || typeof body.proposalId !== "string" || typeof body.action !== "string" || !reviewActions.has(body.action)) return Response.json({ error: "Acción editorial inválida." }, { status: 400 });
+  const body = await request.json().catch(() => null) as { proposalId?: unknown; action?: unknown; title?: unknown; summary?: unknown; content?: unknown } | null;
+  if (!body || typeof body.proposalId !== "string" || typeof body.action !== "string" || (!reviewActions.has(body.action) && body.action !== "human_edit")) return Response.json({ error: "Acción editorial inválida." }, { status: 400 });
   const { data: proposal, error } = await session.admin.from("content_editorial_proposals").select("*").eq("id", body.proposalId).maybeSingle();
   if (error || !proposal) return Response.json({ error: "Propuesta no encontrada." }, { status: 404 });
   const audit = async (action: string, metadata: Record<string, unknown> = {}) => session.admin.from("content_editorial_proposal_audit").insert({ proposal_id: proposal.id, action, actor_email: session.email, metadata });
+  if (body.action === "human_edit") {
+    const edit = validateHumanEdit({ title: typeof body.title === "string" ? body.title : undefined, summary: typeof body.summary === "string" ? body.summary : undefined, content: typeof body.content === "string" ? body.content : undefined });
+    const candidate = proposal.status === "applied" ? await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id) : null;
+    if (!edit || !candidate || candidate.entityType !== "help_article" || candidate.status !== "draft") return Response.json({ error: "La corrección humana requiere un artículo aplicado sobre un borrador." }, { status: 409 });
+    const before = { title: candidate.title, summary: candidate.originalText.split("\n\n")[1] ?? "", content: candidate.originalText };
+    const { error: draftError } = await session.admin.from("help_articles").update({ title: edit.title, summary: edit.summary, content: edit.content }).eq("id", candidate.id).eq("status", "draft");
+    if (draftError) return Response.json({ error: "No pudimos guardar la corrección humana." }, { status: 503 });
+    const nextProposal = { ...(proposal.proposal as Record<string, unknown>), rewritten_title: edit.title, rewritten_summary: edit.summary, rewritten_content: edit.content };
+    const { data, error: proposalError } = await session.admin.from("content_editorial_proposals").update({ proposal: nextProposal }).eq("id", proposal.id).select("*").single();
+    if (proposalError || (await audit("human_edited", { entity_type: candidate.entityType, changed_fields: ["title", "summary", "content"], before_hash: humanEditHash(before), after_hash: humanEditHash(edit) })).error) return Response.json({ error: "La corrección se guardó, pero no pudimos completar la auditoría." }, { status: 503 });
+    return Response.json({ proposal: data, humanEdited: true });
+  }
   if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
   if (body.action === "published") {
     const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
