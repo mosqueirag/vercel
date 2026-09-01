@@ -10,7 +10,7 @@ import {
   type EditorialReviewCandidate,
   type EditorialReviewProposal,
 } from "../../../lib/editorial/bulk-review";
-import { canPublishEditorialProposal, publicationGateMessage } from "../../../lib/editorial/publication";
+import { canPublishEditorialProposal } from "../../../lib/editorial/publication";
 import {
   canApplyEditorialProposal,
   canGenerateEditorialProposal,
@@ -122,7 +122,7 @@ export default function EditorialContentPage() {
     setHumanEdit({ title: proposal.proposal.rewritten_title || "", summary: proposal.proposal.rewritten_summary || "", content: proposal.proposal.rewritten_content || "" });
     setSelectedProposal(proposal);
   };
-  const saveHumanEdit = async () => { if (!selectedProposal) return; setBusy(selectedProposal.id); const response=await fetch("/api/admin/editorial-proposals",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({proposalId:selectedProposal.id,action:"human_edit",...humanEdit})}); const data=await response.json() as {error?:string}; setMessage(response.ok ? "Corrección humana guardada en el borrador. No se publicó contenido." : data.error || "No pudimos guardar la corrección."); setBusy(null); if(response.ok) await load(); };
+  const saveHumanEdit = async () => { if (!selectedProposal) return; setBusy(selectedProposal.id); setMessage(""); try { const response=await fetch("/api/admin/editorial-proposals",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({proposalId:selectedProposal.id,action:"human_edit",...humanEdit})}); const data=await response.json() as {error?:string}; setMessage(response.ok ? "Corrección humana guardada. El contenido continúa en borrador." : data.error || "No pudimos guardar la corrección."); if(response.ok) await load(); } finally { setBusy(null); } };
   const toggleCandidate = (candidateId: string) => setSelectedCandidateIds((current) => {
     const next = new Set(current);
     if (next.has(candidateId)) next.delete(candidateId); else next.add(candidateId);

@@ -99,12 +99,12 @@ export async function PATCH(request: Request) {
     const edit = validateHumanEdit({ title: typeof body.title === "string" ? body.title : undefined, summary: typeof body.summary === "string" ? body.summary : undefined, content: typeof body.content === "string" ? body.content : undefined });
     const candidate = proposal.status === "applied" ? await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id) : null;
     if (!edit || !candidate || candidate.entityType !== "help_article" || candidate.status !== "draft") return Response.json({ error: "La corrección humana requiere un artículo aplicado sobre un borrador." }, { status: 409 });
-    const before = { title: candidate.title, summary: candidate.originalText.split("\n\n")[1] ?? "", content: candidate.originalText };
-    const { error: draftError } = await session.admin.from("help_articles").update({ title: edit.title, summary: edit.summary, content: edit.content }).eq("id", candidate.id).eq("status", "draft");
-    if (draftError) return Response.json({ error: "No pudimos guardar la corrección humana." }, { status: 503 });
-    const nextProposal = { ...(proposal.proposal as Record<string, unknown>), rewritten_title: edit.title, rewritten_summary: edit.summary, rewritten_content: edit.content };
-    const { data, error: proposalError } = await session.admin.from("content_editorial_proposals").update({ proposal: nextProposal }).eq("id", proposal.id).select("*").single();
-    if (proposalError || (await audit("human_edited", { entity_type: candidate.entityType, changed_fields: ["title", "summary", "content"], before_hash: humanEditHash(before), after_hash: humanEditHash(edit) })).error) return Response.json({ error: "La corrección se guardó, pero no pudimos completar la auditoría." }, { status: 503 });
+    const { data: article, error: articleError } = await session.admin.from("help_articles").select("title,summary,content").eq("id", candidate.id).eq("status", "draft").maybeSingle();
+    if (articleError || !article) return Response.json({ error: "El artículo ya no es un borrador editable." }, { status: 409 });
+    const { error: rpcError } = await session.admin.rpc("apply_editorial_human_edit", { p_proposal_id: proposal.id, p_actor_email: session.email, p_title: edit.title, p_summary: edit.summary, p_content: edit.content, p_before_hash: humanEditHash(article), p_after_hash: humanEditHash(edit) });
+    if (rpcError) return Response.json({ error: "No pudimos guardar la corrección humana." }, { status: 503 });
+    const { data, error: refreshedError } = await session.admin.from("content_editorial_proposals").select("*").eq("id", proposal.id).single();
+    if (refreshedError) return Response.json({ error: "La corrección fue aplicada, pero no pudimos actualizar la revisión." }, { status: 503 });
     return Response.json({ proposal: data, humanEdited: true });
   }
   if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
