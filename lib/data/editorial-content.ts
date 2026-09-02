@@ -3,6 +3,7 @@ import "server-only";
 import { createSupabaseAdmin } from "../supabase";
 import type { EditorialEntityType } from "../editorial/proposals";
 import { isHistoricalEditorialEntityType, validationForSourceSlugs } from "../editorial/historical-corpus";
+import { isSitePageEditorialSlug, type SitePageCopyItem } from "../editorial/site-page-bridge";
 export { historicalEditorialEntityTypes } from "../editorial/historical-corpus";
 
 export type EditorialCandidate = {
@@ -18,6 +19,7 @@ export type EditorialCandidate = {
   sourceSlugs: string[];
   historicalCorpus: boolean;
   editableDraft?: { title: string; summary: string; content: string };
+  sitePageDraft?: { eyebrow: string; title: string; intro: string; items: SitePageCopyItem[]; imageUrl: string | null; slug: string; sortOrder: number };
 };
 
 type RawCandidate = { id: string; status: EditorialCandidate["status"] };
@@ -61,6 +63,20 @@ export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
 /** The bounded Fase 4D historical corpus. Plans, contacts and unrelated drafts stay out. */
 export async function getHistoricalEditorialCandidates(): Promise<EditorialCandidate[]> {
   return (await getEditorialCandidates()).filter((candidate) => candidate.historicalCorpus);
+}
+
+/** Explicit 4G.7.2A inventory. These pages never enter the automatic editorial batch. */
+export async function getSitePageEditorialCandidates(): Promise<EditorialCandidate[]> {
+  const supabase = createSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("site_pages").select("id,slug,eyebrow,title,intro,image_url,items,status,sort_order").in("slug", ["institucional", "telefonia", "contacto", "centro-de-ayuda"]);
+  if (error) return [];
+  return (data ?? []).flatMap((row) => {
+    if (!isSitePageEditorialSlug(String(row.slug)) || !Array.isArray(row.items)) return [];
+    const items = row.items.flatMap((value): SitePageCopyItem[] => value && typeof value === "object" && typeof (value as Record<string, unknown>).title === "string" && typeof (value as Record<string, unknown>).text === "string" && typeof (value as Record<string, unknown>).href === "string" ? [{ title: String((value as Record<string, unknown>).title), text: String((value as Record<string, unknown>).text), href: String((value as Record<string, unknown>).href) }] : []);
+    const draft = { eyebrow: String(row.eyebrow), title: String(row.title), intro: String(row.intro), items, imageUrl: typeof row.image_url === "string" ? row.image_url : null, slug: String(row.slug), sortOrder: Number(row.sort_order ?? 0) };
+    return [{ id: String(row.id), entityType: "site_page" as const, title: draft.title, originalText: JSON.stringify({ eyebrow: draft.eyebrow, title: draft.title, intro: draft.intro, items: draft.items }), status: row.status as EditorialCandidate["status"], provenanceCount: 0, validationPending: false, sourceSlugs: [], historicalCorpus: false, sitePageDraft: draft }];
+  }).sort((a, b) => a.title.localeCompare(b.title, "es-AR"));
 }
 
 export async function getEditorialCandidate(entityType: EditorialEntityType, id: string) {

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const editorialPromptVersion = "coopsar-editorial-v1";
-export type EditorialEntityType = "service" | "help_article" | "faq" | "internet_plan" | "contact_channel";
+export type EditorialEntityType = "service" | "help_article" | "faq" | "internet_plan" | "contact_channel" | "site_page";
 export const editorialBatchOrder: EditorialEntityType[] = ["help_article", "faq", "service"];
 export type ProtectedFact = { type: "phone" | "email" | "url" | "address" | "hours" | "date" | "price" | "speed" | "percentage"; value: string };
 export type EditorialProposal = {

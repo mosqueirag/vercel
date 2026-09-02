@@ -1,5 +1,5 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates } from "../../../../lib/data/editorial-content";
+import { getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidates } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
 import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
@@ -9,7 +9,7 @@ import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../.
 import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
 import { humanEditHash, sameHumanEdit, validateHumanEdit } from "../../../../lib/editorial/human-edit";
 
-const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel"]);
+const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel", "site_page"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
 const reviewActions = new Set(["approved", "rejected", "needs_validation", "applied", "published"]);
 const proposalText = (proposal: unknown, key: string) => proposal && typeof proposal === "object" && typeof (proposal as Record<string, unknown>)[key] === "string" ? (proposal as Record<string, string>)[key].trim() : "";
@@ -23,13 +23,14 @@ function draftUpdate(entityType: EditorialEntityType, proposal: unknown) {
   return title ? { label: title } : {};
 }
 
-const entityTable: Record<EditorialEntityType, string> = { service: "services", help_article: "help_articles", faq: "faqs", internet_plan: "internet_plans", contact_channel: "public_contact_channels" };
+const entityTable: Record<EditorialEntityType, string> = { service: "services", help_article: "help_articles", faq: "faqs", internet_plan: "internet_plans", contact_channel: "public_contact_channels", site_page: "site_pages" };
 
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const [candidates, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getEditorialProposals()]);
-  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}) })), proposals });
+  const [historical, sitePages, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getSitePageEditorialCandidates(), getEditorialProposals()]);
+  const candidates = [...historical, ...sitePages];
+  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}), ...(candidate.entityType === "site_page" && candidate.sitePageDraft ? { sitePageDraft: candidate.sitePageDraft } : {}) })), proposals });
 }
 
 export async function POST(request: Request) {
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
       return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length, remaining: batch.remaining, totalCorpus: batch.totalCorpus, alreadyProcessed: batch.alreadyProcessed });
     }
     if (!isEntityType(body.entityType) || typeof body.entityId !== "string") return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
+    if (body.entityType === "site_page") return Response.json({ error: "Las páginas están preparadas para revisión copy-only; la generación IA no está habilitada en esta subfase." }, { status: 409 });
     const candidate = await getHistoricalEditorialCandidate(body.entityType, body.entityId);
     if (!candidate) return Response.json({ error: "Contenido no encontrado." }, { status: 404 });
     const result = await create(candidate);

@@ -76,3 +76,6 @@ La documentación obligatoria del DNI del titular se carga directamente desde el
 # Administración de planes Internet
 
 `/admin/internet/planes` usa Google OAuth + `requireNewsAdmin()` y una route handler server-side. El sitio público usa `lib/data/public-content.ts`; cobertura consume la misma proyección publicada y filtra compatibilidad por tecnología. La publicación valida con el mismo normalizador técnico usado por cobertura y restringe la oferta comercial a `FTTH`/`WIRELESS`; `ADSL` se conserva como legado. El registro administrativo propuesto `internet_plan_admin_audit` es server-only y permanece pendiente de aplicación autorizada.
+# 4G.7.2A — Site Pages Editorial Bridge
+
+`site_pages` remains the structure layer and is server-read only when published. The editorial bridge models `site_page` proposals privately, with an immutable structural snapshot. AI may propose copy (`eyebrow`, `title`, `intro`, item title/text) only; `href`, image, slug, status and order are forbidden. The first inventory is limited to `institucional`, `telefonia`, `contacto` and `centro-de-ayuda`; dedicated-route pages stay shadowed and outside the batch.
