@@ -3,7 +3,7 @@ import "server-only";
 import { createSupabaseAdmin } from "../supabase";
 import type { EditorialEntityType } from "../editorial/proposals";
 import { isHistoricalEditorialEntityType, validationForSourceSlugs } from "../editorial/historical-corpus";
-import { isSitePageEditorialSlug, type SitePageCopyItem } from "../editorial/site-page-bridge";
+import { isSitePageEditorialSlug, type SitePageCopyItem, type SitePageEditorialSnapshot, type SitePageEditorialStatus } from "../editorial/site-page-bridge";
 export { historicalEditorialEntityTypes } from "../editorial/historical-corpus";
 
 export type EditorialCandidate = {
@@ -11,7 +11,7 @@ export type EditorialCandidate = {
   entityType: EditorialEntityType;
   title: string;
   originalText: string;
-  status: "draft" | "published" | "archived";
+  status: SitePageEditorialStatus;
   provenanceCount: number;
   validationPending: boolean;
   validationReason?: string;
@@ -19,11 +19,12 @@ export type EditorialCandidate = {
   sourceSlugs: string[];
   historicalCorpus: boolean;
   editableDraft?: { title: string; summary: string; content: string };
-  sitePageDraft?: { eyebrow: string; title: string; intro: string; items: SitePageCopyItem[]; imageUrl: string | null; slug: string; sortOrder: number };
+  sitePageDraft?: SitePageEditorialSnapshot;
 };
 
 type RawCandidate = { id: string; status: EditorialCandidate["status"] };
 const asText = (value: unknown) => typeof value === "string" ? value : "";
+const asEditorialStatus = (value: unknown): SitePageEditorialStatus | null => value === "draft" || value === "published" || value === "archived" ? value : null;
 const joinText = (...values: unknown[]) => values.map(asText).filter(Boolean).join("\n\n");
 /** Private projection for the editorial console. Never use this from a client component. */
 export async function getEditorialCandidates(): Promise<EditorialCandidate[]> {
@@ -73,9 +74,11 @@ export async function getSitePageEditorialCandidates(): Promise<EditorialCandida
   if (error) return [];
   return (data ?? []).flatMap((row) => {
     if (!isSitePageEditorialSlug(String(row.slug)) || !Array.isArray(row.items)) return [];
+    const status = asEditorialStatus(row.status);
+    if (!status) return [];
     const items = row.items.flatMap((value): SitePageCopyItem[] => value && typeof value === "object" && typeof (value as Record<string, unknown>).title === "string" && typeof (value as Record<string, unknown>).text === "string" && typeof (value as Record<string, unknown>).href === "string" ? [{ title: String((value as Record<string, unknown>).title), text: String((value as Record<string, unknown>).text), href: String((value as Record<string, unknown>).href) }] : []);
-    const draft = { eyebrow: String(row.eyebrow), title: String(row.title), intro: String(row.intro), items, imageUrl: typeof row.image_url === "string" ? row.image_url : null, slug: String(row.slug), sortOrder: Number(row.sort_order ?? 0) };
-    return [{ id: String(row.id), entityType: "site_page" as const, title: draft.title, originalText: JSON.stringify({ eyebrow: draft.eyebrow, title: draft.title, intro: draft.intro, items: draft.items }), status: row.status as EditorialCandidate["status"], provenanceCount: 0, validationPending: false, sourceSlugs: [], historicalCorpus: false, sitePageDraft: draft }];
+    const draft: SitePageEditorialSnapshot = { eyebrow: String(row.eyebrow), title: String(row.title), intro: String(row.intro), items, imageUrl: typeof row.image_url === "string" ? row.image_url : null, slug: String(row.slug), status, sortOrder: Number(row.sort_order ?? 0) };
+    return [{ id: String(row.id), entityType: "site_page" as const, title: draft.title, originalText: JSON.stringify({ eyebrow: draft.eyebrow, title: draft.title, intro: draft.intro, items: draft.items }), status, provenanceCount: 0, validationPending: false, sourceSlugs: [], historicalCorpus: false, sitePageDraft: draft }];
   }).sort((a, b) => a.title.localeCompare(b.title, "es-AR"));
 }
 

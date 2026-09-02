@@ -2,12 +2,25 @@ import { contentSourceHash } from "./proposals";
 
 export type SitePageCopyItem = { title: string; text: string; href: string };
 export type SitePageCopy = { eyebrow: string; title: string; intro: string; items: SitePageCopyItem[] };
+export type SitePageEditorialStatus = "draft" | "published" | "archived";
+/** Complete protected snapshot used for generation and Apply stale checks. */
+export type SitePageEditorialSnapshot = SitePageCopy & {
+  imageUrl: string | null;
+  slug: string;
+  status: SitePageEditorialStatus;
+  sortOrder: number;
+};
 export type SitePageProposalItem = { sourceIndex: number; originalHref: string; rewrittenTitle?: string; rewrittenText?: string };
 export type SitePageProposal = { rewritten_eyebrow?: string; rewritten_title?: string; rewritten_intro?: string; items?: SitePageProposalItem[] };
 export type SitePageTopLevelProposal = { rewritten_eyebrow: string; rewritten_title: string; rewritten_intro: string; editorial_notes: string };
 
-export function sitePageEditorialSourceHash(page: SitePageCopy & { imageUrl?: string | null; slug?: string; status?: string; sortOrder?: number }) {
-  return contentSourceHash({ eyebrow: page.eyebrow, title: page.title, intro: page.intro, items: page.items.map(({ title, text, href }) => ({ title, text, href })), imageUrl: page.imageUrl ?? null, slug: page.slug ?? "", status: page.status ?? "", sortOrder: page.sortOrder ?? 0 });
+export function sitePageEditorialSourceHash(page: SitePageEditorialSnapshot) {
+  return contentSourceHash({ eyebrow: page.eyebrow, title: page.title, intro: page.intro, items: page.items.map(({ title, text, href }) => ({ title, text, href })), imageUrl: page.imageUrl, slug: page.slug, status: page.status, sortOrder: page.sortOrder });
+}
+
+/** Must be evaluated before deriving values or issuing an update to site_pages. */
+export function canApplySitePageEditorialProposal(page: SitePageEditorialSnapshot, proposalSourceHash: string) {
+  return sitePageEditorialSourceHash(page) === proposalSourceHash;
 }
 
 export function applySitePageCopyProposal(current: SitePageCopy, proposal: SitePageProposal): SitePageCopy | null {

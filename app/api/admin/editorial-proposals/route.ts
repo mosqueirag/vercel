@@ -10,7 +10,7 @@ import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial
 import { humanEditHash, sameHumanEdit, validateHumanEdit } from "../../../../lib/editorial/human-edit";
 import { generateSitePageEditorialProposal, sitePageEditorialPromptVersion } from "../../../../lib/editorial/site-page-generator";
 import { parseSitePageEditorialProposal } from "../../../../lib/editorial/site-page-proposal-schema";
-import { applySitePageTopLevelProposal, sitePageEditorialSourceHash, sitePageTopLevelText } from "../../../../lib/editorial/site-page-bridge";
+import { applySitePageTopLevelProposal, canApplySitePageEditorialProposal, sitePageEditorialSourceHash, sitePageTopLevelText } from "../../../../lib/editorial/site-page-bridge";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel", "site_page"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -167,7 +167,10 @@ export async function PATCH(request: Request) {
   const currentHash = candidate.entityType === "site_page" && candidate.sitePageDraft
     ? sitePageEditorialSourceHash(candidate.sitePageDraft)
     : contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
-  if (proposalIsStale(currentHash, proposal.source_hash)) {
+  const isStale = candidate.entityType === "site_page" && candidate.sitePageDraft
+    ? !canApplySitePageEditorialProposal(candidate.sitePageDraft, proposal.source_hash)
+    : proposalIsStale(currentHash, proposal.source_hash);
+  if (isStale) {
     await session.admin.from("content_editorial_proposals").update({ status: "stale" }).eq("id", proposal.id);
     await audit("stale", { reason: "source_hash_changed" });
     return Response.json({ error: "El borrador cambió desde la generación; la propuesta quedó desactualizada." }, { status: 409 });
