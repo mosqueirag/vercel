@@ -10,6 +10,8 @@ El contenido histórico importado es evidencia curada para revisión editorial. 
 
 **COOPIA CONSUMER = PASS.** La proyección `getPublishedCuratedKnowledge()` incluye el artículo publicado y `getAssistantKnowledge()` lo incorpora a la base oficial. Borradores, propuestas, provenance y validaciones continúan fuera de la conversación pública.
 
+**TEST CONTENT CLEANUP = PASS.** El artefacto `articulo-test-staging` queda `archived`, no se elimina físicamente y ya no satisface las lecturas published-only de Web o COOPIA. `energia-estimar-consumo` continúa siendo el artículo real publicado; los otros cuatro elementos de Batch 01 permanecen `draft` / `needs_validation`.
+
 4G.7.1.7 completa ambos pendientes: **WEB ARTICLE SURFACE = PASS** mediante `/centro-de-ayuda/[slug]`, que sólo lee artículos `published` con fecha efectiva; y **PROPOSAL STATE CONSISTENCY = PASS** porque `Publicado` se deriva de `target.status + audit(published)` mientras la propuesta mantiene `applied`. Los conteos siguientes son la fotografía de auditoría original y no deben reinterpretarse como el estado posterior al Smoke 01.
 
 ## Inventario real de staging

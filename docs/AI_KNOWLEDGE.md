@@ -28,6 +28,10 @@ COOPIA pública consume exclusivamente `services`, `help_articles` y `faqs` con 
 - **WEB ARTICLE SURFACE = PASS.** La ruta canónica published-only es `/centro-de-ayuda/[slug]`. No reutiliza `[slug]` ni expone borradores, fechas futuras, propuestas ni provenance.
 - **PROPOSAL STATE CONSISTENCY = PASS.** La publicación se deriva de `target.status` y de la auditoría `published`; `content_editorial_proposals.status` conserva `applied` para significar “aplicada al borrador”. No existe un segundo estado persistido `published`.
 
+## Cierre 4G.7.1 — limpieza de conocimiento público
+
+El fixture sintético `articulo-test-staging` se archiva exclusivamente mediante una migración de datos idempotente y deja de cumplir las lecturas `published` de Web y COOPIA. No se elimina físicamente ni se modifica su `published_at` histórico. Al no tener `content_editorial_proposals` asociada, su housekeeping no usa la auditoría editorial; la trazabilidad es la migración, el commit y el historial de migraciones. **PUBLIC KNOWLEDGE CLEAN = PASS.**
+
 ## Continuidad pública
 
 COOPIA acompaña la navegación pública durante una única sesión temporal. El contexto técnico de cada consulta incluye página, `journeyId`, `sessionId` y, cuando ya existe, intención y servicio. Esto aporta continuidad sin enviar contenido completo de las páginas al modelo. Las respuestas no resueltas y el feedback se registran solamente como métricas estructuradas, sin conservar el texto completo de la conversación.

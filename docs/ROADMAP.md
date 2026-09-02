@@ -107,6 +107,10 @@ COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada p
 
 **CERRADA en código y QA local del HEAD exacto.** La conectividad pública se consolida en `/internet`; `/fibra-optica` redirige permanentemente sin eliminar tecnología FTTH/fibra ni el flujo de cobertura. La QA local de 4G.2.4 registró P0 = 0 y P1 = 0; el Preview quedó READY. La inspección visual remota autenticada no fue verificada y no bloquea el cierre. No se agregan datos comerciales: planes sólo aparecen publicados y compatibles; sin planes, el siguiente paso es validación o contacto comercial.
 
+# Fase 4G.7.1 — Activación curada de contenido IA
+
+**COMPLETA en staging.** Smoke editorial, corrección humana, consumidor Web `/centro-de-ayuda/[slug]` y consumidor COOPIA fueron validados. El contenido QA `articulo-test-staging` se archivó sin borrado físico y no integra las superficies públicas ni el conocimiento. Próximas etapas planificadas, sin iniciar: **4G.7.2 Site Pages Editorial Bridge**; **4G.8 Energy Information & Tools** (segmentación tarifaria, uso racional, canales oficiales, prevención de estafas); **4G.9 Energy Service Lookup**; **4G.10 COOPIA Energy Diagnostic**; **4G.11 Operational Notifications**; **4G.12 Smart Billing**; **4G.13 Mis Gestiones**; **4G.14 Accessibility & Trust**. P3: Mi COOPSAR / cuenta única.
+
 # Fase 4G.1 — arquitectura y consolidación de contenido público
 
 **COMPLETADA como auditoría y decisión de arquitectura.** El siguiente trabajo es 4G.2: unificar la experiencia pública de Internet en `/internet`, evolucionar `site_pages` de forma aditiva si los bloques tipados resultan necesarios y recién entonces implementar el redirect permanente de `/fibra-optica`. La prioridad previa sigue siendo resolver las validaciones humanas de contenido sensible; no se publican borradores automáticamente.
