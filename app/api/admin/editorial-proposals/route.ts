@@ -1,5 +1,5 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidates } from "../../../../lib/data/editorial-content";
+import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidatesResult } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
 import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, sitePageTopLevelValidationFlags, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
@@ -31,8 +31,9 @@ const entityTable: Record<EditorialEntityType, string> = { service: "services", 
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const [historical, sitePages, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getSitePageEditorialCandidates(), getEditorialProposals()]);
-  const candidates = [...historical, ...sitePages];
+  const [historical, sitePageResult, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getSitePageEditorialCandidatesResult(), getEditorialProposals()]);
+  if (!sitePageResult.ok) return Response.json({ error: "No pudimos cargar las páginas. Intentá actualizar el estado." }, { status: 503 });
+  const candidates = [...historical, ...sitePageResult.candidates];
   return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}), ...(candidate.entityType === "site_page" && candidate.sitePageDraft ? { sitePageDraft: candidate.sitePageDraft } : {}) })), proposals });
 }
 
@@ -138,12 +139,26 @@ export async function PATCH(request: Request) {
   }
   if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
   if (body.action === "published") {
-    const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
+    const candidate = proposal.entity_type === "site_page"
+      ? await getEditorialCandidate("site_page", proposal.entity_id)
+      : await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
     const validationFlags = Array.isArray(proposal.validation_flags) ? proposal.validation_flags.filter((value: unknown): value is string => typeof value === "string") : [];
     const gate = candidate && canPublishEditorialProposal({ entityType: proposal.entity_type as EditorialEntityType, proposalStatus: proposal.status, candidateStatus: candidate.status, riskLevel: proposal.risk_level, validationFlags, validationPending: candidate.validationPending });
     if (!candidate || !gate?.allowed) {
       await audit("publication_blocked", { reason: gate?.reason ?? "historical_candidate_required", risk: proposal.risk_level, validation_pending: candidate?.validationPending ?? true });
       return Response.json({ error: "La publicación fue bloqueada por los controles de seguridad." }, { status: 409 });
+    }
+    if (candidate.entityType === "site_page") {
+      const { error: publishError } = await session.admin.rpc("publish_site_page_editorial_proposal", {
+        p_proposal_id: proposal.id,
+        p_page_id: candidate.id,
+        p_actor_email: session.email,
+      });
+      if (publishError) {
+        const status = publishError.code === "P0001" ? 409 : 503;
+        return Response.json({ error: status === 409 ? "La publicación fue bloqueada por los controles de seguridad." : "No pudimos completar la publicación de forma segura." }, { status });
+      }
+      return Response.json({ published: true });
     }
     const { data: published, error: publishError } = await session.admin.from(entityTable[candidate.entityType]).update(publicationUpdateValues(candidate.entityType, new Date().toISOString())).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
     if (publishError || !published) {

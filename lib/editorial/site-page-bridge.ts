@@ -45,3 +45,12 @@ export function sitePageTopLevelText(page: Pick<SitePageCopy, "eyebrow" | "title
 
 export const sitePageEditorialSlugs = ["institucional", "telefonia", "contacto", "centro-de-ayuda"] as const;
 export const isSitePageEditorialSlug = (slug: string) => (sitePageEditorialSlugs as readonly string[]).includes(slug);
+
+/** Keeps a successful empty inventory distinct from a failed Supabase read. */
+export function sitePageEditorialQueryOutcome(data: unknown, error: unknown):
+  | { ok: true; rows: unknown[] }
+  | { ok: false; reason: "query" | "invalid_response" } {
+  if (error) return { ok: false, reason: "query" };
+  if (!Array.isArray(data)) return { ok: false, reason: "invalid_response" };
+  return { ok: true, rows: data };
+}
