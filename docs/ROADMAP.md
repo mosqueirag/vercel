@@ -14,7 +14,9 @@ Inventario y primer batch editorial controlado de hasta cinco entidades históri
 
 ## Fase 4G.7.2 — Integración editorial de páginas CMS
 
-Definir el flujo para `site_pages` sin crear un CMS paralelo, preservando los contactos dinámicos y la regla de contenido público `published`.
+**4G.7.2B cerrada y validada en staging.** El primer copy-only smoke de `centro-de-ayuda` se aprobó y aplicó exactamente una vez al borrador; no se publicó contenido. El hash fuente protege estado, estructura y datos operativos.
+
+**4G.7.2C cerrada.** El Centro de Gestión usa la respuesta canónica del servidor para actualizar de inmediato filas, detalle y métricas tras una transición editorial; la reconciliación posterior es segura ante fallos y no habilita acciones automáticas. `site_pages` preserva contactos dinámicos y la regla de contenido público `published`.
 
 ## Fase 4G.7.3 — Gobierno de publicación y stale content
 
@@ -168,4 +170,4 @@ La migración correctiva restablece exclusivamente los canónicos aprobados de H
 ## 4G.4.1.3 — Jerarquía y conversión de Home
 
 La Home distingue ahora el propósito de cada bloque: COOPIA resuelve la necesidad, el panel adaptativo sólo continúa cuando agrega valor, los accesos directos navegan y la sección Internet presenta primero la experiencia comercial y luego la cobertura. Las secciones de noticias no se renderizan sin publicaciones; no se agregan noticias de demostración ni datos comerciales nuevos.
-- **4G.7.2B — Site Page Copy Activation Smoke:** propuesta única de copy top-level para `centro-de-ayuda`, sin Apply ni publicación automática. La reescritura editorial de items queda diferida a 4G.7.2C.
+- **4G.7.2B/4G.7.2C — Site Page Copy Activation Smoke y consistencia visual:** propuesta única de copy top-level para `centro-de-ayuda` aplicada una vez al draft, sin publicación. La interfaz usa la respuesta canónica del servidor y reconcilia de forma segura; la reescritura editorial de items queda diferida.
