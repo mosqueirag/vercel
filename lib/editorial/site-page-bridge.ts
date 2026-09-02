@@ -4,6 +4,7 @@ export type SitePageCopyItem = { title: string; text: string; href: string };
 export type SitePageCopy = { eyebrow: string; title: string; intro: string; items: SitePageCopyItem[] };
 export type SitePageProposalItem = { sourceIndex: number; originalHref: string; rewrittenTitle?: string; rewrittenText?: string };
 export type SitePageProposal = { rewritten_eyebrow?: string; rewritten_title?: string; rewritten_intro?: string; items?: SitePageProposalItem[] };
+export type SitePageTopLevelProposal = { rewritten_eyebrow: string; rewritten_title: string; rewritten_intro: string; editorial_notes: string };
 
 export function sitePageEditorialSourceHash(page: SitePageCopy & { imageUrl?: string | null; slug?: string; status?: string; sortOrder?: number }) {
   return contentSourceHash({ eyebrow: page.eyebrow, title: page.title, intro: page.intro, items: page.items.map(({ title, text, href }) => ({ title, text, href })), imageUrl: page.imageUrl ?? null, slug: page.slug ?? "", status: page.status ?? "", sortOrder: page.sortOrder ?? 0 });
@@ -18,6 +19,15 @@ export function applySitePageCopyProposal(current: SitePageCopy, proposal: SiteP
     if (item.rewrittenText?.trim()) next.items[item.sourceIndex].text = item.rewrittenText.trim();
   }
   return next;
+}
+
+/** The 4G.7.2B smoke explicitly excludes operational cards from editorial output. */
+export function applySitePageTopLevelProposal(current: SitePageCopy, proposal: SitePageTopLevelProposal): Pick<SitePageCopy, "eyebrow" | "title" | "intro"> {
+  return { eyebrow: proposal.rewritten_eyebrow.trim(), title: proposal.rewritten_title.trim(), intro: proposal.rewritten_intro.trim() };
+}
+
+export function sitePageTopLevelText(page: Pick<SitePageCopy, "eyebrow" | "title" | "intro">) {
+  return [page.eyebrow, page.title, page.intro].join("\n");
 }
 
 export const sitePageEditorialSlugs = ["institucional", "telefonia", "contacto", "centro-de-ayuda"] as const;

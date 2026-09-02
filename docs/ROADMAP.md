@@ -168,3 +168,4 @@ La migración correctiva restablece exclusivamente los canónicos aprobados de H
 ## 4G.4.1.3 — Jerarquía y conversión de Home
 
 La Home distingue ahora el propósito de cada bloque: COOPIA resuelve la necesidad, el panel adaptativo sólo continúa cuando agrega valor, los accesos directos navegan y la sección Internet presenta primero la experiencia comercial y luego la cobertura. Las secciones de noticias no se renderizan sin publicaciones; no se agregan noticias de demostración ni datos comerciales nuevos.
+- **4G.7.2B — Site Page Copy Activation Smoke:** propuesta única de copy top-level para `centro-de-ayuda`, sin Apply ni publicación automática. La reescritura editorial de items queda diferida a 4G.7.2C.

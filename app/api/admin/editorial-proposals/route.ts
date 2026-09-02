@@ -1,13 +1,16 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidates } from "../../../../lib/data/editorial-content";
+import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidates } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
-import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, type EditorialEntityType } from "../../../../lib/editorial/proposals";
+import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, sitePageTopLevelValidationFlags, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
 import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch-selection";
 import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
 import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../../../../lib/editorial/generation-integrity";
 import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
 import { humanEditHash, sameHumanEdit, validateHumanEdit } from "../../../../lib/editorial/human-edit";
+import { generateSitePageEditorialProposal, sitePageEditorialPromptVersion } from "../../../../lib/editorial/site-page-generator";
+import { parseSitePageEditorialProposal } from "../../../../lib/editorial/site-page-proposal-schema";
+import { applySitePageTopLevelProposal, sitePageEditorialSourceHash, sitePageTopLevelText } from "../../../../lib/editorial/site-page-bridge";
 
 const entityTypes = new Set<EditorialEntityType>(["service", "help_article", "faq", "internet_plan", "contact_channel", "site_page"]);
 const isEntityType = (value: unknown): value is EditorialEntityType => typeof value === "string" && entityTypes.has(value as EditorialEntityType);
@@ -55,6 +58,22 @@ export async function POST(request: Request) {
     if (error) throw new Error("EDITORIAL_PROPOSAL_SAVE_FAILED");
     return { proposal: data, reused: false as const };
   };
+  const createSitePage = async (candidate: NonNullable<Awaited<ReturnType<typeof getEditorialCandidate>>>) => {
+    if (candidate.entityType !== "site_page" || !candidate.sitePageDraft || candidate.status !== "draft") return { skipped: true as const, reason: "stale_candidate" };
+    const sourceHash = sitePageEditorialSourceHash(candidate.sitePageDraft);
+    const { data: existing, error: existingError } = await session.admin.from("content_editorial_proposals").select("*").eq("entity_type", "site_page").eq("entity_id", candidate.id).eq("source_hash", sourceHash).eq("prompt_version", sitePageEditorialPromptVersion).maybeSingle();
+    if (existingError) throw new Error("EDITORIAL_PROPOSAL_LOOKUP_FAILED");
+    if (existing) return { proposal: existing, reused: true as const };
+    const proposal = await generateSitePageEditorialProposal(candidate);
+    const currentCandidate = await getEditorialCandidate("site_page", candidate.id);
+    if (!currentCandidate?.sitePageDraft || currentCandidate.status !== "draft" || sitePageEditorialSourceHash(currentCandidate.sitePageDraft) !== sourceHash) return { skipped: true as const, reason: "stale_candidate" };
+    const sourceText = sitePageTopLevelText(candidate.sitePageDraft);
+    const validationFlags = sitePageTopLevelValidationFlags(sourceText, proposal);
+    const row = { entity_type: "site_page", entity_id: candidate.id, source_hash: sourceHash, prompt_version: sitePageEditorialPromptVersion, proposal, detected_facts: extractProtectedFacts(sourceText), validation_flags: validationFlags, risk_level: proposalRiskLevel("site_page", validationFlags), status: validationFlags.length ? "needs_validation" : "generated" };
+    const { data, error } = await session.admin.from("content_editorial_proposals").insert(row).select("*").single();
+    if (error) throw new Error("EDITORIAL_PROPOSAL_SAVE_FAILED");
+    return { proposal: data, reused: false as const };
+  };
   try {
     if (body.recalculateRisk === true) {
       const historicalCandidates = await getHistoricalEditorialCandidates();
@@ -76,7 +95,13 @@ export async function POST(request: Request) {
       return Response.json({ processed: results.length, created: results.filter((result) => "reused" in result && !result.reused).length, reused: results.filter((result) => "reused" in result && result.reused).length, remaining: batch.remaining, totalCorpus: batch.totalCorpus, alreadyProcessed: batch.alreadyProcessed });
     }
     if (!isEntityType(body.entityType) || typeof body.entityId !== "string") return Response.json({ error: "Solicitud editorial inválida." }, { status: 400 });
-    if (body.entityType === "site_page") return Response.json({ error: "Las páginas están preparadas para revisión copy-only; la generación IA no está habilitada en esta subfase." }, { status: 409 });
+    if (body.entityType === "site_page") {
+      const candidate = await getEditorialCandidate("site_page", body.entityId);
+      if (!candidate || !candidate.sitePageDraft || candidate.status !== "draft") return Response.json({ error: "Página no encontrada o no editable." }, { status: 404 });
+      const result = await createSitePage(candidate);
+      if ("skipped" in result) return Response.json({ skipped: true, reason: result.reason, error: "La página cambió o dejó de ser borrador durante la generación." }, { status: 409 });
+      return Response.json({ proposal: result.proposal, reused: result.reused }, { status: result.reused ? 200 : 201 });
+    }
     const candidate = await getHistoricalEditorialCandidate(body.entityType, body.entityId);
     if (!candidate) return Response.json({ error: "Contenido no encontrado." }, { status: 404 });
     const result = await create(candidate);
@@ -135,15 +160,23 @@ export async function PATCH(request: Request) {
     return Response.json({ proposal: data });
   }
   if (proposal.status !== "approved") return Response.json({ error: "La propuesta debe aprobarse antes de aplicarla al borrador." }, { status: 409 });
-  const candidate = await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
+  const candidate = proposal.entity_type === "site_page"
+    ? await getEditorialCandidate("site_page", proposal.entity_id)
+    : await getHistoricalEditorialCandidate(proposal.entity_type as EditorialEntityType, proposal.entity_id);
   if (!candidate || candidate.status !== "draft") return Response.json({ error: "El contenido original ya no es un borrador aplicable." }, { status: 409 });
-  const currentHash = contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
+  const currentHash = candidate.entityType === "site_page" && candidate.sitePageDraft
+    ? sitePageEditorialSourceHash(candidate.sitePageDraft)
+    : contentSourceHash({ title: candidate.title, content: candidate.originalText, entityType: candidate.entityType });
   if (proposalIsStale(currentHash, proposal.source_hash)) {
     await session.admin.from("content_editorial_proposals").update({ status: "stale" }).eq("id", proposal.id);
     await audit("stale", { reason: "source_hash_changed" });
     return Response.json({ error: "El borrador cambió desde la generación; la propuesta quedó desactualizada." }, { status: 409 });
   }
-  const values = draftUpdate(candidate.entityType, proposal.proposal);
+  const parsedSitePageProposal = candidate.entityType === "site_page" ? parseSitePageEditorialProposal(proposal.proposal) : null;
+  if (parsedSitePageProposal && !parsedSitePageProposal.success) return Response.json({ error: "La propuesta de página no cumple el contrato copy-only." }, { status: 409 });
+  const values = candidate.entityType === "site_page" && candidate.sitePageDraft && parsedSitePageProposal?.success
+    ? applySitePageTopLevelProposal(candidate.sitePageDraft, parsedSitePageProposal.data)
+    : draftUpdate(candidate.entityType, proposal.proposal);
   if (!Object.keys(values).length) return Response.json({ error: "La propuesta no contiene cambios aplicables." }, { status: 409 });
   const { data: appliedDraft, error: applyError } = await session.admin.from(entityTable[candidate.entityType]).update(values).eq("id", candidate.id).eq("status", "draft").select("id").maybeSingle();
   if (applyError || !appliedDraft) return Response.json({ error: "El contenido ya no es un borrador aplicable." }, { status: 409 });

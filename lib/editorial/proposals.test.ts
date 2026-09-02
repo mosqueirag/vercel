@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareProtectedFacts, contentSourceHash, editorialBatchOrder, extractProtectedFacts, isEditorialBatchCandidate, isRestrictiveEditorialType, proposalIsStale, proposalNeedsValidation, proposalRiskLevel } from "./proposals";
+import { compareProtectedFacts, contentSourceHash, editorialBatchOrder, extractProtectedFacts, isEditorialBatchCandidate, isRestrictiveEditorialType, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, sitePageTopLevelValidationFlags } from "./proposals";
 
 describe("editorial proposal safeguards", () => {
   it("detects protected phones, prices and URLs", () => {
@@ -30,5 +30,8 @@ describe("editorial proposal safeguards", () => {
   it("marks a proposal stale only when the current draft source changed", () => {
     expect(proposalIsStale("same-hash", "same-hash")).toBe(false);
     expect(proposalIsStale("new-hash", "old-hash")).toBe(true);
+  });
+  it("blocks protected facts newly introduced into page top-level copy", () => {
+    expect(sitePageTopLevelValidationFlags("Ayuda\nCentro\nGuías oficiales.", { rewritten_eyebrow: "Ayuda", rewritten_title: "Centro", rewritten_intro: "Llamá al 0297 444 1234." })).toContain("protected_fact_added:phone");
   });
 });

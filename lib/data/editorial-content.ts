@@ -80,7 +80,10 @@ export async function getSitePageEditorialCandidates(): Promise<EditorialCandida
 }
 
 export async function getEditorialCandidate(entityType: EditorialEntityType, id: string) {
-  return (await getEditorialCandidates()).find((candidate) => candidate.entityType === entityType && candidate.id === id) ?? null;
+  const candidates = entityType === "site_page"
+    ? await getSitePageEditorialCandidates()
+    : await getEditorialCandidates();
+  return candidates.find((candidate) => candidate.entityType === entityType && candidate.id === id) ?? null;
 }
 
 export async function getHistoricalEditorialCandidate(entityType: EditorialEntityType, id: string) {

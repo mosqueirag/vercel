@@ -43,3 +43,6 @@ COOPIA acompaña la navegación pública durante una única sesión temporal. El
 ## Fase 4F.3 — interfaz de resolución
 
 COOPIA es una interfaz guiada por intención: una necesidad, un paso y una acción principal a la vez. La presentación no replica detección ni decide cobertura; las fuentes tipadas server-side continúan resolviendo datos vivos y COOPIA sólo usa contenido publicado.
+## 4G.7.2B — smoke de copy top-level para `site_pages`
+
+La primera propuesta de página se limita a `eyebrow`, `title` e `intro` de `centro-de-ayuda`. Los items y sus teléfonos, URLs, horarios, domicilio u otros hechos operativos no viajan al prompt, no pueden volver en el esquema estricto y no son editables desde Curaduría IA. `site_pages` draft y propuestas editoriales siguen fuera de COOPIA; sólo una página publicada podría integrarse a las superficies públicas existentes.
