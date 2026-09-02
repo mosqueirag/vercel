@@ -3,9 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import {
   canApplyEditorialProposal,
   canGenerateEditorialProposal,
+  canReviewEditorialProposal,
   focusEditorialReviewPanel,
   isEditorialReviewDismissKey,
   proposalActionLabel,
+  reconciliationWarning,
+  replaceCanonicalProposal,
+  reviewPendingLabel,
 } from "./review-interaction";
 
 describe("editorial review interactions", () => {
@@ -30,6 +34,21 @@ describe("editorial review interactions", () => {
     expect(canApplyEditorialProposal("rejected")).toBe(false);
     expect(canApplyEditorialProposal("applied")).toBe(false);
     expect(canApplyEditorialProposal("stale")).toBe(false);
+  });
+
+  it("labels and gates a single pending review action without allowing incompatible transitions", () => {
+    expect(reviewPendingLabel("approved")).toBe("Aprobando…");
+    expect(reviewPendingLabel("applied")).toBe("Aplicando…");
+    expect(canReviewEditorialProposal("generated", "approved")).toBe(true);
+    expect(canReviewEditorialProposal("approved", "applied")).toBe(true);
+    expect(canReviewEditorialProposal("generated", "applied")).toBe(false);
+    expect(canReviewEditorialProposal("applied", "approved")).toBe(false);
+  });
+
+  it("uses the canonical PATCH response immediately and preserves it when reconciliation fails", () => {
+    const before = [{ id: "proposal-1", status: "generated" }, { id: "proposal-2", status: "approved" }];
+    expect(replaceCanonicalProposal(before, { id: "proposal-1", status: "approved" })).toEqual([{ id: "proposal-1", status: "approved" }, { id: "proposal-2", status: "approved" }]);
+    expect(reconciliationWarning()).toContain("operación fue confirmada");
   });
 
   it("does not allow proposal generation for published content", () => {

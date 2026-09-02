@@ -6,6 +6,8 @@ export type EditorialProposalStatus =
   | "applied"
   | "stale";
 
+export type EditorialReviewAction = "approved" | "rejected" | "needs_validation" | "applied" | "published";
+
 type ReviewPanelTarget = {
   scrollIntoView: (options: ScrollIntoViewOptions) => void;
   querySelector: (selector: string) => HTMLElement | null;
@@ -13,6 +15,31 @@ type ReviewPanelTarget = {
 
 export function canApplyEditorialProposal(status: string) {
   return status === "approved";
+}
+
+/** Client-side affordance only. The route remains the canonical transition gate. */
+export function canReviewEditorialProposal(status: string, action: EditorialReviewAction) {
+  if (action === "applied") return canApplyEditorialProposal(status);
+  if (action === "published") return status === "applied";
+  return status === "generated" || status === "needs_validation";
+}
+
+export function reviewPendingLabel(action: EditorialReviewAction) {
+  switch (action) {
+    case "approved": return "Aprobando…";
+    case "rejected": return "Rechazando…";
+    case "needs_validation": return "Marcando para validar…";
+    case "applied": return "Aplicando…";
+    case "published": return "Publicando…";
+  }
+}
+
+export function reconciliationWarning() {
+  return "La operación fue confirmada. No pudimos actualizar el listado; podés actualizar el estado de forma segura.";
+}
+
+export function replaceCanonicalProposal<T extends { id: string }>(proposals: T[], canonical: T) {
+  return proposals.map((proposal) => proposal.id === canonical.id ? canonical : proposal);
 }
 
 export function canGenerateEditorialProposal(contentStatus: string) {
