@@ -6,7 +6,7 @@ export type PublicationGate = {
 };
 
 export function publicationUpdateValues(entityType: EditorialEntityType, publishedAt: string) {
-  if (entityType === "service") return { status: "published" as const };
+  if (entityType === "service" || entityType === "site_page") return { status: "published" as const };
   return { status: "published" as const, published_at: publishedAt };
 }
 
@@ -18,7 +18,7 @@ export function canPublishEditorialProposal(input: {
   validationFlags: string[];
   validationPending: boolean;
 }): PublicationGate {
-  if (!(["service", "help_article", "faq"] as const).includes(input.entityType as "service" | "help_article" | "faq")) return { allowed: false, reason: "not_supported_type" };
+  if (!(["service", "help_article", "faq", "site_page"] as const).includes(input.entityType as "service" | "help_article" | "faq" | "site_page")) return { allowed: false, reason: "not_supported_type" };
   if (input.proposalStatus === "stale") return { allowed: false, reason: "stale" };
   if (input.proposalStatus !== "applied") return { allowed: false, reason: "not_applied" };
   if (input.candidateStatus !== "draft") return { allowed: false, reason: "not_draft" };
