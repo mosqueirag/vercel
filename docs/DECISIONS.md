@@ -1,5 +1,15 @@
 # Decisiones técnicas
 
+## 4G.7.1 — Activación de contenido curado
+
+- El corpus histórico se mantiene separado de las fuentes vivas: WordPress/XML es únicamente evidencia de migración, no una consulta de runtime.
+- La IA propone; la revisión humana aplica y publica. Ningún lote puede publicar, reescribir `published` ni decidir hechos protegidos.
+- Web pública y COOPIA consumen las mismas proyecciones tipadas `published`; `provenance`, `validation_queue` y propuestas son privados.
+- `site_pages` es una fuente pública administrable pero aún no participa del pipeline editorial ni del contexto público de COOPIA. Es el gap explícito de 4G.7.2.
+- El Smoke 01 confirma que COOPIA consume un `help_article` publicado desde la proyección tipada. La publicación está auditada, no habilita publicación masiva y no cambia los otros cuatro registros del Batch 01, que permanecen en revisión.
+- La superficie web de artículos y el ciclo de vida de propuestas se mantienen separados: la ruta genérica `[slug]` no debe asumir `help_articles`, y para el corpus histórico `applied` significa “aplicada al borrador”; la publicación se expresa por target + auditoría.
+- 4G.7.1.7 resuelve esa decisión sin migración: `/centro-de-ayuda/[slug]` lee exclusivamente `help_articles` publicados con fecha efectiva. Para `site_page`, 4G.7.2D adopta deliberadamente un estado persistido `published` de propuesta, consistente con la transición atómica de la página y una auditoría `published` única.
+
 ## 4G.6 — Estado operativo de Energía
 
 - `unknown` nunca se presenta como servicio operativo: significa “Sin información operativa confirmada”.
@@ -33,7 +43,7 @@ Las necesidades claras se resuelven primero mediante el resultado estructurado t
 La atención urgente del servicio de sepelio se resuelve primero mediante el canal publicado `funeral/emergency`; la página no duplica teléfonos ni condiciones contractuales. Las consultas no urgentes abren la única instancia global de COOPIA con contexto de Sepelio, y las FAQ se muestran únicamente cuando existen registros publicados y relevantes.
 
 - Staging (`wwvqlbycwzxvjnexklwg`) es el único remoto autorizado para PR #2 y PR #3; ningún test ni reparación toca producción.
-- El historial de trece migraciones es canónico y el esquema se modifica solo mediante migraciones aditivas revisadas.
+- El historial versionado de `supabase/migrations/` es canónico (35 migraciones a este HEAD) y el esquema se modifica solo mediante migraciones aditivas revisadas.
 - Los límites distribuidos usan `consume_rate_limit` y huellas con hash/sal; no se persiste IP cruda. Si falla la protección, los endpoints protegidos fallan cerrados.
 - El tracking de journeys es best-effort: errores analíticos no bloquean una solicitud comercial válida. Guarda identificadores, intención, acción, resultados agregados y duración; nunca conversación completa ni PII de contacto.
 - El consentimiento operativo y el opt-in comercial son campos distintos en `internet_requests`; solo el primero es obligatorio para solicitar contacto.
@@ -57,6 +67,8 @@ La atención urgente del servicio de sepelio se resuelve primero mediante el can
 - El panel `/admin/coopia` utiliza `journey_events` y `internet_requests` server-side para métricas agregadas. Si una fuente no está disponible, muestra un estado explícito en lugar de un cero artificial.
 - El contenido recuperado del WordPress histórico entra sólo mediante un paquete curado privado y un importador idempotente de staging. Nunca se usa XML/WordPress en runtime, nunca se publica automáticamente y nunca puede reemplazar un registro ya publicado. La procedencia se almacena fuera de los campos públicos para revisión y auditoría.
 - La curaduría editorial de IA persiste propuestas privadas e idempotentes por entidad, huella y versión de prompt. Las propuestas clasifican cambios de hechos protegidos y contenido sensible para validación humana; nunca publican ni alteran automáticamente un registro publicado.
+- El fixture sintético de staging `articulo-test-staging` se retira con una migración de datos idempotente, limitada por slug, categoría, título y estado. No posee propuesta editorial: `content_editorial_proposal_audit` conserva únicamente el lifecycle de propuestas y no se extiende para housekeeping de entidades sin propuesta. La migración, Git y el historial remoto son su trazabilidad.
+- El bridge de `site_pages` separa copy de estructura: la IA no escribe href, image_url, slug, status ni sort_order. El hash incluye esos valores como snapshot protegido y cualquier cambio concurrente bloquea una aplicación futura.
 - Fase 4E.2 limita la revisión por lote a los 44 contenidos históricos editoriales (servicios, artículos y FAQ); planes y contactos permanecen fuera de publicación asistida. La publicación requiere una propuesta aplicada, de bajo riesgo, sin flags ni validaciones pendientes. COOPIA consulta sólo proyecciones `published`.
 - Las generaciones revalidan estado `draft` y la huella de origen inmediatamente antes de persistir. Las transiciones simples de revisión son idempotentes y no duplican auditoría; aplicar, publicar y marcar contenido stale conservan sus gates específicos.
 - Fase 4F.1 mantiene un único orquestador COOPIA: los identificadores canónicos de necesidad no contienen URLs, teléfonos, precios ni datos de cobertura. Se adaptan a herramientas y acciones ya verificadas; los especialistas futuros podrán agregarse detrás de esta capa sin mostrar agentes separados al usuario.
@@ -90,3 +102,6 @@ La solicitud de actualización familiar se modela como un trámite privado y no 
 ## 4G.3.2 — DNI privado, obligatorio y sin tránsito por Vercel
 
 El titular debe cargar frente y dorso del DNI para completar la actualización familiar. Los binarios no viajan por el route handler final ni se codifican como base64: el backend emite URLs firmadas de carga para paths opacos de un bucket Storage privado y después valida ambos objetos en una transacción antes de persistir la solicitud. El navegador no puede listar ni leer documentos, y el personal autorizado sólo recibe una URL temporal con auditoría `document_viewed`. No hay OCR, IA documental, enlaces públicos ni retención automática; la política de retención se decide antes de Production.
+- **4G.7.2B — activación por capas de páginas:** el primer smoke IA de `site_page` sólo puede reescribir eyebrow, título e introducción. El hash conserva items, href, imagen, slug, estado y orden; la reescritura de cards se difiere por contener datos operativos. El smoke de `centro-de-ayuda` fue aplicado una sola vez a un borrador y no publicado.
+- **4G.7.2C — reconciliación editorial:** el servidor conserva la fuente canónica de las transiciones. Tras un `PATCH` exitoso, el Centro de Gestión refleja de inmediato la propuesta devuelta y luego reconcilia con una lectura; si esa lectura falla, conserva el estado confirmado y ofrece una actualización segura. No hay transición, Apply ni publicación automática.
+- **4G.7.2D/4G.7.2E — publicación y robustez de páginas:** `site_page` publica exclusivamente mediante RPC atómica con locks, compare-and-set y transición server-side `applied → published`. Las propuestas terminales no se reactivan. Las lecturas REST fallidas o inválidas no se degradan a `[]`: el endpoint responde un error controlado y la UI bloquea acciones hasta recuperar inventario canónico.

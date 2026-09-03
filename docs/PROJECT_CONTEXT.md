@@ -4,7 +4,7 @@ PR #2 (`platform-coopsar-ai`) está abierto y Ready for Review contra `main`. PR
 
 La plataforma valida en staging: navegación y asistencia COOPIA, consulta de cobertura por domicilio, planes publicados cuando estén aprobados, solicitudes de Internet/lista de espera, outbox persistente y CMS de noticias con rol editorial. No hay CRM, n8n productivo ni flujos operativos internos nuevos.
 
-Las trece migraciones canónicas de `supabase/migrations/` reproducen el esquema actual y están aplicadas en staging. El contenido semilla y las solicitudes usadas para validación están etiquetados explícitamente como `TEST`; nunca son información institucional ni comercial.
+Las migraciones versionadas de `supabase/migrations/` reproducen el esquema actual (35 a este HEAD) y están aplicadas en staging. El contenido semilla y las solicitudes usadas para validación están etiquetados explícitamente como `TEST`; nunca son información institucional ni comercial.
 
 Antes de producción se requiere información oficial validada, canales operativos aprobados, revisión de privacidad, observabilidad y la lista de `docs/PRODUCTION_READINESS.md` completa.
 

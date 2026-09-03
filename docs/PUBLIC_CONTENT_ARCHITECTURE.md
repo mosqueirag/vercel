@@ -93,6 +93,12 @@ Es suficiente para hero + introducción + accesos. No representa una página com
 
 Hardcodes a retirar gradualmente, sin perder fallback hasta reemplazo publicado: contenido de `lib/service-pages.ts`, imágenes de `app/[slug]/page.tsx`, y valores de compatibilidad de `lib/coopsar-data.ts`. Los canales publicados ya ganan sobre los fallbacks.
 
+## 4G.7.2A — Consumer audit y puente editorial de páginas
+
+`lib/data/site-pages.ts` consulta exclusivamente filas `published`; `app/[slug]/page.tsx` aplica después `withPublicContacts()`, por lo que los canales publicados siguen siendo dinámicos incluso para una página CMS. La primera auditoría separa: **consumidas por `/[slug]`** (`institucional`, `telefonia`, `contacto`, `centro-de-ayuda`, `medios-de-pago`, `privacidad`); **shadowed por rutas dedicadas** (`energia`, `internet`, `fibra-optica`, `sepelio`, `tramites`, `cortes-programados`); y **fallback/legacy** según la ruta equivalente. La fundación editorial inventaría sólo `institucional`, `telefonia`, `contacto` y `centro-de-ayuda`.
+
+La propuesta privada `site_page` conserva una huella de copy **y** estructura. Sólo puede cambiar `eyebrow`, `title`, `intro` y los textos de items; cada item se ata a `sourceIndex + originalHref`. Imagen, href, slug, estado y orden no son campos editoriales. En esta subfase no se generan propuestas, no se aplican cambios y no se publica ninguna página.
+
 ## Implementación 4G.2
 
 `app/internet/page.tsx` compone un hero comercial sobrio, soporte mediante COOPIA y el mismo `InternetCenter` que usa la Home. El motor de domicilio, cobertura y solicitud no se duplica: `/api/coverage-check` continúa decidiendo cobertura server-side y `/api/internet-leads` registra solicitudes con consentimiento operativo separado del opt-in de marketing.
@@ -120,3 +126,6 @@ No se publican drafts, no se alteran tablas ni RLS, no se crea un CMS paralelo, 
 # Oferta comercial de Internet
 
 `getPublishedInternetPlans()` es la capa server-side que alimenta `/internet`, el resolver de cobertura y COOPIA. Filtra `status=published` y `published_at<=now`; los componentes cliente nunca consultan `internet_plans` directamente. El editor del Centro de Gestión conserva borradores privados hasta una publicación explícita.
+# Site Pages Editorial Bridge
+
+La capa técnica de Páginas administra estructura, enlaces, imágenes, slugs, orden y estado. Curaduría IA sólo puede revisar copy y nunca publica. Los enlaces se preservan por `sourceIndex + originalHref`; un cambio humano de href invalida la propuesta. La allowlist de imágenes acepta `/images/`, el host Supabase configurado y WordPress COOPSAR legado, no hosts Supabase arbitrarios.

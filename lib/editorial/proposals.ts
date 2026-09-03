@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const editorialPromptVersion = "coopsar-editorial-v1";
-export type EditorialEntityType = "service" | "help_article" | "faq" | "internet_plan" | "contact_channel";
+export type EditorialEntityType = "service" | "help_article" | "faq" | "internet_plan" | "contact_channel" | "site_page";
 export const editorialBatchOrder: EditorialEntityType[] = ["help_article", "faq", "service"];
 export type ProtectedFact = { type: "phone" | "email" | "url" | "address" | "hours" | "date" | "price" | "speed" | "percentage"; value: string };
 export type EditorialProposal = {
@@ -70,4 +70,13 @@ export function proposalRiskLevel(entityType: EditorialEntityType, flags: string
   if (flags.includes("restricted_editorial_content") || isRestrictiveEditorialType(entityType, "")) return "restricted";
   if (flags.some((flag) => flag.startsWith("protected_fact_"))) return "high";
   return flags.length ? "medium" : "low";
+}
+
+/** Site pages are top-level copy only in 4G.7.2B. Cards are deliberately excluded. */
+export function sitePageTopLevelValidationFlags(original: string, proposal: { rewritten_eyebrow: string; rewritten_title: string; rewritten_intro: string }) {
+  const proposedText = [proposal.rewritten_eyebrow, proposal.rewritten_title, proposal.rewritten_intro].join("\n");
+  const flags = compareProtectedFacts(original, proposedText);
+  const addressLike = /\b(?:calle|avenida|av\.?|ruta)\s+[\p{L}0-9 .-]+/iu;
+  if (!addressLike.test(original) && addressLike.test(proposedText)) flags.push("protected_fact_added:address");
+  return [...new Set(flags)];
 }

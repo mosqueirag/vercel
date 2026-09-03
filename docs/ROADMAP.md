@@ -1,5 +1,29 @@
 # Roadmap posterior al cierre de Fase 2
 
+## Fase 4G.7.1 — Activación de contenido curado
+
+Inventario y primer batch editorial controlado de hasta cinco entidades históricas: sólo servicios, artículos de ayuda y FAQ `draft`, con provenance, validaciones y propuestas privadas. Sin publicación automática, sin planes/contactos y sin cambios de cobertura.
+
+### Cierre Smoke 01 — staging
+
+**SMOKE 01 EDITORIAL = PASS** y **COOPIA CONSUMER = PASS**: un artículo de ayuda aprobado se publicó de forma individual y entra a la base oficial a través de la proyección published-only. Los otros cuatro contenidos del Batch 01 continúan `draft` / `needs_validation`; no hay publicación masiva.
+
+### 4G.7.1.7 — superficie pública de artículos y consistencia editorial
+
+**CERRADA.** La ruta canónica published-only es `/centro-de-ayuda/[slug]`; no colisiona con `[slug]` de `site_pages` / `servicePages` y el índice de Centro de ayuda sólo muestra artículos efectivamente publicados. La publicación visual se deriva de candidato `published` y auditoría `published`; la propuesta conserva `applied` como lifecycle privado. No hubo llamadas IA, publicación adicional, cambios de cobertura ni datos oficiales vivos.
+
+## Fase 4G.7.2 — Integración editorial de páginas CMS
+
+**4G.7.2B cerrada y validada en staging.** El primer copy-only smoke de `centro-de-ayuda` se aprobó y aplicó exactamente una vez al borrador; el hash fuente protege estado, estructura y datos operativos.
+
+**4G.7.2C cerrada.** El Centro de Gestión usa la respuesta canónica del servidor para actualizar de inmediato filas, detalle y métricas tras una transición editorial; la reconciliación posterior es segura ante fallos y no habilita acciones automáticas. `site_pages` preserva contactos dinámicos y la regla de contenido público `published`.
+
+**4G.7.2D/4G.7.2E cerradas.** La publicación humana de `site_page` usa una RPC atómica: `generated → approved/rejected/needs_validation → applied → published`; `rejected` permanece terminal. `centro-de-ayuda` fue publicada únicamente en staging mediante ese flujo, sin modificar copy estructural durante la publicación. Las fallas o payloads inválidos de lectura editorial son explícitos, preservan el último estado canónico de la UI y bloquean acciones hasta reintentar correctamente.
+
+## Fase 4G.7.3 — Gobierno de publicación y stale content
+
+Definir el mantenimiento editorial de cambios de fuente, propuestas stale, auditoría y recuperación, antes de ampliar el corpus o automatizar decisiones.
+
 ## Fase 4G.6 — Energy Operations Center
 
 Pendiente de QA humana: `/energia` prioriza estado oficial, acción inmediata, guardia publicada y gestiones reutilizables. Los cortes programados se consultan desde alertas publicadas y se distinguen de interrupciones imprevistas.
@@ -87,6 +111,14 @@ COOPIA evoluciona de un historial de chat a una interfaz de resolución guiada p
 
 **CERRADA en código y QA local del HEAD exacto.** La conectividad pública se consolida en `/internet`; `/fibra-optica` redirige permanentemente sin eliminar tecnología FTTH/fibra ni el flujo de cobertura. La QA local de 4G.2.4 registró P0 = 0 y P1 = 0; el Preview quedó READY. La inspección visual remota autenticada no fue verificada y no bloquea el cierre. No se agregan datos comerciales: planes sólo aparecen publicados y compatibles; sin planes, el siguiente paso es validación o contacto comercial.
 
+# Fase 4G.7.1 — Activación curada de contenido IA
+
+**COMPLETA en staging.** Smoke editorial, corrección humana, consumidor Web `/centro-de-ayuda/[slug]` y consumidor COOPIA fueron validados. El contenido QA `articulo-test-staging` se archivó sin borrado físico y no integra las superficies públicas ni el conocimiento. Próximas etapas planificadas, sin iniciar: **4G.7.2 Site Pages Editorial Bridge**; **4G.8 Energy Information & Tools** (segmentación tarifaria, uso racional, canales oficiales, prevención de estafas); **4G.9 Energy Service Lookup**; **4G.10 COOPIA Energy Diagnostic**; **4G.11 Operational Notifications**; **4G.12 Smart Billing**; **4G.13 Mis Gestiones**; **4G.14 Accessibility & Trust**. P3: Mi COOPSAR / cuenta única.
+
+## 4G.7.2A — Site Pages Editorial Bridge Foundation
+
+En progreso sobre una PR stacked: inventario copy-only de `institucional`, `telefonia`, `contacto` y `centro-de-ayuda`; las rutas dedicadas (`energia`, `internet`, `fibra-optica`, `sepelio`, `tramites`, `cortes-programados`) quedan explícitamente fuera por estar shadowed. No hay generación IA, apply ni publicación.
+
 # Fase 4G.1 — arquitectura y consolidación de contenido público
 
 **COMPLETADA como auditoría y decisión de arquitectura.** El siguiente trabajo es 4G.2: unificar la experiencia pública de Internet en `/internet`, evolucionar `site_pages` de forma aditiva si los bloques tipados resultan necesarios y recién entonces implementar el redirect permanente de `/fibra-optica`. La prioridad previa sigue siendo resolver las validaciones humanas de contenido sensible; no se publican borradores automáticamente.
@@ -140,3 +172,4 @@ La migración correctiva restablece exclusivamente los canónicos aprobados de H
 ## 4G.4.1.3 — Jerarquía y conversión de Home
 
 La Home distingue ahora el propósito de cada bloque: COOPIA resuelve la necesidad, el panel adaptativo sólo continúa cuando agrega valor, los accesos directos navegan y la sección Internet presenta primero la experiencia comercial y luego la cobertura. Las secciones de noticias no se renderizan sin publicaciones; no se agregan noticias de demostración ni datos comerciales nuevos.
+- **4G.7.2B/4G.7.2C — Site Page Copy Activation Smoke y consistencia visual:** propuesta única de copy top-level para `centro-de-ayuda` aplicada una vez al draft, sin publicación. La interfaz usa la respuesta canónica del servidor y reconcilia de forma segura; la reescritura editorial de items queda diferida.

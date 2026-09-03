@@ -17,6 +17,10 @@ describe("controlled editorial publication", () => {
   });
   it("publishes services without a nonexistent published_at column", () => {
     expect(publicationUpdateValues("service", "2026-08-22T00:00:00.000Z")).toEqual({ status: "published" });
+    expect(publicationUpdateValues("site_page", "2026-08-22T00:00:00.000Z")).toEqual({ status: "published" });
+  });
+  it("permits an applied low-risk site page but still excludes plans and contacts", () => {
+    expect(canPublishEditorialProposal({ ...safe, entityType: "site_page" }).allowed).toBe(true);
   });
   it("timestamps only articles and FAQs when explicitly publishing", () => {
     const publishedAt = "2026-08-22T00:00:00.000Z";
