@@ -8,7 +8,9 @@ Entorno auditado: `coopsar-staging`. Fecha: 2026-08-31. Este documento no cambia
 
 Los cuatro ítems restantes de este Batch continúan `draft` / `needs_validation`. **COOPIA CONSUMER = PASS**: el artículo publicado entra por la proyección `help_articles` published-only, mientras que borradores y propuestas privadas no entran al contexto público.
 
-Dos pendientes quedan documentados sin cambio funcional: **WEB ARTICLE SURFACE = PENDING** (`/energia-estimar-consumo` devuelve 404 porque `[slug]` no sirve `help_articles`) y **PROPOSAL STATE CONSISTENCY = PENDING** (el candidato está `published`, pero la propuesta permanece `applied`, estado que significa aplicada al borrador).
+Dos pendientes quedan documentados sin cambio funcional: **WEB ARTICLE SURFACE = PENDING** (`/energia-estimar-consumo` devuelve 404 porque `[slug]` no sirve `help_articles`) y **PROPOSAL STATE CONSISTENCY = PENDING** *(fotografía histórica; resuelto posteriormente)* (el candidato está `published`, pero la propuesta permanece `applied`, estado que significa aplicada al borrador).
+
+**Resolución actual: PASS.** El cierre posterior 4G.7.2 validó la matriz server-side y compare-and-set, el rechazo terminal y el ciclo `applied → published` para `site_page`; su publicación usa una RPC atómica y el smoke finalizó en PASS.
 
 ## Gate de revisión inicial — evidencia histórica
 
