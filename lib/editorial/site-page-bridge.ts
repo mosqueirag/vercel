@@ -47,7 +47,7 @@ export const sitePageEditorialSlugs = ["institucional", "telefonia", "contacto",
 export const isSitePageEditorialSlug = (slug: string) => (sitePageEditorialSlugs as readonly string[]).includes(slug);
 
 /** Keeps a successful empty inventory distinct from a failed Supabase read. */
-export function sitePageEditorialQueryOutcome(data: unknown, error: unknown):
+export function editorialRowsQueryOutcome(data: unknown, error: unknown):
   | { ok: true; rows: unknown[] }
   | { ok: false; reason: "query" | "invalid_response" } {
   if (error) return { ok: false, reason: "query" };

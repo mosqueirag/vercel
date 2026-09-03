@@ -3,7 +3,7 @@ import "server-only";
 import { createSupabaseAdmin } from "../supabase";
 import type { EditorialEntityType } from "../editorial/proposals";
 import { isHistoricalEditorialEntityType, validationForSourceSlugs } from "../editorial/historical-corpus";
-import { isSitePageEditorialSlug, sitePageEditorialQueryOutcome, type SitePageCopyItem, type SitePageEditorialSnapshot, type SitePageEditorialStatus } from "../editorial/site-page-bridge";
+import { editorialRowsQueryOutcome, isSitePageEditorialSlug, type SitePageCopyItem, type SitePageEditorialSnapshot, type SitePageEditorialStatus } from "../editorial/site-page-bridge";
 export { historicalEditorialEntityTypes } from "../editorial/historical-corpus";
 
 export type EditorialCandidate = {
@@ -83,7 +83,7 @@ export async function getSitePageEditorialCandidatesResult(): Promise<SitePageEd
   let data: unknown;
   try {
     const response = await supabase.from("site_pages").select("id,slug,eyebrow,title,intro,image_url,items,status,sort_order").in("slug", ["institucional", "telefonia", "contacto", "centro-de-ayuda"]);
-    const outcome = sitePageEditorialQueryOutcome(response.data, response.error);
+    const outcome = editorialRowsQueryOutcome(response.data, response.error);
     if (!outcome.ok) return outcome;
     data = outcome.rows;
   } catch {
@@ -120,9 +120,32 @@ export async function getHistoricalEditorialCandidate(entityType: EditorialEntit
 }
 
 export type EditorialProposalRow = { id: string; entity_type: EditorialEntityType; entity_id: string; source_hash: string; prompt_version: string; proposal: unknown; detected_facts: unknown; validation_flags: string[]; risk_level: "low" | "medium" | "high" | "restricted"; status: string; created_at: string; updated_at: string };
-export async function getEditorialProposals() {
+export type EditorialProposalsResult =
+  | { ok: true; proposals: EditorialProposalRow[] }
+  | { ok: false; reason: "configuration" | "query" | "invalid_response" };
+
+export class EditorialProposalsError extends Error {
+  constructor(readonly reason: Extract<EditorialProposalsResult, { ok: false }>['reason']) {
+    super("EDITORIAL_PROPOSALS_UNAVAILABLE");
+  }
+}
+
+/** Private proposal inventory. A failed REST read is never an empty inventory. */
+export async function getEditorialProposalsResult(): Promise<EditorialProposalsResult> {
   const supabase = createSupabaseAdmin();
-  if (!supabase) return [] as EditorialProposalRow[];
-  const { data, error } = await supabase.from("content_editorial_proposals").select("id,entity_type,entity_id,source_hash,prompt_version,proposal,detected_facts,validation_flags,risk_level,status,created_at,updated_at").order("updated_at", { ascending: false });
-  return error ? [] as EditorialProposalRow[] : (data ?? []) as EditorialProposalRow[];
+  if (!supabase) return { ok: false, reason: "configuration" };
+  try {
+    const response = await supabase.from("content_editorial_proposals").select("id,entity_type,entity_id,source_hash,prompt_version,proposal,detected_facts,validation_flags,risk_level,status,created_at,updated_at").order("updated_at", { ascending: false });
+    const outcome = editorialRowsQueryOutcome(response.data, response.error);
+    if (!outcome.ok) return outcome;
+    return { ok: true, proposals: outcome.rows as EditorialProposalRow[] };
+  } catch {
+    return { ok: false, reason: "query" };
+  }
+}
+
+export async function getEditorialProposals(): Promise<EditorialProposalRow[]> {
+  const result = await getEditorialProposalsResult();
+  if (!result.ok) throw new EditorialProposalsError(result.reason);
+  return result.proposals;
 }

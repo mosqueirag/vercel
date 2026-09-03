@@ -1,5 +1,5 @@
 import { isSameOrigin, requireNewsAdmin } from "../../../../lib/admin-auth";
-import { getEditorialCandidate, getEditorialProposals, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidatesResult } from "../../../../lib/data/editorial-content";
+import { getEditorialCandidate, getEditorialProposals, getEditorialProposalsResult, getHistoricalEditorialCandidate, getHistoricalEditorialCandidates, getSitePageEditorialCandidatesResult } from "../../../../lib/data/editorial-content";
 import { generateEditorialProposal } from "../../../../lib/editorial/generator";
 import { contentSourceHash, editorialPromptVersion, extractProtectedFacts, proposalIsStale, proposalNeedsValidation, proposalRiskLevel, sitePageTopLevelValidationFlags, type EditorialEntityType } from "../../../../lib/editorial/proposals";
 import { canPublishEditorialProposal, publicationUpdateValues } from "../../../../lib/editorial/publication";
@@ -31,10 +31,11 @@ const entityTable: Record<EditorialEntityType, string> = { service: "services", 
 export async function GET() {
   const session = await requireNewsAdmin();
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const [historical, sitePageResult, proposals] = await Promise.all([getHistoricalEditorialCandidates(), getSitePageEditorialCandidatesResult(), getEditorialProposals()]);
+  const [historical, sitePageResult, proposalsResult] = await Promise.all([getHistoricalEditorialCandidates(), getSitePageEditorialCandidatesResult(), getEditorialProposalsResult()]);
   if (!sitePageResult.ok) return Response.json({ error: "No pudimos cargar las páginas. Intentá actualizar el estado." }, { status: 503 });
+  if (!proposalsResult.ok) return Response.json({ error: "No pudimos cargar las propuestas editoriales. Intentá actualizar el estado." }, { status: 503 });
   const candidates = [...historical, ...sitePageResult.candidates];
-  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}), ...(candidate.entityType === "site_page" && candidate.sitePageDraft ? { sitePageDraft: candidate.sitePageDraft } : {}) })), proposals });
+  return Response.json({ candidates: candidates.map((candidate) => ({ id: candidate.id, entityType: candidate.entityType, title: candidate.title, originalText: candidate.originalText, status: candidate.status, provenanceCount: candidate.provenanceCount, validationPending: candidate.validationPending, validationReason: candidate.validationReason, validationPriority: candidate.validationPriority, sourceSlugs: candidate.sourceSlugs, historicalCorpus: candidate.historicalCorpus, ...(candidate.entityType === "help_article" && candidate.status === "draft" && candidate.editableDraft ? { editableDraft: candidate.editableDraft } : {}), ...(candidate.entityType === "site_page" && candidate.sitePageDraft ? { sitePageDraft: candidate.sitePageDraft } : {}) })), proposals: proposalsResult.proposals });
 }
 
 export async function POST(request: Request) {

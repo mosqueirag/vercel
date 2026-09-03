@@ -14,9 +14,11 @@ Inventario y primer batch editorial controlado de hasta cinco entidades históri
 
 ## Fase 4G.7.2 — Integración editorial de páginas CMS
 
-**4G.7.2B cerrada y validada en staging.** El primer copy-only smoke de `centro-de-ayuda` se aprobó y aplicó exactamente una vez al borrador; no se publicó contenido. El hash fuente protege estado, estructura y datos operativos.
+**4G.7.2B cerrada y validada en staging.** El primer copy-only smoke de `centro-de-ayuda` se aprobó y aplicó exactamente una vez al borrador; el hash fuente protege estado, estructura y datos operativos.
 
 **4G.7.2C cerrada.** El Centro de Gestión usa la respuesta canónica del servidor para actualizar de inmediato filas, detalle y métricas tras una transición editorial; la reconciliación posterior es segura ante fallos y no habilita acciones automáticas. `site_pages` preserva contactos dinámicos y la regla de contenido público `published`.
+
+**4G.7.2D/4G.7.2E cerradas.** La publicación humana de `site_page` usa una RPC atómica: `generated → approved/rejected/needs_validation → applied → published`; `rejected` permanece terminal. `centro-de-ayuda` fue publicada únicamente en staging mediante ese flujo, sin modificar copy estructural durante la publicación. Las fallas o payloads inválidos de lectura editorial son explícitos, preservan el último estado canónico de la UI y bloquean acciones hasta reintentar correctamente.
 
 ## Fase 4G.7.3 — Gobierno de publicación y stale content
 

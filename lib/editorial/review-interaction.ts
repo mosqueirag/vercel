@@ -36,6 +36,11 @@ export function reconciliationWarning() {
   return "La operación fue confirmada. No pudimos actualizar el listado; podés actualizar el estado de forma segura.";
 }
 
+/** Mutations stay disabled until a failed inventory refresh is reconciled. */
+export function canUseCanonicalEditorialInventory(reconciliationNeeded: boolean) {
+  return !reconciliationNeeded;
+}
+
 export function replaceCanonicalProposal<T extends { id: string }>(proposals: T[], canonical: T) {
   return proposals.map((proposal) => proposal.id === canonical.id ? canonical : proposal);
 }

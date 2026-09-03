@@ -4,6 +4,7 @@ import {
   canApplyEditorialProposal,
   canGenerateEditorialProposal,
   canReviewEditorialProposal,
+  canUseCanonicalEditorialInventory,
   focusEditorialReviewPanel,
   isEditorialReviewDismissKey,
   proposalActionLabel,
@@ -55,6 +56,8 @@ describe("editorial review interactions", () => {
     const before = [{ id: "proposal-1", status: "generated" }, { id: "proposal-2", status: "approved" }];
     expect(replaceCanonicalProposal(before, { id: "proposal-1", status: "approved" })).toEqual([{ id: "proposal-1", status: "approved" }, { id: "proposal-2", status: "approved" }]);
     expect(reconciliationWarning()).toContain("operación fue confirmada");
+    expect(canUseCanonicalEditorialInventory(false)).toBe(true);
+    expect(canUseCanonicalEditorialInventory(true)).toBe(false);
   });
 
   it("does not allow proposal generation for published content", () => {

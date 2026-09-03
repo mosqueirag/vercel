@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { historicalEditorialEntityTypes, validationForSourceSlugs } from "../editorial/historical-corpus";
-import { sitePageEditorialQueryOutcome } from "../editorial/site-page-bridge";
+import { editorialRowsQueryOutcome } from "../editorial/site-page-bridge";
 
 describe("historical editorial corpus safeguards", () => {
   it("limits the historical corpus to services, help articles and FAQs", () => {
@@ -16,16 +16,16 @@ describe("historical editorial corpus safeguards", () => {
   });
 });
 
-describe("site page editorial reads", () => {
+describe("editorial inventory reads", () => {
   it("treats an empty successful query as an empty inventory", () => {
-    expect(sitePageEditorialQueryOutcome([], null)).toEqual({ ok: true, rows: [] });
+    expect(editorialRowsQueryOutcome([], null)).toEqual({ ok: true, rows: [] });
   });
 
   it("does not downgrade a failed REST query to an empty inventory", () => {
-    expect(sitePageEditorialQueryOutcome(null, { code: "PGRST999" })).toEqual({ ok: false, reason: "query" });
+    expect(editorialRowsQueryOutcome(null, { code: "PGRST999" })).toEqual({ ok: false, reason: "query" });
   });
 
   it("treats malformed successful payloads as failures rather than empty data", () => {
-    expect(sitePageEditorialQueryOutcome(null, null)).toEqual({ ok: false, reason: "invalid_response" });
+    expect(editorialRowsQueryOutcome(null, null)).toEqual({ ok: false, reason: "invalid_response" });
   });
 });
