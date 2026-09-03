@@ -40,9 +40,15 @@ describe("editorial review interactions", () => {
     expect(reviewPendingLabel("approved")).toBe("Aprobando…");
     expect(reviewPendingLabel("applied")).toBe("Aplicando…");
     expect(canReviewEditorialProposal("generated", "approved")).toBe(true);
+    expect(canReviewEditorialProposal("needs_validation", "approved")).toBe(true);
+    expect(canReviewEditorialProposal("approved", "rejected")).toBe(true);
     expect(canReviewEditorialProposal("approved", "applied")).toBe(true);
     expect(canReviewEditorialProposal("generated", "applied")).toBe(false);
+    expect(canReviewEditorialProposal("rejected", "approved")).toBe(false);
+    expect(canReviewEditorialProposal("rejected", "needs_validation")).toBe(false);
     expect(canReviewEditorialProposal("applied", "approved")).toBe(false);
+    expect(canReviewEditorialProposal("published", "approved")).toBe(false);
+    expect(canReviewEditorialProposal("stale", "approved")).toBe(false);
   });
 
   it("uses the canonical PATCH response immediately and preserves it when reconciliation fails", () => {

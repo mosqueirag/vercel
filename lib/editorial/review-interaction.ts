@@ -1,10 +1,8 @@
-export type EditorialProposalStatus =
-  | "generated"
-  | "needs_validation"
-  | "approved"
-  | "rejected"
-  | "applied"
-  | "stale";
+import {
+  resolveEditorialProposalTransition,
+} from "./review-transition";
+
+export type { EditorialProposalStatus } from "./review-transition";
 
 export type EditorialReviewAction = "approved" | "rejected" | "needs_validation" | "applied" | "published";
 
@@ -21,7 +19,7 @@ export function canApplyEditorialProposal(status: string) {
 export function canReviewEditorialProposal(status: string, action: EditorialReviewAction) {
   if (action === "applied") return canApplyEditorialProposal(status);
   if (action === "published") return status === "applied";
-  return status === "generated" || status === "needs_validation";
+  return resolveEditorialProposalTransition(status, action).kind === "transition";
 }
 
 export function reviewPendingLabel(action: EditorialReviewAction) {
@@ -50,7 +48,7 @@ export function proposalActionLabel(hasProposal: boolean) {
   return hasProposal ? "Ver propuesta actual" : "Generar propuesta";
 }
 
-export function reviewActionMessage(action: EditorialProposalStatus) {
+export function reviewActionMessage(action: EditorialReviewAction) {
   switch (action) {
     case "approved":
       return "Propuesta aprobada para aplicar al borrador. Sigue sin publicar.";

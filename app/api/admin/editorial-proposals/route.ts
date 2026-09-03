@@ -6,7 +6,7 @@ import { canPublishEditorialProposal, publicationUpdateValues } from "../../../.
 import { selectProgressiveEditorialBatch } from "../../../../lib/editorial/batch-selection";
 import { editorialRiskRecalculation } from "../../../../lib/editorial/risk-recalculation";
 import { canPersistGeneratedProposal, editorialGenerationSourceHash } from "../../../../lib/editorial/generation-integrity";
-import { isIdempotentEditorialReviewTransition } from "../../../../lib/editorial/review-transition";
+import { applySimpleEditorialProposalTransition } from "../../../../lib/editorial/review-transition";
 import { humanEditHash, sameHumanEdit, validateHumanEdit } from "../../../../lib/editorial/human-edit";
 import { generateSitePageEditorialProposal, sitePageEditorialPromptVersion } from "../../../../lib/editorial/site-page-generator";
 import { parseSitePageEditorialProposal } from "../../../../lib/editorial/site-page-proposal-schema";
@@ -137,7 +137,7 @@ export async function PATCH(request: Request) {
     if (refreshedError) return Response.json({ error: "La corrección fue aplicada, pero no pudimos actualizar la revisión." }, { status: 503 });
     return Response.json({ proposal: data, humanEdited: true, unchanged: false, draft: edit });
   }
-  if (isIdempotentEditorialReviewTransition(proposal.status, body.action)) return Response.json({ proposal, reused: true, unchanged: true });
+  if (proposal.status === body.action) return Response.json({ proposal, reused: true, unchanged: true });
   if (body.action === "published") {
     const candidate = proposal.entity_type === "site_page"
       ? await getEditorialCandidate("site_page", proposal.entity_id)
@@ -169,10 +169,18 @@ export async function PATCH(request: Request) {
     return Response.json({ published: true });
   }
   if (body.action !== "applied") {
-    const { data, error: updateError } = await session.admin.from("content_editorial_proposals").update({ status: body.action, reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).select("*").single();
-    const { error: auditError } = await audit(body.action);
-    if (updateError || auditError) return Response.json({ error: "No pudimos registrar la revisión." }, { status: 503 });
-    return Response.json({ proposal: data });
+    const result = await applySimpleEditorialProposalTransition(proposal.status, body.action, {
+      compareAndSet: async ({ expectedStatus, nextStatus }) => {
+        const { data, error: updateError } = await session.admin.from("content_editorial_proposals").update({ status: nextStatus, reviewed_at: new Date().toISOString(), reviewed_by: session.email }).eq("id", proposal.id).eq("status", expectedStatus).select("*").maybeSingle();
+        return { proposal: data, error: updateError };
+      },
+      insertAudit: ({ action }) => audit(action),
+    });
+    if (result.kind === "idempotent_noop") return Response.json({ proposal, reused: true, unchanged: true });
+    if (result.kind === "invalid_transition") return Response.json({ error: "La transición editorial solicitada no está permitida." }, { status: 409 });
+    if (result.kind === "concurrency_conflict") return Response.json({ error: "La propuesta cambió mientras se registraba la revisión. Actualizá el estado antes de reintentar." }, { status: 409 });
+    if (result.kind === "persistence_error" || result.kind === "audit_error") return Response.json({ error: "No pudimos registrar la revisión." }, { status: 503 });
+    return Response.json({ proposal: result.proposal });
   }
   if (proposal.status !== "approved") return Response.json({ error: "La propuesta debe aprobarse antes de aplicarla al borrador." }, { status: 409 });
   const candidate = proposal.entity_type === "site_page"
